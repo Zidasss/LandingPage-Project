@@ -1394,3 +1394,53 @@ main {
     left: 0;
   }
 }
+
+.card img{
+  height: 330px;
+}
+
+
+.card-container{
+  margin-top: 30px;
+  text-align: center;
+}
+.card{
+  height: 470px;
+  width: 380px;
+  text-align: center;
+  padding: 20px;
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  padding-bottom: 30px;
+  border-radius: 30px;
+  margin-top: 25px;
+  transition: 0.7s;
+  margin-right: 20px
+}
+.card h1{
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+.card p {
+  margin-bottom: 20px;
+}
+.card-container{
+  margin-top: 40px;
+}
+.cards {
+  margin-top: 45px;
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.card:hover{
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
+.card-section {
+  text-align: center;
+  margin-top: 30px;
+}
+
+
+
