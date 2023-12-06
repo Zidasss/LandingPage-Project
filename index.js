@@ -6,7 +6,7 @@ const sacola = document.querySelector('.sacola')
 const main = document.querySelector('main')
 const setaSacola = document.querySelector('.seta-sacola');
 const removeSacola = document.querySelector('.remove-sacola')
-
+const header = document.querySelector('header');
 
 
 button.addEventListener('click', () => {
