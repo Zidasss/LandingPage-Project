@@ -57,7 +57,7 @@ export function TicketSection() {
         <p className="font-mono text-magenta text-[0.65rem] tracking-[0.4em] uppercase">
           ▶ garanta seu lugar
         </p>
-        <h2 className="font-heading chromatic text-bone mt-3 text-3xl tracking-[0.12em] uppercase sm:text-4xl">
+        <h2 className="font-drip text-pumpkin mt-3 text-3xl uppercase sm:text-4xl">
           Ingresso
         </h2>
         <p className="text-bone/70 mt-5 text-sm leading-relaxed">

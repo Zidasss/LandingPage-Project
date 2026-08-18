@@ -10,7 +10,7 @@ export function InfoSection() {
           <p className="font-mono text-magenta text-[0.65rem] tracking-[0.4em] uppercase">
             ▶ reproduzindo
           </p>
-          <h2 className="font-heading chromatic text-bone mt-3 text-3xl tracking-[0.12em] uppercase sm:text-4xl">
+          <h2 className="font-drip text-pumpkin mt-3 text-3xl uppercase sm:text-4xl">
             As coordenadas
           </h2>
         </Reveal>

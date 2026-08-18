@@ -55,7 +55,7 @@ export function Hero() {
       <footer className="relative z-30">
         <div className="mb-2 flex items-end justify-between">
           <Barcode code="016.102.026" />
-          <p className="font-script text-bone text-4xl leading-none sm:text-5xl">
+          <p className="font-drip text-bone text-3xl leading-none sm:text-4xl">
             Boo
           </p>
         </div>

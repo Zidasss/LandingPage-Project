@@ -1,12 +1,23 @@
 import type { Metadata } from "next";
-import { Anton, Archivo, Pinyon_Script, Share_Tech_Mono } from "next/font/google";
+import { Archivo, Chicle, Rubik_Wet_Paint, Share_Tech_Mono } from "next/font/google";
 import { event } from "@/config/event";
 import { PaperGrain } from "@/components/PaperGrain";
 import "./globals.css";
 
-/** Condensada e pesada: a tipografia de cartaz que carrega o nome. */
-const poster = Anton({
+/** Gorda e ondulada: carrega o nome da festa e os títulos grandes. */
+const poster = Chicle({
   variable: "--font-poster",
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+/**
+ * Escorrida, para os títulos de seção. Só funciona em corpo grande —
+ * pequena, os pingos empastelam a leitura.
+ */
+const drip = Rubik_Wet_Paint({
+  variable: "--font-drip",
   weight: "400",
   subsets: ["latin"],
   display: "swap",
@@ -27,14 +38,6 @@ const term = Share_Tech_Mono({
   display: "swap",
 });
 
-/** Manuscrita, usada em uma palavra só — o contraponto do cartaz. */
-const script = Pinyon_Script({
-  variable: "--font-script",
-  weight: "400",
-  subsets: ["latin"],
-  display: "swap",
-});
-
 export const metadata: Metadata = {
   title: `${event.name} — ${event.dateLabel}`,
   description: `${event.tagline}. Festa de Halloween em ${event.dateLabel}, ${event.timeLabel}. Confirme sua presença pelo PIX.`,
@@ -50,7 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-      className={`${poster.variable} ${grotesk.variable} ${term.variable} ${script.variable} h-full antialiased`}
+      className={`${poster.variable} ${drip.variable} ${grotesk.variable} ${term.variable} h-full antialiased`}
     >
       <body className="relative min-h-full">
         <PaperGrain />

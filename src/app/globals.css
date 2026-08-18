@@ -9,10 +9,10 @@
   --color-bone: #f4efe6;
   --color-ash: #8a8078;
 
-  --font-display: var(--font-poster), "Arial Narrow", sans-serif;
+  --font-display: var(--font-poster), cursive, sans-serif;
+  --font-drip: var(--font-drip), cursive, sans-serif;
   --font-heading: var(--font-grotesk), system-ui, sans-serif;
   --font-mono: var(--font-term), ui-monospace, monospace;
-  --font-script: var(--font-script), cursive;
   --font-sans: var(--font-grotesk), system-ui, sans-serif;
 
   --animate-marquee: marquee 28s linear infinite;
@@ -54,8 +54,8 @@ body {
  */
 @utility poster-type {
   font-family: var(--font-display);
-  line-height: 0.78;
-  letter-spacing: -0.02em;
+  line-height: 0.92;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
