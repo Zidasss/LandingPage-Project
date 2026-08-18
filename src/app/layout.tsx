@@ -1,22 +1,25 @@
 import type { Metadata } from "next";
-import { Monoton, Orbitron, Share_Tech_Mono, Space_Grotesk } from "next/font/google";
+import { Anton, Archivo, Pinyon_Script, Share_Tech_Mono } from "next/font/google";
 import { event } from "@/config/event";
-import { VhsOverlay } from "@/components/VhsOverlay";
+import { PaperGrain } from "@/components/PaperGrain";
 import "./globals.css";
 
-const neon = Monoton({
-  variable: "--font-neon",
+/** Condensada e pesada: a tipografia de cartaz que carrega o nome. */
+const poster = Anton({
+  variable: "--font-poster",
   weight: "400",
   subsets: ["latin"],
   display: "swap",
 });
 
-const tech = Orbitron({
-  variable: "--font-tech",
+/** Grotesca de apoio: legendas, textos corridos e botões. */
+const grotesk = Archivo({
+  variable: "--font-grotesk",
   subsets: ["latin"],
   display: "swap",
 });
 
+/** Monoespaçada para números, códigos e o código de barras. */
 const term = Share_Tech_Mono({
   variable: "--font-term",
   weight: "400",
@@ -24,8 +27,10 @@ const term = Share_Tech_Mono({
   display: "swap",
 });
 
-const text = Space_Grotesk({
-  variable: "--font-text",
+/** Manuscrita, usada em uma palavra só — o contraponto do cartaz. */
+const script = Pinyon_Script({
+  variable: "--font-script",
+  weight: "400",
   subsets: ["latin"],
   display: "swap",
 });
@@ -45,10 +50,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-      className={`${neon.variable} ${tech.variable} ${term.variable} ${text.variable} h-full antialiased`}
+      className={`${poster.variable} ${grotesk.variable} ${term.variable} ${script.variable} h-full antialiased`}
     >
       <body className="relative min-h-full">
-        <VhsOverlay />
+        <PaperGrain />
         <main className="relative z-10">{children}</main>
       </body>
     </html>

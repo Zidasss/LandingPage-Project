@@ -76,7 +76,7 @@ export function Countdown({ target }: { target: string }) {
 
   if (left?.done) {
     return (
-      <p className="font-heading glow-magenta text-magenta text-2xl tracking-[0.2em] uppercase sm:text-3xl">
+      <p className="font-display text-pumpkin text-3xl tracking-tight uppercase">
         A festa começou
       </p>
     );
@@ -90,31 +90,27 @@ export function Countdown({ target }: { target: string }) {
   ];
 
   return (
-    <div
-      className="flex items-end justify-center gap-2 sm:gap-4"
+    <dl
       role="timer"
       aria-live="off"
       aria-label="Contagem regressiva para a festa"
+      className="flex flex-col gap-1"
     >
-      {units.map((unit, i) => (
-        <div key={unit.label} className="flex items-end gap-2 sm:gap-4">
-          <div className="flex flex-col items-center">
-            <span className="font-mono glow-cyan text-cyan border-cyan/30 bg-crypt/60 rounded-md border px-3 py-2 text-4xl leading-none tabular-nums backdrop-blur-sm sm:px-5 sm:py-3 sm:text-6xl">
-              {unit.value === undefined
-                ? "".padStart(unit.pad, "-")
-                : String(unit.value).padStart(unit.pad, "0")}
-            </span>
-            <span className="font-heading text-ash mt-2 text-[0.6rem] tracking-[0.35em] uppercase sm:text-xs">
-              {unit.label}
-            </span>
-          </div>
-          {i < units.length - 1 && (
-            <span className="text-magenta animate-pulse-glow mb-8 hidden text-3xl leading-none sm:inline sm:text-5xl">
-              :
-            </span>
-          )}
+      {units.map((unit) => (
+        <div
+          key={unit.label}
+          className="border-bone/15 flex items-baseline justify-between gap-4 border-b pb-1"
+        >
+          <dt className="font-heading text-ash text-[0.6rem] font-semibold tracking-[0.3em] uppercase">
+            {unit.label}
+          </dt>
+          <dd className="font-mono text-pumpkin text-2xl leading-none tabular-nums">
+            {unit.value === undefined
+              ? "".padStart(unit.pad, "-")
+              : String(unit.value).padStart(unit.pad, "0")}
+          </dd>
         </div>
       ))}
-    </div>
+    </dl>
   );
 }

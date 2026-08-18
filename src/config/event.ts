@@ -44,6 +44,14 @@ export const event = {
     receiverCity: process.env.NEXT_PUBLIC_PIX_CITY ?? "CURITIBA",
   },
 
+  /** Arte do cartaz. Deixe src vazio para usar a silhueta provisória. */
+  hero: {
+    /** Caminho da imagem em /public, ex.: "/fantasma.png". */
+    src: "",
+    /** Crédito da imagem, exigido por alguns bancos de imagem. */
+    credit: "",
+  },
+
   contact: {
     /** WhatsApp em formato internacional, só dígitos. TODO: preencher. */
     whatsapp: "",
