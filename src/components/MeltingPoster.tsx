@@ -12,8 +12,9 @@ const DERRETIMENTO = 130;
 const DEGRAU = 3;
 
 /**
- * Derrete o cartaz conforme a página rola: as letras escorrem para baixo e se
- * desfazem, entregando a cena à seção seguinte.
+ * Derrete o cartaz conforme a página rola: as letras escorrem para os lados,
+ * empurradas pela boca da luz que se abre, e se desfazem antes de o vermelho
+ * virar fundo.
  *
  * A deformação é um `feDisplacementMap` alimentado por ruído — o efeito
  * convincente, e também o mais caro que existe para animar: filtro não roda na
@@ -44,11 +45,11 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
       const rect = palco.getBoundingClientRect();
       const p = Math.min(1, Math.max(0, -rect.top / (rect.height || 1)));
 
-      // Escorre para baixo, afina e some por completo antes de a luz virar
-      // fundo. Sobrando qualquer resto, ele lê como mancha esquecida sobre o
-      // vermelho — as letras precisam ter ido embora, não desbotado.
-      node.style.transform = `translate3d(0, ${(p * 46).toFixed(2)}%, 0) scaleY(${(1 + p * 0.9).toFixed(3)})`;
-      node.style.opacity = String(Math.max(0, 1 - Math.max(0, (p - 0.3) / 0.28)));
+      // Abre para os lados no mesmo ritmo da luz, e some por completo antes de
+      // o vermelho virar fundo. Sobrando qualquer resto, ele lê como mancha
+      // esquecida — as letras precisam ter ido embora, não desbotado.
+      node.style.transform = `scale3d(${(1 + p * p * 2.6).toFixed(3)}, ${(1 - p * 0.25).toFixed(3)}, 1)`;
+      node.style.opacity = String(Math.max(0, 1 - Math.max(0, (p - 0.24) / 0.26)));
 
       if (telaGrande && displace.current) {
         const escala = Math.round((p * DERRETIMENTO) / DEGRAU) * DEGRAU;
@@ -92,7 +93,7 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
           >
             <feTurbulence
               type="fractalNoise"
-              baseFrequency="0.018 0.006"
+              baseFrequency="0.004 0.021"
               numOctaves="3"
               seed="11"
               result="ruido"
@@ -112,7 +113,7 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
       <div
         ref={ref}
         className="w-full will-change-transform"
-        style={{ transformOrigin: "50% 0%" }}
+        style={{ transformOrigin: "50% 60%" }}
       >
         {children}
       </div>

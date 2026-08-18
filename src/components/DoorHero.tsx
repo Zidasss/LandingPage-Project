@@ -1,5 +1,5 @@
 import { Doorway } from "@/components/Doorway";
-import { GrowingBeam } from "@/components/GrowingBeam";
+import { OpeningBeam } from "@/components/OpeningBeam";
 import { Floor } from "@/components/Floor";
 import { MeltingPoster } from "@/components/MeltingPoster";
 import { PosterLines } from "@/components/PosterLines";
@@ -7,7 +7,6 @@ import {
   beamPolygon,
   BEAM_DESKTOP,
   BEAM_MOBILE,
-  BEAM_TOP,
   DOOR_BOTTOM,
   DOOR_TOP,
 } from "@/lib/beam";
@@ -22,10 +21,11 @@ import { event } from "@/config/event";
  * escolhidas linha a linha: assim o bloco acompanha o trapézio sozinho, em
  * qualquer tamanho de tela.
  *
- * A transição é a própria luz: ao rolar, o feixe abre até cobrir toda a largura
- * abaixo da porta e encostar na seção seguinte, que já é vermelha — a luz vira
- * o fundo dela. Enquanto isso o cartaz derrete e escorre para fora, para as
- * letras não ficarem perdidas sobre o vermelho depois que a cena acabar.
+ * A transição é a própria luz: ao rolar, só a boca do feixe se abre, até cobrir
+ * toda a largura e encostar na seção seguinte, que já é vermelha — a luz vira o
+ * fundo dela. O topo continua com a largura da porta o tempo todo. Enquanto
+ * isso o cartaz derrete para os lados, empurrado pela abertura, e some antes do
+ * vermelho fechar.
  */
 export function DoorHero() {
   return (
@@ -37,21 +37,15 @@ export function DoorHero() {
 
       {/* z-10 · a porta */}
       <div
+        data-porta
         className="absolute left-1/2 z-10 w-[40vw] -translate-x-1/2 sm:w-[22vw]"
         style={{ top: `${DOOR_TOP}%`, height: `${DOOR_BOTTOM - DOOR_TOP}%` }}
       >
         <Doorway />
       </div>
 
-      {/* z-30 · o feixe, que cresce até virar o fundo da seção seguinte */}
-      <GrowingBeam origemY={BEAM_TOP}>
-        {/*
-          Sem granulado próprio: o grão da página já cobre tudo, e uma segunda
-          camada só aqui deixava a luz num tom levemente diferente do vermelho
-          da seção seguinte — o que reabria uma emenda visível entre as duas.
-        */}
-        <div aria-hidden className="feixe bg-blood absolute inset-0" />
-      </GrowingBeam>
+      {/* z-30 · a luz, que abre a boca até virar o fundo da seção seguinte */}
+      <OpeningBeam />
 
       {/* z-40 · o cartaz, deitado no plano do feixe */}
       <div
