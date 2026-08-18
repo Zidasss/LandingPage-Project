@@ -3,15 +3,19 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Cortina de preto que desce sobre a cena conforme a página rola.
+ * Escuridão que desce sobre a cena conforme a página rola.
  *
  * Ela cobre o chão e a porta, mas fica **por baixo** do feixe — então a luz
  * permanece enquanto o resto some, e no fim o que sobra na tela é só o vermelho,
  * que encosta na próxima seção. Nada se move de lugar: a porta fica parada e a
- * perspectiva não muda, o que importa quando a ilustração da porta entrar.
+ * perspectiva não muda.
  *
- * O percurso é a própria saída do hero, que tem a altura da tela — a transição
- * não acrescenta rolagem nenhuma à página.
+ * Duas decisões vieram de o efeito ter ficado truncado na primeira versão:
+ *
+ * 1. O movimento é `transform`, não `height`. Mudar altura a cada quadro obriga
+ *    o navegador a refazer o layout; transform vive na composição e desliza.
+ * 2. A borda de baixo é um degradê, não um corte. Uma aresta reta descendo lê
+ *    como cortina de teatro caindo; o degradê lê como a luz se apagando.
  */
 export function Curtain() {
   const ref = useRef<HTMLDivElement>(null);
@@ -28,10 +32,8 @@ export function Curtain() {
       frame = 0;
       const rect = palco.getBoundingClientRect();
       const percurso = rect.height || 1;
-      // Termina antes do fim da rolagem: a cortina precisa fechar enquanto o
-      // hero ainda está em quadro, senão o efeito acontece fora da tela.
-      const p = Math.min(1, Math.max(0, -rect.top / (percurso * 0.72)));
-      node.style.height = `${(p * 100).toFixed(2)}%`;
+      const p = Math.min(1, Math.max(0, -rect.top / percurso));
+      node.style.transform = `translate3d(0, ${(p * 118).toFixed(2)}%, 0)`;
     };
     const aoRolar = () => {
       if (!frame) frame = requestAnimationFrame(aplicar);
@@ -51,7 +53,15 @@ export function Curtain() {
     <div
       ref={ref}
       aria-hidden
-      className="bg-ink absolute inset-x-0 top-0 z-20 h-0"
+      className="absolute inset-x-0 z-20 will-change-transform"
+      style={{
+        top: "-100%",
+        height: "200%",
+        // O preto ocupa a metade de cima e se dissolve ao longo de um quarto da
+        // altura: é essa faixa difusa que atravessa a cena, não uma borda.
+        background:
+          "linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,0.86) 52%, rgba(0,0,0,0) 68%)",
+      }}
     />
   );
 }
