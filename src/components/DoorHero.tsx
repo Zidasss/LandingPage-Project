@@ -3,7 +3,15 @@
 import { useEffect, useRef } from "react";
 import { Doorway } from "@/components/Doorway";
 import { Floor } from "@/components/Floor";
-import { beamPolygon, beamShape, clamp01, slice, DOOR_BOTTOM } from "@/lib/beam";
+import {
+  beamPolygon,
+  beamShape,
+  clamp01,
+  glowGradient,
+  slice,
+  DOOR_BOTTOM,
+  DOOR_TOP,
+} from "@/lib/beam";
 import { brl } from "@/lib/format";
 import { event } from "@/config/event";
 
@@ -26,6 +34,8 @@ export function DoorHero() {
   const feixe = useRef<HTMLDivElement>(null);
   const cena = useRef<HTMLDivElement>(null);
   const chamada = useRef<HTMLDivElement>(null);
+  const porta = useRef<HTMLDivElement>(null);
+  const clarao = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const alvo = secao.current;
@@ -40,22 +50,30 @@ export function DoorHero() {
       const percurso = rect.height - window.innerHeight;
       const p = percurso > 0 ? clamp01(-rect.top / percurso) : 0;
 
+      // A meia-largura da porta é medida da própria porta, não estimada: ela
+      // tem mínimo e máximo em pixels, então a conta em vw erraria nas telas
+      // muito estreitas ou muito largas — e qualquer erro aqui reabre o degrau.
+      const larguraPorta = porta.current?.offsetWidth ?? 0;
+      const meiaPorta = (larguraPorta / window.innerWidth) * 50;
+
       if (feixe.current) {
-        feixe.current.style.clipPath = beamPolygon(beamShape(p));
+        feixe.current.style.clipPath = beamPolygon(beamShape(p, meiaPorta));
+      }
+      if (clarao.current) {
+        clarao.current.style.backgroundImage = glowGradient(p);
       }
       if (cena.current) {
         // a cena avança em direção a quem olha, como se andássemos até a porta
-        cena.current.style.transform = `scale(${(1 + p * 0.55).toFixed(3)})`;
-        cena.current.style.opacity = String(1 - slice(p, 0.62, 0.95));
+        cena.current.style.transform = `scale(${(1 + p * 0.5).toFixed(3)})`;
       }
       if (chamada.current) {
-        chamada.current.style.opacity = String(1 - slice(p, 0.1, 0.42));
+        chamada.current.style.opacity = String(1 - slice(p, 0.12, 0.45));
       }
     };
 
     if (semMovimento.matches) {
       // sem animação: a cena fica no estado inicial, legível e parada
-      if (feixe.current) feixe.current.style.clipPath = beamPolygon(beamShape(0));
+      desenhar();
       return;
     }
 
@@ -83,8 +101,9 @@ export function DoorHero() {
           </div>
 
           <div
-            className="absolute left-1/2 w-[22vw] max-w-[260px] min-w-[132px] -translate-x-1/2"
-            style={{ top: "14%", height: `${DOOR_BOTTOM - 14}%` }}
+            ref={porta}
+            className="absolute left-1/2 w-[20vw] max-w-[240px] min-w-[124px] -translate-x-1/2"
+            style={{ top: `${DOOR_TOP}%`, height: `${DOOR_BOTTOM - DOOR_TOP}%` }}
           >
             <Doorway />
           </div>
@@ -95,7 +114,7 @@ export function DoorHero() {
           ref={feixe}
           aria-hidden
           className="bg-blood absolute inset-0 will-change-[clip-path]"
-          style={{ clipPath: beamPolygon(beamShape(0)) }}
+          style={{ clipPath: beamPolygon(beamShape(0, 10)) }}
         >
           {/* grão sobre o vermelho, para não ficar uma chapada digital */}
           <div
@@ -106,6 +125,9 @@ export function DoorHero() {
             }}
           />
         </div>
+
+        {/* ---- clarão: engole o preto sem aresta nenhuma ---- */}
+        <div ref={clarao} aria-hidden className="absolute inset-0" />
 
         {/* ---- texto sobre o feixe ---- */}
         <div
