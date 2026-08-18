@@ -8,6 +8,7 @@ import {
   DOOR_BOTTOM,
   DOOR_TOP,
 } from "@/lib/beam";
+import { amostrar, cubicBezier } from "@/lib/easing";
 import { event } from "@/config/event";
 
 /**
@@ -30,6 +31,18 @@ import { event } from "@/config/event";
 
 /** Chave que marca quem já viu a abertura. */
 const MARCA = "volvoween:intro";
+/** Avisa o resto da página que a porta terminou de abrir. */
+export const PORTA_ABERTA = "volvoween:porta-aberta";
+
+/**
+ * A folha e o feixe são gerados desta mesma amostragem, e as duas animações
+ * rodam em tempo linear. É o que mantém a ponta do feixe grudada no canto da
+ * porta: com curvas ou durações diferentes, uma sempre adianta a outra.
+ */
+const ABERTURA = amostrar(cubicBezier(0.45, 0, 0.35, 1), 14);
+/** Quando a folha começa a girar, e quanto tempo leva. */
+const ABRE_EM = 3750;
+const ABRE_POR = 1700;
 
 export function Intro() {
   const ref = useRef<HTMLDivElement>(null);
@@ -45,6 +58,10 @@ export function Intro() {
       } catch {
         // navegação privada pode recusar: a abertura só roda de novo, sem erro
       }
+      // O cartaz espera este aviso para se formar: as letras aparecem pelo
+      // caminho inverso do derretimento, e não faria sentido começarem antes de
+      // a porta ter aberto.
+      window.dispatchEvent(new CustomEvent(PORTA_ABERTA));
       node.addEventListener("transitionend", () => node.remove(), { once: true });
     };
 
@@ -210,7 +227,8 @@ export function Intro() {
           background: var(--color-blood);
           box-shadow: 0 0 2.5vw rgba(255, 26, 18, 0.45);
           opacity: 0;
-          animation: intro-macaneta 400ms 3100ms ease-out forwards, intro-macaneta-viaja 1700ms 3750ms cubic-bezier(0.45, 0, 0.35, 1) forwards;
+          animation: intro-macaneta 400ms 3100ms ease-out forwards,
+            intro-macaneta-viaja ${ABRE_POR}ms ${ABRE_EM}ms linear forwards;
         }
 
         @keyframes intro-macaneta {
@@ -290,12 +308,14 @@ export function Intro() {
           z-index: 1;
           background: #120303;
           transform-origin: left center;
-          animation: intro-folha 1700ms 3750ms cubic-bezier(0.45, 0, 0.35, 1) forwards;
+          animation: intro-folha ${ABRE_POR}ms ${ABRE_EM}ms linear forwards;
         }
 
         @keyframes intro-folha {
-          from { transform: scaleX(1); filter: brightness(1); }
-          to   { transform: scaleX(0.05); filter: brightness(0.3); }
+          ${ABERTURA.map(
+            ({ tempo, valor }) =>
+              `${(tempo * 100).toFixed(2)}% { transform: scaleX(${(1 - valor * 0.95).toFixed(4)}); filter: brightness(${(1 - valor * 0.7).toFixed(3)}); }`,
+          ).join("\n          ")}
         }
 
         /*
@@ -303,40 +323,37 @@ export function Intro() {
 
           O vão começa como uma fresta na borda da maçaneta e vai abrindo em
           direção à dobradiça — luz não atravessa a folha fechada, então o feixe
-          não pode nascer no meio da porta. Os passos intermediários existem por
-          isso: interpolar direto entre a fresta e o feixe cheio faria o feixe
-          cortar caminho pelo centro em vez de varrer junto com a folha.
+          não pode nascer no meio da porta.
 
-          O último passo é exatamente o feixe do hero, então a troca de cena não
-          tem salto.
+          Os passos vêm da mesma amostragem da folha, e a animação roda em tempo
+          linear: em CSS a suavização é aplicada entre cada par de keyframes, e
+          uma curva declarada aqui faria o feixe acelerar e frear a cada passo.
+          Era isso que se via como engasgo — e o que fazia a ponta do feixe
+          descolar do canto da porta.
         */
         .intro-feixe {
           position: absolute;
           inset: 0;
           background: var(--color-blood);
           opacity: 0;
-          animation: intro-feixe-mobile 1650ms 3900ms cubic-bezier(0.45, 0, 0.35, 1) forwards;
+          animation: intro-feixe-mobile ${ABRE_POR}ms ${ABRE_EM}ms linear forwards;
         }
 
         @keyframes intro-feixe-mobile {
-          0% { opacity: 0; clip-path: ${beamGapPolygon(BEAM_MOBILE, 0.0)}; }
-          20% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_MOBILE, 0.2)}; }
-          40% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_MOBILE, 0.4)}; }
-          60% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_MOBILE, 0.6)}; }
-          80% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_MOBILE, 0.8)}; }
-          100% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_MOBILE, 1.0)}; }
+          ${ABERTURA.map(
+            ({ tempo, valor }, i) =>
+              `${(tempo * 100).toFixed(2)}% { opacity: ${i === 0 ? 0 : 1}; clip-path: ${beamGapPolygon(BEAM_MOBILE, valor)}; }`,
+          ).join("\n          ")}
         }
 
         @media (min-width: 640px) {
           .intro-feixe { animation-name: intro-feixe-desktop; }
 
           @keyframes intro-feixe-desktop {
-            0% { opacity: 0; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 0.0)}; }
-            20% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 0.2)}; }
-            40% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 0.4)}; }
-            60% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 0.6)}; }
-            80% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 0.8)}; }
-            100% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 1.0)}; }
+            ${ABERTURA.map(
+              ({ tempo, valor }, i) =>
+                `${(tempo * 100).toFixed(2)}% { opacity: ${i === 0 ? 0 : 1}; clip-path: ${beamGapPolygon(BEAM_DESKTOP, valor)}; }`,
+            ).join("\n            ")}
           }
         }
 
@@ -355,7 +372,7 @@ export function Intro() {
             rgba(255, 26, 18, 0.18) 42%,
             transparent 74%
           );
-          animation: intro-brilho 1700ms 3850ms ease-out forwards;
+          animation: intro-brilho ${ABRE_POR}ms ${ABRE_EM}ms linear forwards;
         }
 
         @keyframes intro-brilho {
@@ -363,17 +380,18 @@ export function Intro() {
           to   { opacity: 1; }
         }
 
-        /* A maçaneta acompanha a folha até a dobradiça e se apaga com ela. */
+        /*
+          A maçaneta acompanha a borda da folha até a dobradiça e se apaga com
+          ela. O deslocamento sai da mesma amostragem, então ela não desliza
+          por conta própria enquanto a porta gira.
+        */
         @keyframes intro-macaneta-viaja {
-          from {
-            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.085);
-            opacity: 1;
-          }
-          70% { opacity: 0.7; }
-          to {
-            transform: translate(calc(-50% - var(--macaneta-x)), -50%) scale(0.078);
-            opacity: 0;
-          }
+          ${ABERTURA.map(({ tempo, valor }) => {
+            const folha = 1 - valor * 0.95;
+            const lado = (2 * folha - 1).toFixed(3);
+            const opacidade = Math.max(0, 1 - Math.max(0, (valor - 0.55) / 0.45)).toFixed(2);
+            return `${(tempo * 100).toFixed(2)}% { transform: translate(calc(-50% + var(--macaneta-x) * ${lado}), -50%) scale(0.085); opacity: ${opacidade}; }`;
+          }).join("\n          ")}
         }
 
         .intro-pular {
