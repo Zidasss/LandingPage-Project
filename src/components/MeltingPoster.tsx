@@ -4,7 +4,9 @@ import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
 /** Deformação máxima, em pixels do espaço do filtro. */
-const DERRETIMENTO = 130;
+const DERRETIMENTO = 118;
+/** Desfoque máximo que alimenta a etapa de liquefação. */
+const BORRAO = 9;
 /**
  * O filtro é recalculado pixel a pixel a cada mudança de `scale`. Arredondar em
  * degraus corta a maior parte das recalculações sem que o olho perceba salto.
@@ -25,6 +27,7 @@ const DEGRAU = 3;
 export function MeltingPoster({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const displace = useRef<SVGFEDisplacementMapElement>(null);
+  const borrao = useRef<SVGFEGaussianBlurElement>(null);
 
   useEffect(() => {
     const node = ref.current;
@@ -48,13 +51,22 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
       // Abre para os lados no mesmo ritmo da luz, e some por completo antes de
       // o vermelho virar fundo. Sobrando qualquer resto, ele lê como mancha
       // esquecida — as letras precisam ter ido embora, não desbotado.
-      node.style.transform = `scale3d(${(1 + p * p * 2.6).toFixed(3)}, ${(1 - p * 0.25).toFixed(3)}, 1)`;
-      node.style.opacity = String(Math.max(0, 1 - Math.max(0, (p - 0.24) / 0.26)));
+      node.style.transform = `scale3d(${(1 + p * p * 1.9).toFixed(3)}, ${(1 - p * 0.18).toFixed(3)}, 1)`;
+      // dissolve devagar no fim, para a massa sumir em vez de piscar
+      const desvanecer = Math.max(0, Math.min(1, (p - 0.3) / 0.32));
+      node.style.opacity = (1 - desvanecer * desvanecer).toFixed(3);
 
-      if (telaGrande && displace.current) {
+      if (telaGrande && displace.current && borrao.current) {
         const escala = Math.round((p * DERRETIMENTO) / DEGRAU) * DEGRAU;
         if (escala !== ultimo) {
           displace.current.setAttribute("scale", String(escala));
+          // O desfoque entra junto e alimenta a liquefação: sem ele o
+          // deslocamento sozinho deixa as bordas serrilhadas, com cara de
+          // ruído, em vez de massa escorrendo.
+          borrao.current.setAttribute(
+            "stdDeviation",
+            ((escala / DERRETIMENTO) * BORRAO).toFixed(2),
+          );
           ultimo = escala;
         }
       }
@@ -105,6 +117,22 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
               scale="0"
               xChannelSelector="R"
               yChannelSelector="G"
+              result="deslocado"
+            />
+            {/*
+              Liquefação: desfoca e depois recupera o contraste do canal alfa.
+              As bordas moles voltam a ser nítidas, mas já fundidas — é o que
+              faz as letras virarem massa contínua em vez de cacos borrados.
+              Sem esta dupla, o derretimento parece interferência de sinal.
+            */}
+            <feGaussianBlur ref={borrao} in="deslocado" stdDeviation="0" result="mole" />
+            <feColorMatrix
+              in="mole"
+              type="matrix"
+              values="1 0 0 0 0
+                      0 1 0 0 0
+                      0 0 1 0 0
+                      0 0 0 19 -8"
             />
           </filter>
         </defs>
