@@ -43,7 +43,7 @@ export function Intro() {
     };
 
     // some sozinha ao fim da sequência, e a qualquer sinal de impaciência
-    const fim = window.setTimeout(encerrar, 4200);
+    const fim = window.setTimeout(encerrar, 4050);
     const pular = () => {
       window.clearTimeout(fim);
       encerrar();
@@ -86,6 +86,17 @@ export function Intro() {
         .intro {
           --porta-topo: ${DOOR_TOP}%;
           --porta-altura: ${DOOR_BOTTOM - DOOR_TOP}%;
+          /* Meia altura da porta: onde a mão alcançaria a maçaneta. */
+          --macaneta-y: ${(DOOR_TOP + DOOR_BOTTOM) / 2}%;
+          /*
+            Distância vertical que a abóbora percorre até a maçaneta, em altura
+            de tela. Precisa ser vh e não %: dentro de um transform, a
+            porcentagem é relativa ao próprio elemento, não à viewport — foi o
+            que jogou a abóbora para fora da porta.
+          */
+          --macaneta-dy: ${(DOOR_TOP + DOOR_BOTTOM) / 2 - 38}vh;
+          /* Deslocamento lateral até a borda oposta à fresta de luz. */
+          --macaneta-x: 14.4vw;
           transition: opacity 520ms ease;
         }
         .intro[data-saindo] { opacity: 0; pointer-events: none; }
@@ -94,8 +105,12 @@ export function Intro() {
         .intro-macaneta {
           position: absolute;
           left: 50%;
-          top: 40%;
+          top: 38%;
           transform: translate(-50%, -50%);
+        }
+
+        @media (min-width: 640px) {
+          .intro { --macaneta-x: 7.9vw; }
         }
 
         /* Fase 1 e 2: entra e ri. O riso é pulso de escala com uma leve
@@ -104,10 +119,18 @@ export function Intro() {
           width: min(52vw, 340px);
           aspect-ratio: 1;
           opacity: 0;
+          /*
+            Os tempos são encadeados, não escolhidos soltos: a maçaneta só pode
+            entrar depois de a abóbora ter chegado ao lugar dela, senão as duas
+            aparecem juntas e a troca fica visível.
+              entrada  0 → 420
+              risada   420 → 1460
+              recuo    1460 → 2560
+          */
           animation:
-            intro-entra 520ms ease-out forwards,
-            intro-risada 620ms 520ms ease-in-out 2,
-            intro-recua 1500ms 1760ms cubic-bezier(0.55, 0, 0.7, 1) forwards;
+            intro-entra 420ms ease-out forwards,
+            intro-risada 520ms 420ms ease-in-out 2,
+            intro-recua 1100ms 1460ms cubic-bezier(0.55, 0, 0.7, 1) forwards;
         }
 
         .intro-marcador {
@@ -139,6 +162,8 @@ export function Intro() {
         /* Fase 3: recua perdendo definição. O desfoque e a dessaturação são o
            que apagam o desenho; a mudança de matiz leva o laranja para o
            vermelho da cena seguinte. */
+        /* Recua e, no mesmo gesto, caminha até a borda da porta: maçaneta fica
+           do lado, não no meio. Fazer isso depois seria um pulo. */
         @keyframes intro-recua {
           from {
             transform: translate(-50%, -50%) scale(1);
@@ -150,7 +175,7 @@ export function Intro() {
             opacity: 1;
           }
           to {
-            transform: translate(-50%, -50%) scale(0.075);
+            transform: translate(calc(-50% + var(--macaneta-x)), calc(-50% + var(--macaneta-dy))) scale(0.075);
             filter: blur(12px) saturate(0.4) hue-rotate(-30deg) brightness(0.7);
             opacity: 0;
           }
@@ -158,19 +183,32 @@ export function Intro() {
 
         /* O círculo que sobra: entra por baixo enquanto a abóbora se apaga. */
         .intro-macaneta {
+          /* Acima da porta: ela é a maçaneta dela, não algo atrás dela. */
+          z-index: 2;
+          left: 50%;
+          top: var(--macaneta-y);
           width: min(52vw, 340px);
           aspect-ratio: 1;
           border-radius: 50%;
           background: var(--color-blood);
+          box-shadow: 0 0 2.5vw rgba(255, 26, 18, 0.45);
           opacity: 0;
-          transform: translate(-50%, -50%) scale(0.075);
-          animation: intro-macaneta 900ms 2660ms ease-out forwards;
+          animation: intro-macaneta 620ms 2480ms ease-out forwards;
         }
 
         @keyframes intro-macaneta {
-          from { opacity: 0; transform: translate(-50%, -50%) scale(0.075); }
-          40%  { opacity: 1; transform: translate(-50%, -50%) scale(0.075); }
-          to   { opacity: 1; transform: translate(-50%, -50%) scale(0.058); }
+          from {
+            opacity: 0;
+            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.075);
+          }
+          40% {
+            opacity: 1;
+            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.075);
+          }
+          to {
+            opacity: 1;
+            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.055);
+          }
         }
 
         /* Fase 4: a porta se desenha em volta, já nas medidas do hero. */
@@ -181,10 +219,11 @@ export function Intro() {
           height: var(--porta-altura);
           width: 40vw;
           transform: translateX(-50%);
+          z-index: 1;
           background: #120303;
           border: 1px solid rgba(255, 26, 18, 0.22);
           opacity: 0;
-          animation: intro-porta 700ms 2900ms ease-out forwards;
+          animation: intro-porta 620ms 2700ms ease-out forwards;
         }
 
         @media (min-width: 640px) {
@@ -202,7 +241,7 @@ export function Intro() {
           inset: 0 auto 0 0;
           width: 0;
           background: var(--color-blood);
-          animation: intro-fresta 900ms 3300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          animation: intro-fresta 800ms 3150ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
         @keyframes intro-fresta {
@@ -222,7 +261,7 @@ export function Intro() {
           letter-spacing: 0.3em;
           text-transform: uppercase;
           opacity: 0;
-          animation: intro-pular 400ms 1200ms ease-out forwards;
+          animation: intro-pular 400ms 900ms ease-out forwards;
         }
 
         @keyframes intro-pular {

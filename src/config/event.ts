@@ -55,8 +55,8 @@ export const event = {
 
   /** Abertura do site, antes da cena da porta. */
   intro: {
-    /** Abóbora que vira a maçaneta. PNG com fundo transparente, em /public. */
-    pumpkin: "",
+    /** Abóbora que vira a maçaneta. */
+    pumpkin: "/abobora.png",
   },
 
   /** Endereço divulgado no topo do cartaz. */
