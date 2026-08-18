@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+@theme {
+  /* ---- Paleta: VHS horror anos 80 ---- */
+  --color-void: #05040a;
+  --color-ink: #0b0912;
+  --color-crypt: #140f22;
+  --color-magenta: #ff2d78;
+  --color-cyan: #22e8ff;
+  --color-pumpkin: #ff7a1a;
+  --color-bone: #ede7f5;
+  --color-ash: #9a93ae;
+
+  --font-display: var(--font-neon), cursive, sans-serif;
+  --font-heading: var(--font-tech), system-ui, sans-serif;
+  --font-mono: var(--font-term), ui-monospace, monospace;
+  --font-sans: var(--font-text), system-ui, sans-serif;
+
+  --animate-flicker: flicker 6s linear infinite;
+  --animate-scan: scan 8s linear infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 3.2s ease-in-out infinite;
+
+  @keyframes flicker {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    41% {
+      opacity: 1;
+    }
+    42% {
+      opacity: 0.72;
+    }
+    43% {
+      opacity: 1;
+    }
+    77% {
+      opacity: 1;
+    }
+    78% {
+      opacity: 0.55;
+    }
+    79% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scan {
+    from {
+      transform: translateY(-100%);
+    }
+    to {
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-18px) rotate(3deg);
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-void);
+  color: var(--color-bone);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-magenta);
+  color: var(--color-void);
+}
+
+/* ---- Utilitários de brilho neon ---- */
+@utility glow-magenta {
+  text-shadow:
+    0 0 6px color-mix(in srgb, var(--color-magenta) 90%, transparent),
+    0 0 24px color-mix(in srgb, var(--color-magenta) 60%, transparent),
+    0 0 62px color-mix(in srgb, var(--color-magenta) 35%, transparent);
+}
+
+@utility glow-cyan {
+  text-shadow:
+    0 0 6px color-mix(in srgb, var(--color-cyan) 90%, transparent),
+    0 0 22px color-mix(in srgb, var(--color-cyan) 55%, transparent);
+}
+
+@utility glow-pumpkin {
+  text-shadow:
+    0 0 8px color-mix(in srgb, var(--color-pumpkin) 85%, transparent),
+    0 0 28px color-mix(in srgb, var(--color-pumpkin) 45%, transparent);
+}
+
+/* ---- Aberração cromática estilo fita gasta ---- */
+@utility chromatic {
+  text-shadow:
+    2px 0 0 color-mix(in srgb, var(--color-magenta) 75%, transparent),
+    -2px 0 0 color-mix(in srgb, var(--color-cyan) 75%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
