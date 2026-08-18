@@ -1,4 +1,5 @@
 import { DoorHero } from "@/components/DoorHero";
+import { Intro } from "@/components/Intro";
 import { InfoSection } from "@/components/InfoSection";
 import { OpeningBeam } from "@/components/OpeningBeam";
 import { TicketSection } from "@/components/TicketSection";
@@ -12,6 +13,7 @@ export default function Home() {
         passagem parecer a luz tomando a página, e não um bloco vermelho subindo
         por baixo.
       */}
+      <Intro />
       <OpeningBeam />
       <DoorHero />
       <InfoSection />

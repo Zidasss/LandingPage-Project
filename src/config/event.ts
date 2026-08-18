@@ -53,6 +53,12 @@ export const event = {
     silhouettes: "",
   },
 
+  /** Abertura do site, antes da cena da porta. */
+  intro: {
+    /** Abóbora que vira a maçaneta. PNG com fundo transparente, em /public. */
+    pumpkin: "",
+  },
+
   /** Endereço divulgado no topo do cartaz. */
   site: "@volvoween.com",
 
