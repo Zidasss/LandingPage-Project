@@ -7,6 +7,16 @@ export function Hero() {
     <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-6 py-24 text-center">
       <SynthGrid />
 
+      {/* escurece o miolo para o texto nunca competir com o sol */}
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 45% at 50% 55%, rgba(5,4,10,0.82) 0%, rgba(5,4,10,0.45) 55%, transparent 100%)",
+        }}
+      />
+
       <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-8">
         <p className="font-mono glow-cyan text-cyan/90 text-[0.65rem] tracking-[0.4em] uppercase sm:text-sm sm:tracking-[0.5em]">
           {event.dateLabel} · {event.edition} · {event.venue.city}

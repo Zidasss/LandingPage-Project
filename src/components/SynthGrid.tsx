@@ -9,7 +9,7 @@ export function SynthGrid() {
       <div className="from-void via-crypt to-void absolute inset-0 bg-gradient-to-b" />
 
       {/* sol */}
-      <div className="absolute top-[30%] left-1/2 -translate-x-1/2 sm:top-[20%]">
+      <div className="absolute top-[22%] left-1/2 -translate-x-1/2 sm:top-[10%]">
         <div
           className="animate-pulse-glow h-44 w-44 rounded-full opacity-80 blur-[2px] sm:h-72 sm:w-72"
           style={{

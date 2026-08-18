@@ -1,10 +1,12 @@
 import { Hero } from "@/components/Hero";
+import { InfoSection } from "@/components/InfoSection";
 import { event } from "@/config/event";
 
 export default function Home() {
   return (
     <>
       <Hero />
+      <InfoSection />
 
       <section
         id="ingresso"
