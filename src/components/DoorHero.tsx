@@ -3,7 +3,6 @@ import { Floor } from "@/components/Floor";
 import { PosterLines } from "@/components/PosterLines";
 import {
   beamPolygon,
-  BEAM_TOP,
   BEAM_DESKTOP,
   BEAM_MOBILE,
   DOOR_BOTTOM,
