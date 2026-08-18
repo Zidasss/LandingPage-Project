@@ -6,11 +6,7 @@ export default function Home() {
   return (
     <>
       <DoorHero />
-      {/* o feixe termina cobrindo a tela de vermelho e encosta aqui: a luz
-          não some, ela vira a próxima seção */}
-      <div className="bg-blood text-ink">
-        <InfoSection />
-      </div>
+      <InfoSection />
       <TicketSection />
     </>
   );

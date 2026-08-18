@@ -4,7 +4,6 @@ import {
   beamPolygon,
   beamShape,
   clamp01,
-  glowRadius,
   slice,
   DOOR_BOTTOM,
   DOOR_TOP,
@@ -54,19 +53,24 @@ test("a base só abre, nunca fecha", () => {
   }
 });
 
-test("o clarão entra depois que a base já abriu, e só cresce", () => {
-  assert.equal(glowRadius(0), 0);
-  assert.equal(glowRadius(0.5), 0, "ainda não começou");
-  assert.ok(glowRadius(0.8) > 0, "já está em curso");
-  assert.ok(glowRadius(0.8) < 100, "mas ainda não comeu o feixe");
-  assert.ok(glowRadius(1) >= 100, "cobre a tela inteira só no fim");
-
-  let anterior = glowRadius(0);
-  for (let p = 0.02; p <= 1.0001; p += 0.02) {
-    const atual = glowRadius(p);
-    assert.ok(atual >= anterior - 1e-9, `o clarão encolheu em ${p}`);
-    anterior = atual;
+test("o feixe nunca toma a tela inteira: os cantos de cima ficam pretos", () => {
+  // a aresta de cima é a da porta, então acima dela sempre sobra preto —
+  // é o que impede a cena de virar simples troca de fundo
+  for (const p of [0, 0.5, 1]) {
+    assert.ok(beamShape(p, PORTA).topHalf < 50, `o topo cobriu a tela em ${p}`);
   }
+});
+
+test("a base cresce durante todo o percurso, sem parar no meio", () => {
+  const inicio = beamShape(0, PORTA).bottomHalf;
+  const meio = beamShape(0.5, PORTA).bottomHalf;
+  const fim = beamShape(1, PORTA).bottomHalf;
+  assert.ok(meio > inicio, "cresceu na primeira metade");
+  assert.ok(fim > meio, "e continuou crescendo na segunda");
+});
+
+test("a base já nasce larga o bastante para o texto do cartaz", () => {
+  assert.ok(beamShape(0, PORTA).bottomHalf > 35, "o cartaz não caberia");
 });
 
 test("o polígono nasce colado na base da porta", () => {

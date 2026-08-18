@@ -3,17 +3,8 @@
 import { useEffect, useRef } from "react";
 import { Doorway } from "@/components/Doorway";
 import { Floor } from "@/components/Floor";
-import {
-  beamPolygon,
-  beamShape,
-  clamp01,
-  glowGradient,
-  slice,
-  DOOR_BOTTOM,
-  DOOR_TOP,
-} from "@/lib/beam";
-import { brl } from "@/lib/format";
-import { event } from "@/config/event";
+import { PosterLines } from "@/components/PosterLines";
+import { beamPolygon, beamShape, clamp01, DOOR_BOTTOM, DOOR_TOP } from "@/lib/beam";
 
 /** Altura total da seção. O que passa de 100svh é a distância de rolagem. */
 const ALTURA = "260svh";
@@ -33,9 +24,7 @@ export function DoorHero() {
   const secao = useRef<HTMLElement>(null);
   const feixe = useRef<HTMLDivElement>(null);
   const cena = useRef<HTMLDivElement>(null);
-  const chamada = useRef<HTMLDivElement>(null);
   const porta = useRef<HTMLDivElement>(null);
-  const clarao = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const alvo = secao.current;
@@ -59,15 +48,9 @@ export function DoorHero() {
       if (feixe.current) {
         feixe.current.style.clipPath = beamPolygon(beamShape(p, meiaPorta));
       }
-      if (clarao.current) {
-        clarao.current.style.backgroundImage = glowGradient(p);
-      }
       if (cena.current) {
         // a cena avança em direção a quem olha, como se andássemos até a porta
         cena.current.style.transform = `scale(${(1 + p * 0.5).toFixed(3)})`;
-      }
-      if (chamada.current) {
-        chamada.current.style.opacity = String(1 - slice(p, 0.12, 0.45));
       }
     };
 
@@ -102,7 +85,7 @@ export function DoorHero() {
 
           <div
             ref={porta}
-            className="absolute left-1/2 w-[20vw] max-w-[240px] min-w-[124px] -translate-x-1/2"
+            className="absolute left-1/2 w-[23vw] max-w-[300px] min-w-[124px] -translate-x-1/2"
             style={{ top: `${DOOR_TOP}%`, height: `${DOOR_BOTTOM - DOOR_TOP}%` }}
           >
             <Doorway />
@@ -126,25 +109,12 @@ export function DoorHero() {
           />
         </div>
 
-        {/* ---- clarão: engole o preto sem aresta nenhuma ---- */}
-        <div ref={clarao} aria-hidden className="absolute inset-0" />
-
-        {/* ---- texto sobre o feixe ---- */}
-        <div
-          ref={chamada}
-          className="absolute inset-x-0 bottom-0 z-10 px-5 pb-8 text-center"
-        >
-          <h1 className="font-display text-ink text-[13vw] leading-[0.9] sm:text-[7vw]">
-            <span className="sr-only">{event.name}</span>
-            <span aria-hidden>{event.name}</span>
-          </h1>
-          <p className="font-heading text-ink mt-2 text-xs font-bold tracking-[0.15em] uppercase sm:text-sm">
-            {event.dateLabel} &middot; {event.timeLabel} &middot; {brl(event.ticket.price)}
-          </p>
-          <p className="font-heading text-ink/70 mt-6 text-[0.6rem] font-bold tracking-[0.3em] uppercase">
-            role para entrar
-          </p>
+        {/* ---- cartaz dentro do feixe ---- */}
+        <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-6 text-center">
+          <h1 className="sr-only">{`Volvoween — festa de Halloween`}</h1>
+          <PosterLines />
         </div>
+
       </div>
     </section>
   );

@@ -8,9 +8,9 @@
  *    porta e vira um bloco colado nela. Por isso o feixe abre por ângulo: só a
  *    base se afasta, e o topo continua encaixado na abertura.
  *
- * 2. O preenchimento final não é o trapézio crescendo até cobrir tudo, e sim
- *    um clarão radial nascendo da porta. Polígono tem aresta; clarão não tem.
- *    É o que faz a virada terminar sem canto vivo em lugar nenhum.
+ * 2. O feixe nunca toma a tela inteira. Ele só abre, do começo ao fim do
+ *    percurso, e os cantos de cima continuam pretos: é o que mantém a leitura
+ *    de luz saindo de uma porta num quarto escuro, e não de troca de fundo.
  */
 
 /** Prende um número ao intervalo [0, 1]. */
@@ -28,14 +28,19 @@ export function easeInOut(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
 }
 
+/** Sai rápido e desacelera: o crescimento se mantém visível o percurso todo. */
+export function easeOut(t: number): number {
+  return 1 - (1 - clamp01(t)) ** 2;
+}
+
 function lerp(from: number, to: number, t: number): number {
   return from + (to - from) * t;
 }
 
 /** Onde a base da porta encosta, em porcentagem da altura da tela. */
-export const DOOR_BOTTOM = 56;
+export const DOOR_BOTTOM = 50;
 /** Onde o topo da porta começa. Porta comprida: ocupa quase metade da cena. */
-export const DOOR_TOP = 7;
+export const DOOR_TOP = 6;
 
 export type BeamShape = {
   /** Meia-largura da aresta de cima. Igual à da porta, sempre. */
@@ -52,9 +57,20 @@ export function beamShape(progress: number, doorHalf: number): BeamShape {
   const p = clamp01(progress);
   return {
     topHalf: doorHalf,
-    // a base abre em ângulo, partindo de pouco mais que a própria porta
-    bottomHalf: lerp(doorHalf * 2.6, 145, easeInOut(slice(p, 0, 0.72))),
+    // A base já nasce larga o bastante para caber o texto do cartaz, e abre de
+    // forma contínua durante todo o percurso — sem etapas, sem parar no meio.
+    bottomHalf: lerp(doorHalf * 4.0, 175, easeOut(p)),
   };
+}
+
+/**
+ * Meia-largura do feixe na altura `y` (em % da tela). Serve para conferir se
+ * uma linha de texto cabe dentro da luz naquele ponto — fora do vermelho, o
+ * texto preto simplesmente desaparece no fundo.
+ */
+export function halfWidthAt(shape: BeamShape, y: number): number {
+  const t = clamp01((y - DOOR_BOTTOM) / (100 - DOOR_BOTTOM));
+  return shape.topHalf + (shape.bottomHalf - shape.topHalf) * t;
 }
 
 /** Monta o polígono do clip-path. O topo fica colado na base da porta. */
@@ -66,25 +82,4 @@ export function beamPolygon({ topHalf, bottomHalf }: BeamShape): string {
     [50 - bottomHalf, 100],
   ];
   return `polygon(${pontos.map(([x, y]) => `${x.toFixed(2)}% ${y.toFixed(2)}%`).join(", ")})`;
-}
-
-/**
- * O clarão que engole o preto no fim. Entra só depois que a base do feixe já
- * passou das bordas, para as duas etapas serem lidas na ordem certa.
- *
- * O raio é porcentagem do círculo que alcança o canto mais distante, então
- * 100 já cobre a tela inteira — passar muito disso só faz o clarão terminar
- * antes da hora e comer o feixe no meio do caminho.
- */
-export function glowRadius(progress: number): number {
-  return lerp(0, 104, easeInOut(slice(clamp01(progress), 0.62, 1)));
-}
-
-/** Gradiente radial do clarão, centrado na porta. */
-export function glowGradient(progress: number): string {
-  const raio = glowRadius(progress);
-  if (raio <= 0) return "none";
-  // a borda difusa é o que substitui a aresta do polígono
-  const difusa = raio + 26;
-  return `radial-gradient(circle at 50% ${DOOR_BOTTOM}%, var(--color-blood) 0%, var(--color-blood) ${raio.toFixed(1)}%, transparent ${difusa.toFixed(1)}%)`;
 }
