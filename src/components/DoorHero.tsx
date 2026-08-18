@@ -1,5 +1,4 @@
 import { Doorway } from "@/components/Doorway";
-import { OpeningBeam } from "@/components/OpeningBeam";
 import { Floor } from "@/components/Floor";
 import { MeltingPoster } from "@/components/MeltingPoster";
 import { PosterLines } from "@/components/PosterLines";
@@ -21,15 +20,14 @@ import { event } from "@/config/event";
  * escolhidas linha a linha: assim o bloco acompanha o trapézio sozinho, em
  * qualquer tamanho de tela.
  *
- * A transição é a própria luz: ao rolar, só a boca do feixe se abre, até cobrir
- * toda a largura e encostar na seção seguinte, que já é vermelha — a luz vira o
- * fundo dela. O topo continua com a largura da porta o tempo todo. Enquanto
- * isso o cartaz derrete para os lados, empurrado pela abertura, e some antes do
- * vermelho fechar.
+ * A luz não é desenhada aqui: ela é fixa na tela e mora fora do hero, atrás do
+ * conteúdo da página inteira — só assim o vermelho que aparece durante a
+ * rolagem é a própria luz, e não um segundo bloco pintado pela seção seguinte.
+ * Este componente cuida do quarto: chão, porta e o cartaz por cima da luz.
  */
 export function DoorHero() {
   return (
-    <section className="bg-ink relative h-svh overflow-hidden">
+    <section data-hero className="bg-ink relative h-svh overflow-hidden">
       {/* z-0 · chão em perspectiva, com o ponto de fuga na porta */}
       <div className="text-blood/40 absolute inset-0 z-0">
         <Floor />
@@ -43,9 +41,6 @@ export function DoorHero() {
       >
         <Doorway />
       </div>
-
-      {/* z-30 · a luz, que abre a boca até virar o fundo da seção seguinte */}
-      <OpeningBeam />
 
       {/* z-40 · o cartaz, deitado no plano do feixe */}
       <div

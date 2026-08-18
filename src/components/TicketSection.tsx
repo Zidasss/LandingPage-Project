@@ -51,7 +51,7 @@ export function TicketSection() {
   return (
     <section
       id="ingresso"
-      className="border-crypt relative border-t px-6 py-24 sm:py-32"
+      className="bg-ink relative z-40 px-6 py-24 sm:py-32"
     >
       <div className="mx-auto max-w-xl text-center">
         <p className="font-mono text-magenta text-[0.65rem] tracking-[0.4em] uppercase">

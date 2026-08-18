@@ -34,11 +34,20 @@ export const BEAM_MOBILE: BeamShape = { topHalf: 20, bottomHalf: 46 };
 /** Desktop: a porta é uma fatia no meio de uma tela deitada. */
 export const BEAM_DESKTOP: BeamShape = { topHalf: 11, bottomHalf: 44 };
 
-/** Monta o polígono do clip-path. O topo fica colado na base da porta. */
-export function beamPolygon({ topHalf, bottomHalf }: BeamShape): string {
+/**
+ * Monta o polígono do clip-path.
+ *
+ * `topY` existe porque a luz é fixa na tela enquanto a porta rola: para as duas
+ * continuarem coladas, o vértice de cima precisa acompanhar onde a porta está
+ * naquele instante, e não uma altura constante.
+ */
+export function beamPolygon(
+  { topHalf, bottomHalf }: BeamShape,
+  topY: number = BEAM_TOP,
+): string {
   const pontos: [number, number][] = [
-    [50 - topHalf, BEAM_TOP],
-    [50 + topHalf, BEAM_TOP],
+    [50 - topHalf, topY],
+    [50 + topHalf, topY],
     [50 + bottomHalf, 100],
     [50 - bottomHalf, 100],
   ];
