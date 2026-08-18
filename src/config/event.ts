@@ -44,12 +44,13 @@ export const event = {
     receiverCity: process.env.NEXT_PUBLIC_PIX_CITY ?? "CURITIBA",
   },
 
-  /** Arte do cartaz. Deixe src vazio para usar a silhueta provisória. */
+  /** Arte do hero. */
   hero: {
-    /** Caminho da imagem em /public. */
-    src: "/fantasma.png",
-    /** Crédito da imagem, exigido por alguns bancos de imagem. */
-    credit: "",
+    /**
+     * Painel de silhuetas que aparece dentro da porta.
+     * PNG com fundo transparente, em /public. Vazio = espaço reservado.
+     */
+    silhouettes: "",
   },
 
   /** Endereço divulgado no topo do cartaz. */
