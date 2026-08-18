@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import {
-  beamPolygon,
+  beamGapPolygon,
   BEAM_DESKTOP,
   BEAM_MOBILE,
   DOOR_BOTTOM,
@@ -299,46 +299,44 @@ export function Intro() {
         }
 
         /*
-          O feixe no chão nasce junto com a luz que escapa: começa como uma
-          lâmina estreita, do tamanho do vão recém-aberto, e abre até o feixe
-          cheio do hero. Assim, quando a abertura sai de cena, o chão já está
-          iluminado do jeito certo e não há salto.
+          O feixe no chão acompanha o vão, e não a porta.
+
+          O vão começa como uma fresta na borda da maçaneta e vai abrindo em
+          direção à dobradiça — luz não atravessa a folha fechada, então o feixe
+          não pode nascer no meio da porta. Os passos intermediários existem por
+          isso: interpolar direto entre a fresta e o feixe cheio faria o feixe
+          cortar caminho pelo centro em vez de varrer junto com a folha.
+
+          O último passo é exatamente o feixe do hero, então a troca de cena não
+          tem salto.
         */
         .intro-feixe {
           position: absolute;
           inset: 0;
           background: var(--color-blood);
           opacity: 0;
-          clip-path: ${beamPolygon({ topHalf: 1.6, bottomHalf: 5 })};
-          animation: intro-feixe-mobile 1650ms 3900ms cubic-bezier(0.35, 0, 0.3, 1) forwards;
+          animation: intro-feixe-mobile 1650ms 3900ms cubic-bezier(0.45, 0, 0.35, 1) forwards;
         }
 
         @keyframes intro-feixe-mobile {
-          from {
-            opacity: 0;
-            clip-path: ${beamPolygon({ topHalf: 1.6, bottomHalf: 5 })};
-          }
-          22% { opacity: 1; }
-          to {
-            opacity: 1;
-            clip-path: ${beamPolygon(BEAM_MOBILE)};
-          }
+          0% { opacity: 0; clip-path: ${beamGapPolygon(BEAM_MOBILE, 0.0)}; }
+          20% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_MOBILE, 0.2)}; }
+          40% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_MOBILE, 0.4)}; }
+          60% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_MOBILE, 0.6)}; }
+          80% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_MOBILE, 0.8)}; }
+          100% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_MOBILE, 1.0)}; }
         }
 
         @media (min-width: 640px) {
-          .intro-feixe {
-            animation-name: intro-feixe-desktop;
-          }
+          .intro-feixe { animation-name: intro-feixe-desktop; }
+
           @keyframes intro-feixe-desktop {
-            from {
-              opacity: 0;
-              clip-path: ${beamPolygon({ topHalf: 0.9, bottomHalf: 3 })};
-            }
-            22% { opacity: 1; }
-            to {
-              opacity: 1;
-              clip-path: ${beamPolygon(BEAM_DESKTOP)};
-            }
+            0% { opacity: 0; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 0.0)}; }
+            20% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 0.2)}; }
+            40% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 0.4)}; }
+            60% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 0.6)}; }
+            80% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 0.8)}; }
+            100% { opacity: 1; clip-path: ${beamGapPolygon(BEAM_DESKTOP, 1.0)}; }
           }
         }
 

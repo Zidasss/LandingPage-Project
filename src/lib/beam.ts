@@ -22,6 +22,15 @@ export const DOOR_GAP = 1.6;
 /** Altura em que a luz encosta no chão. */
 export const BEAM_TOP = DOOR_BOTTOM + DOOR_GAP;
 
+/**
+ * Formata os vértices. As duas funções que montam polígono passam por aqui: com
+ * formatações diferentes, um `polygon()` com a mesma geometria virava string
+ * diferente, e a comparação entre eles falhava sem haver diferença real.
+ */
+function formatar(pontos: [number, number][]): string {
+  return `polygon(${pontos.map(([x, y]) => `${x.toFixed(2)}% ${y.toFixed(2)}%`).join(",")})`;
+}
+
 export type BeamShape = {
   /** Meia-largura da aresta de cima. Igual à da porta, sempre. */
   topHalf: number;
@@ -51,7 +60,34 @@ export function beamPolygon(
     [50 + bottomHalf, 100],
     [50 - bottomHalf, 100],
   ];
-  return `polygon(${pontos.map(([x, y]) => `${x}% ${y}%`).join(",")})`;
+  return formatar(pontos);
+}
+
+/**
+ * Feixe projetado pelo vão de uma porta que está abrindo.
+ *
+ * O vão não nasce no meio da porta: ele começa como uma fresta na borda do lado
+ * da maçaneta e vai abrindo em direção à dobradiça. O feixe tem que sair dali,
+ * e não do centro — luz não atravessa a folha fechada.
+ *
+ * @param abertura 0 = fresta recém-aberta, 1 = porta escancarada
+ */
+export function beamGapPolygon(shape: BeamShape, abertura: number): string {
+  const t = Math.min(1, Math.max(0, abertura));
+  /** Borda do vão que não se move: o batente do lado da maçaneta. */
+  const batente = 50 + shape.topHalf;
+  /** A outra borda é a folha, que caminha até a dobradiça. */
+  const folga = 0.8 + (2 * shape.topHalf - 0.8) * t;
+  const centro = batente - folga / 2;
+  const base = 3 + (shape.bottomHalf - 3) * t;
+
+  const pontos: [number, number][] = [
+    [batente - folga, BEAM_TOP],
+    [batente, BEAM_TOP],
+    [centro + base, 100],
+    [centro - base, 100],
+  ];
+  return formatar(pontos);
 }
 
 /**
