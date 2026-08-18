@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
 /** Deformação máxima, em pixels do espaço do filtro. */
-const DERRETIMENTO = 92;
+const DERRETIMENTO = 130;
 /**
  * O filtro é recalculado pixel a pixel a cada mudança de `scale`. Arredondar em
  * degraus corta a maior parte das recalculações sem que o olho perceba salto.
@@ -44,9 +44,11 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
       const rect = palco.getBoundingClientRect();
       const p = Math.min(1, Math.max(0, -rect.top / (rect.height || 1)));
 
-      // escorre para baixo e afina, como massa perdendo forma
-      node.style.transform = `translate3d(0, ${(p * 26).toFixed(2)}%, 0) scaleY(${(1 + p * 0.55).toFixed(3)})`;
-      node.style.opacity = String(1 - p * 0.15);
+      // Escorre para baixo, afina e some por completo antes de a luz virar
+      // fundo. Sobrando qualquer resto, ele lê como mancha esquecida sobre o
+      // vermelho — as letras precisam ter ido embora, não desbotado.
+      node.style.transform = `translate3d(0, ${(p * 46).toFixed(2)}%, 0) scaleY(${(1 + p * 0.9).toFixed(3)})`;
+      node.style.opacity = String(Math.max(0, 1 - Math.max(0, (p - 0.3) / 0.28)));
 
       if (telaGrande && displace.current) {
         const escala = Math.round((p * DERRETIMENTO) / DEGRAU) * DEGRAU;

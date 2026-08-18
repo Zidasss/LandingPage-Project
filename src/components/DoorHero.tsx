@@ -1,5 +1,5 @@
-import { Curtain } from "@/components/Curtain";
 import { Doorway } from "@/components/Doorway";
+import { GrowingBeam } from "@/components/GrowingBeam";
 import { Floor } from "@/components/Floor";
 import { MeltingPoster } from "@/components/MeltingPoster";
 import { PosterLines } from "@/components/PosterLines";
@@ -7,6 +7,7 @@ import {
   beamPolygon,
   BEAM_DESKTOP,
   BEAM_MOBILE,
+  BEAM_TOP,
   DOOR_BOTTOM,
   DOOR_TOP,
 } from "@/lib/beam";
@@ -21,10 +22,10 @@ import { event } from "@/config/event";
  * escolhidas linha a linha: assim o bloco acompanha o trapézio sozinho, em
  * qualquer tamanho de tela.
  *
- * As camadas estão em ordem explícita porque a transição depende disso: ao
- * rolar, a cortina de preto desce sobre o chão e a porta, mas passa por baixo
- * do feixe. A luz permanece enquanto o resto some, e o vermelho que sobra
- * encosta na seção seguinte. Nada muda de lugar nem de forma.
+ * A transição é a própria luz: ao rolar, o feixe abre até cobrir toda a largura
+ * abaixo da porta e encostar na seção seguinte, que já é vermelha — a luz vira
+ * o fundo dela. Enquanto isso o cartaz derrete e escorre para fora, para as
+ * letras não ficarem perdidas sobre o vermelho depois que a cena acabar.
  */
 export function DoorHero() {
   return (
@@ -42,37 +43,15 @@ export function DoorHero() {
         <Doorway />
       </div>
 
-      {/* z-20 · a cortina, entre a cena e a luz */}
-      <Curtain />
-
-      {/*
-        z-25 · o encontro com a seção seguinte.
-
-        A base do feixe não alcança as bordas da tela, então sobram duas cunhas
-        pretas nos cantos de baixo. Encostando direto no vermelho da seção
-        seguinte, elas desenham uma linha reta atravessando a página — a troca
-        fica seca. Este degradê acende o chão perto de quem olha até o vermelho
-        cheio, e as duas seções passam a se encontrar sem aresta.
-      */}
-      <div
-        aria-hidden
-        className="absolute inset-x-0 bottom-0 z-[25] h-[30%]"
-        style={{
-          background:
-            "linear-gradient(to bottom, transparent 0%, rgba(255,26,18,0.35) 42%, rgba(255,26,18,0.85) 74%, var(--color-blood) 100%)",
-        }}
-      />
-
-      {/* z-30 · o feixe */}
-      <div aria-hidden className="feixe bg-blood absolute inset-0 z-30">
-        <div
-          className="absolute inset-0 opacity-25 mix-blend-multiply"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23r)'/%3E%3C/svg%3E\")",
-          }}
-        />
-      </div>
+      {/* z-30 · o feixe, que cresce até virar o fundo da seção seguinte */}
+      <GrowingBeam origemY={BEAM_TOP}>
+        {/*
+          Sem granulado próprio: o grão da página já cobre tudo, e uma segunda
+          camada só aqui deixava a luz num tom levemente diferente do vermelho
+          da seção seguinte — o que reabria uma emenda visível entre as duas.
+        */}
+        <div aria-hidden className="feixe bg-blood absolute inset-0" />
+      </GrowingBeam>
 
       {/* z-40 · o cartaz, deitado no plano do feixe */}
       <div
