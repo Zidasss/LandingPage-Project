@@ -3,6 +3,7 @@ import { Floor } from "@/components/Floor";
 import { PosterLines } from "@/components/PosterLines";
 import {
   beamPolygon,
+  BEAM_TOP,
   BEAM_DESKTOP,
   BEAM_MOBILE,
   DOOR_BOTTOM,
@@ -61,18 +62,21 @@ export function DoorHero() {
       <div
         className="absolute inset-x-0 bottom-0 flex justify-center"
         style={{
-          height: `${100 - DOOR_BOTTOM}%`,
-          perspective: "100px",
+          // Começa bem abaixo do topo da luz: colado na porta o feixe é
+          // estreito, e o texto sai apertado e pequeno. Mais para baixo há
+          // largura sobrando, então as linhas podem crescer.
+          height: "34%",
+          perspective: "180px",
           perspectiveOrigin: "50% 0%",
-          // Perspectiva forte e ângulo alto: o texto precisa convergir no mesmo
-          // ritmo do feixe. Estes números saíram de uma varredura medindo, em
-          // cada combinação, se toda linha cabia na largura da luz — no olho,
-          // ou o texto vazava para o preto ou encolhia até virar legenda.
+          // Perspectiva, ângulo e altura saíram de uma varredura que mediu, em
+          // 320 combinações, quanto da largura da luz cada linha preenchia sem
+          // vazar para o preto. No olho eu só alternava entre texto vazando e
+          // texto encolhido até virar legenda.
         }}
       >
         <div
           className="flex w-[80vw] items-end justify-center pb-[1vh] sm:w-[62vw]"
-          style={{ transform: "rotateX(52deg)", transformOrigin: "50% 100%" }}
+          style={{ transform: "rotateX(34deg)", transformOrigin: "50% 100%" }}
         >
           <h1 className="sr-only">
             {event.name} — festa de Halloween em {event.dateLabel}

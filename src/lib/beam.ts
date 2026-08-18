@@ -14,6 +14,13 @@
 export const DOOR_BOTTOM = 50;
 /** Onde o topo da porta começa. Porta comprida: quase metade da cena. */
 export const DOOR_TOP = 6;
+/**
+ * Faixa preta entre a base da porta e o começo da luz no chão. É o respiro que
+ * separa a abertura do reflexo — sem ela, a porta e o feixe viram uma peça só.
+ */
+export const DOOR_GAP = 1.6;
+/** Altura em que a luz encosta no chão. */
+export const BEAM_TOP = DOOR_BOTTOM + DOOR_GAP;
 
 export type BeamShape = {
   /** Meia-largura da aresta de cima. Igual à da porta, sempre. */
@@ -30,8 +37,8 @@ export const BEAM_DESKTOP: BeamShape = { topHalf: 11, bottomHalf: 44 };
 /** Monta o polígono do clip-path. O topo fica colado na base da porta. */
 export function beamPolygon({ topHalf, bottomHalf }: BeamShape): string {
   const pontos: [number, number][] = [
-    [50 - topHalf, DOOR_BOTTOM],
-    [50 + topHalf, DOOR_BOTTOM],
+    [50 - topHalf, BEAM_TOP],
+    [50 + topHalf, BEAM_TOP],
     [50 + bottomHalf, 100],
     [50 - bottomHalf, 100],
   ];
@@ -43,6 +50,6 @@ export function beamPolygon({ topHalf, bottomHalf }: BeamShape): string {
  * texto cabe dentro da luz — fora do vermelho, o texto preto some no fundo.
  */
 export function halfWidthAt(shape: BeamShape, y: number): number {
-  const t = Math.min(1, Math.max(0, (y - DOOR_BOTTOM) / (100 - DOOR_BOTTOM)));
+  const t = Math.min(1, Math.max(0, (y - BEAM_TOP) / (100 - BEAM_TOP)));
   return shape.topHalf + (shape.bottomHalf - shape.topHalf) * t;
 }

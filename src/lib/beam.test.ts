@@ -5,7 +5,9 @@ import {
   halfWidthAt,
   BEAM_DESKTOP,
   BEAM_MOBILE,
+  BEAM_TOP,
   DOOR_BOTTOM,
+  DOOR_GAP,
   DOOR_TOP,
 } from "./beam.ts";
 
@@ -23,17 +25,24 @@ test("o feixe nasce exatamente na largura da porta e abre para baixo", () => {
 
 test("o feixe nunca toma a tela inteira: sobra preto em cima", () => {
   for (const [nome, forma] of FORMAS) {
-    const d = beamPolygon(forma);
+    assert.ok(forma.topHalf < 50, `${nome}: o topo cobriu a tela`);
+  }
+});
+
+test("existe uma faixa preta entre a porta e a luz no chão", () => {
+  assert.ok(DOOR_GAP > 0, "sem respiro, porta e feixe viram uma peça só");
+  assert.equal(BEAM_TOP, DOOR_BOTTOM + DOOR_GAP);
+  for (const [nome, forma] of FORMAS) {
     assert.ok(
-      d.includes(`${DOOR_BOTTOM}%`),
-      `${nome}: o topo do feixe descolou da porta`,
+      beamPolygon(forma).includes(`${BEAM_TOP}%`),
+      `${nome}: o feixe não começou abaixo da porta`,
     );
   }
 });
 
 test("a largura cresce de forma contínua da porta até o pé da tela", () => {
   for (const [nome, forma] of FORMAS) {
-    assert.equal(halfWidthAt(forma, DOOR_BOTTOM), forma.topHalf, nome);
+    assert.equal(halfWidthAt(forma, BEAM_TOP), forma.topHalf, nome);
     assert.equal(halfWidthAt(forma, 100), forma.bottomHalf, nome);
     const meio = halfWidthAt(forma, (DOOR_BOTTOM + 100) / 2);
     assert.ok(meio > forma.topHalf && meio < forma.bottomHalf, `${nome}: meio`);
