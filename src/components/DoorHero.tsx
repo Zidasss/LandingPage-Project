@@ -1,6 +1,7 @@
 import { Curtain } from "@/components/Curtain";
 import { Doorway } from "@/components/Doorway";
 import { Floor } from "@/components/Floor";
+import { MeltingPoster } from "@/components/MeltingPoster";
 import { PosterLines } from "@/components/PosterLines";
 import {
   beamPolygon,
@@ -78,7 +79,9 @@ export function DoorHero() {
           <h1 className="sr-only">
             {event.name} — festa de Halloween em {event.dateLabel}
           </h1>
-          <PosterLines />
+          <MeltingPoster>
+            <PosterLines />
+          </MeltingPoster>
         </div>
       </div>
 
