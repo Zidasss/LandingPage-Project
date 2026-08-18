@@ -1,7 +1,7 @@
+import { Curtain } from "@/components/Curtain";
 import { Doorway } from "@/components/Doorway";
 import { Floor } from "@/components/Floor";
 import { PosterLines } from "@/components/PosterLines";
-import { WalkIn } from "@/components/WalkIn";
 import {
   beamPolygon,
   BEAM_DESKTOP,
@@ -20,69 +20,72 @@ import { event } from "@/config/event";
  * escolhidas linha a linha: assim o bloco acompanha o trapézio sozinho, em
  * qualquer tamanho de tela.
  *
- * A cena inteira, cartaz incluído, fica dentro do WalkIn: ao rolar, tudo se
- * aproxima junto, como se a pessoa desse alguns passos até a porta. O cartaz
- * está pintado no mesmo chão — se ficasse de fora, descolaria da cena.
+ * As camadas estão em ordem explícita porque a transição depende disso: ao
+ * rolar, a cortina de preto desce sobre o chão e a porta, mas passa por baixo
+ * do feixe. A luz permanece enquanto o resto some, e o vermelho que sobra
+ * encosta na seção seguinte. Nada muda de lugar nem de forma.
  */
 export function DoorHero() {
   return (
     <section className="bg-ink relative h-svh overflow-hidden">
-      <WalkIn>
-        {/* chão em perspectiva, com o ponto de fuga na porta */}
-        <div className="text-blood/45 absolute inset-0">
-          <Floor />
-        </div>
+      {/* z-0 · chão em perspectiva, com o ponto de fuga na porta */}
+      <div className="text-blood/40 absolute inset-0 z-0">
+        <Floor />
+      </div>
 
-        {/* a porta */}
-        <div
-          className="absolute left-1/2 w-[40vw] -translate-x-1/2 sm:w-[22vw]"
-          style={{ top: `${DOOR_TOP}%`, height: `${DOOR_BOTTOM - DOOR_TOP}%` }}
-        >
-          <Doorway />
-        </div>
+      {/* z-10 · a porta */}
+      <div
+        className="absolute left-1/2 z-10 w-[40vw] -translate-x-1/2 sm:w-[22vw]"
+        style={{ top: `${DOOR_TOP}%`, height: `${DOOR_BOTTOM - DOOR_TOP}%` }}
+      >
+        <Doorway />
+      </div>
 
-        {/* o feixe */}
-        <div aria-hidden className="feixe bg-blood absolute inset-0">
-          <div
-            className="absolute inset-0 opacity-25 mix-blend-multiply"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23r)'/%3E%3C/svg%3E\")",
-            }}
-          />
-        </div>
-        {/* o cartaz, deitado no plano do feixe */}
+      {/* z-20 · a cortina, entre a cena e a luz */}
+      <Curtain />
+
+      {/* z-30 · o feixe */}
+      <div aria-hidden className="feixe bg-blood absolute inset-0 z-30">
         <div
-          className="absolute inset-x-0 bottom-0 flex justify-center"
+          className="absolute inset-0 opacity-25 mix-blend-multiply"
           style={{
-            // Começa bem abaixo do topo da luz: colado na porta o feixe é
-            // estreito, e o texto sai apertado e pequeno. Mais para baixo há
-            // largura sobrando, então as linhas podem crescer.
-            height: "34%",
-            perspective: "180px",
-            perspectiveOrigin: "50% 0%",
-            // Perspectiva, ângulo e altura saíram de uma varredura que mediu, em
-            // 320 combinações, quanto da largura da luz cada linha preenchia sem
-            // vazar para o preto. No olho eu só alternava entre texto vazando e
-            // texto encolhido até virar legenda.
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23r)'/%3E%3C/svg%3E\")",
           }}
+        />
+      </div>
+
+      {/* z-40 · o cartaz, deitado no plano do feixe */}
+      <div
+        className="absolute inset-x-0 bottom-0 z-40 flex justify-center"
+        style={{
+          // Começa bem abaixo do topo da luz: colado na porta o feixe é
+          // estreito, e o texto sai apertado e pequeno. Mais para baixo há
+          // largura sobrando, então as linhas podem crescer.
+          height: "34%",
+          // Perspectiva, ângulo e altura saíram de uma varredura que mediu, em
+          // 320 combinações, quanto da largura da luz cada linha preenchia sem
+          // vazar para o preto. No olho eu só alternava entre texto vazando e
+          // texto encolhido até virar legenda.
+          perspective: "180px",
+          perspectiveOrigin: "50% 0%",
+        }}
+      >
+        <div
+          className="flex w-[80vw] items-end justify-center pb-[1vh] sm:w-[62vw]"
+          style={{ transform: "rotateX(34deg)", transformOrigin: "50% 100%" }}
         >
-          <div
-            className="flex w-[80vw] items-end justify-center pb-[1vh] sm:w-[62vw]"
-            style={{ transform: "rotateX(34deg)", transformOrigin: "50% 100%" }}
-          >
-            <h1 className="sr-only">
-              {event.name} — festa de Halloween em {event.dateLabel}
-            </h1>
-            <PosterLines />
-          </div>
+          <h1 className="sr-only">
+            {event.name} — festa de Halloween em {event.dateLabel}
+          </h1>
+          <PosterLines />
         </div>
-      </WalkIn>
+      </div>
 
       {/*
-        As duas formas ficam no mesmo <style> porque estilo inline venceria a
-        regra do media query: no desktop a porta é mais estreita e o feixe
-        precisa sair mais fechado.
+        As duas formas do feixe ficam no mesmo <style> porque estilo inline
+        venceria a regra do media query: no desktop a porta é mais estreita e o
+        feixe precisa sair mais fechado.
       */}
       <style>{`
         .feixe { clip-path: ${beamPolygon(BEAM_MOBILE)}; }
@@ -90,7 +93,6 @@ export function DoorHero() {
           .feixe { clip-path: ${beamPolygon(BEAM_DESKTOP)}; }
         }
       `}</style>
-
     </section>
   );
 }
