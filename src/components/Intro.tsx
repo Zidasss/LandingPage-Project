@@ -43,7 +43,7 @@ export function Intro() {
     };
 
     // some sozinha ao fim da sequência, e a qualquer sinal de impaciência
-    const fim = window.setTimeout(encerrar, 4050);
+    const fim = window.setTimeout(encerrar, 4950);
     const pular = () => {
       window.clearTimeout(fim);
       encerrar();
@@ -71,13 +71,16 @@ export function Intro() {
         )}
       </div>
 
-      {/* o que sobra dela: a maçaneta */}
+      {/* o que sobra dela: a maçaneta, que viaja junto com a folha */}
       <div className="intro-macaneta" />
 
-      {/* a porta, desenhada em volta da maçaneta */}
+      {/* o brilho que escapa do batente conforme a porta abre */}
+      <div className="intro-brilho" />
+
+      {/* a porta: a luz fica atrás, a folha por cima dela */}
       <div className="intro-porta">
-        {/* a fresta de luz, que engorda até virar a porta iluminada */}
-        <div className="intro-fresta" />
+        <div className="intro-luz" />
+        <div className="intro-folha" />
       </div>
 
       <p className="intro-pular font-heading">toque para pular</p>
@@ -123,14 +126,14 @@ export function Intro() {
             Os tempos são encadeados, não escolhidos soltos: a maçaneta só pode
             entrar depois de a abóbora ter chegado ao lugar dela, senão as duas
             aparecem juntas e a troca fica visível.
-              entrada  0 → 420
-              risada   420 → 1460
-              recuo    1460 → 2560
+              entrada  0 → 380
+              risada   380 → 1300
+              recuo    1300 → 3200
           */
           animation:
-            intro-entra 420ms ease-out forwards,
-            intro-risada 520ms 420ms ease-in-out 2,
-            intro-recua 1100ms 1460ms cubic-bezier(0.55, 0, 0.7, 1) forwards;
+            intro-entra 380ms ease-out forwards,
+            intro-risada 460ms 380ms ease-in-out 2,
+            intro-recua 1900ms 1300ms cubic-bezier(0.42, 0, 0.6, 1) forwards;
         }
 
         .intro-marcador {
@@ -193,7 +196,7 @@ export function Intro() {
           background: var(--color-blood);
           box-shadow: 0 0 2.5vw rgba(255, 26, 18, 0.45);
           opacity: 0;
-          animation: intro-macaneta 620ms 2480ms ease-out forwards;
+          animation: intro-macaneta 400ms 3100ms ease-out forwards, intro-macaneta-viaja 1000ms 3750ms cubic-bezier(0.5, 0, 0.3, 1) forwards;
         }
 
         @keyframes intro-macaneta {
@@ -223,7 +226,7 @@ export function Intro() {
           background: #120303;
           border: 1px solid rgba(255, 26, 18, 0.22);
           opacity: 0;
-          animation: intro-porta 620ms 2700ms ease-out forwards;
+          animation: intro-porta 500ms 3300ms ease-out forwards;
         }
 
         @media (min-width: 640px) {
@@ -235,19 +238,86 @@ export function Intro() {
           to   { opacity: 1; }
         }
 
-        /* Fase 5: a fresta engorda até ser a porta inteira de luz. */
-        .intro-fresta {
+        /*
+          Fase 5: a porta abre da direita para a esquerda.
+
+          A luz não é pintada por cima da porta: ela já está atrás, e quem se
+          move é a folha. A folha encolhe na horizontal a partir da dobradiça,
+          na esquerda — que é o que uma porta girando para longe faz na tela — e
+          vai escurecendo, porque de perfil ela recebe cada vez menos luz.
+
+          Este tratamento de luz vive só aqui, na abertura. Depois dela, quem
+          manda é o feixe chapado do hero.
+        */
+        .intro-luz {
           position: absolute;
-          inset: 0 auto 0 0;
-          width: 0;
-          background: var(--color-blood);
-          animation: intro-fresta 800ms 3150ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          inset: 0;
+          /* mais quente junto ao vão, como luz que vem de dentro */
+          background: linear-gradient(
+            to left,
+            #ff6a3a 0%,
+            var(--color-blood) 24%,
+            #c8110c 100%
+          );
+          /*
+            No fim assenta no vermelho chapado do hero: terminar em gradiente
+            daria um pulo de tom quando a abertura sai e a cena entra.
+          */
+          animation: intro-luz-assenta 420ms 4520ms ease-out forwards;
         }
 
-        @keyframes intro-fresta {
-          from { width: 0; }
-          18%  { width: 4%; }
-          to   { width: 100%; }
+        @keyframes intro-luz-assenta {
+          to { background: var(--color-blood); }
+        }
+
+        .intro-folha {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          background: #120303;
+          transform-origin: left center;
+          animation: intro-folha 1000ms 3750ms cubic-bezier(0.5, 0, 0.3, 1) forwards;
+        }
+
+        @keyframes intro-folha {
+          from { transform: scaleX(1); filter: brightness(1); }
+          to   { transform: scaleX(0.05); filter: brightness(0.3); }
+        }
+
+        /* A luz não fica presa no batente: ela vaza para o escuro em volta. */
+        .intro-brilho {
+          position: absolute;
+          left: 50%;
+          top: var(--macaneta-y);
+          width: 120vw;
+          height: 96vh;
+          transform: translate(-50%, -50%);
+          opacity: 0;
+          background: radial-gradient(
+            ellipse 20% 44% at 50% 50%,
+            rgba(255, 80, 40, 0.45) 0%,
+            rgba(255, 26, 18, 0.18) 42%,
+            transparent 74%
+          );
+          animation: intro-brilho 1100ms 3800ms ease-out forwards;
+        }
+
+        @keyframes intro-brilho {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+
+        /* A maçaneta acompanha a folha até a dobradiça e se apaga com ela. */
+        @keyframes intro-macaneta-viaja {
+          from {
+            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.055);
+            opacity: 1;
+          }
+          70% { opacity: 0.7; }
+          to {
+            transform: translate(calc(-50% - var(--macaneta-x)), -50%) scale(0.05);
+            opacity: 0;
+          }
         }
 
         .intro-pular {
@@ -261,7 +331,7 @@ export function Intro() {
           letter-spacing: 0.3em;
           text-transform: uppercase;
           opacity: 0;
-          animation: intro-pular 400ms 900ms ease-out forwards;
+          animation: intro-pular 400ms 800ms ease-out forwards;
         }
 
         @keyframes intro-pular {
