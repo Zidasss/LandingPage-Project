@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { DOOR_BOTTOM, DOOR_TOP } from "@/lib/beam";
+import {
+  beamPolygon,
+  BEAM_DESKTOP,
+  BEAM_MOBILE,
+  DOOR_BOTTOM,
+  DOOR_TOP,
+} from "@/lib/beam";
 import { event } from "@/config/event";
 
 /**
@@ -43,7 +49,7 @@ export function Intro() {
     };
 
     // some sozinha ao fim da sequência, e a qualquer sinal de impaciência
-    const fim = window.setTimeout(encerrar, 4950);
+    const fim = window.setTimeout(encerrar, 5750);
     const pular = () => {
       window.clearTimeout(fim);
       encerrar();
@@ -73,6 +79,9 @@ export function Intro() {
 
       {/* o que sobra dela: a maçaneta, que viaja junto com a folha */}
       <div className="intro-macaneta" />
+
+      {/* o feixe no chão, que nasce junto com a luz que escapa */}
+      <div className="intro-feixe" />
 
       {/* o brilho que escapa do batente conforme a porta abre */}
       <div className="intro-brilho" />
@@ -119,7 +128,7 @@ export function Intro() {
         /* Fase 1 e 2: entra e ri. O riso é pulso de escala com uma leve
            inclinação alternada — ombros sacudindo, não a imagem tremendo. */
         .intro-abobora {
-          width: min(52vw, 340px);
+          width: min(34vw, 220px);
           aspect-ratio: 1;
           opacity: 0;
           /*
@@ -178,7 +187,7 @@ export function Intro() {
             opacity: 1;
           }
           to {
-            transform: translate(calc(-50% + var(--macaneta-x)), calc(-50% + var(--macaneta-dy))) scale(0.075);
+            transform: translate(calc(-50% + var(--macaneta-x)), calc(-50% + var(--macaneta-dy))) scale(0.115);
             filter: blur(12px) saturate(0.4) hue-rotate(-30deg) brightness(0.7);
             opacity: 0;
           }
@@ -190,27 +199,32 @@ export function Intro() {
           z-index: 2;
           left: 50%;
           top: var(--macaneta-y);
-          width: min(52vw, 340px);
+          /*
+            Mesma largura de base da abóbora: é dela que a maçaneta nasce. As
+            escalas abaixo compensam, para o círculo final ter o tamanho de uma
+            maçaneta e não acompanhar o tamanho do desenho.
+          */
+          width: min(34vw, 220px);
           aspect-ratio: 1;
           border-radius: 50%;
           background: var(--color-blood);
           box-shadow: 0 0 2.5vw rgba(255, 26, 18, 0.45);
           opacity: 0;
-          animation: intro-macaneta 400ms 3100ms ease-out forwards, intro-macaneta-viaja 1000ms 3750ms cubic-bezier(0.5, 0, 0.3, 1) forwards;
+          animation: intro-macaneta 400ms 3100ms ease-out forwards, intro-macaneta-viaja 1700ms 3750ms cubic-bezier(0.45, 0, 0.35, 1) forwards;
         }
 
         @keyframes intro-macaneta {
           from {
             opacity: 0;
-            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.075);
+            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.115);
           }
           40% {
             opacity: 1;
-            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.075);
+            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.115);
           }
           to {
             opacity: 1;
-            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.055);
+            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.085);
           }
         }
 
@@ -263,7 +277,7 @@ export function Intro() {
             No fim assenta no vermelho chapado do hero: terminar em gradiente
             daria um pulo de tom quando a abertura sai e a cena entra.
           */
-          animation: intro-luz-assenta 420ms 4520ms ease-out forwards;
+          animation: intro-luz-assenta 500ms 5150ms ease-out forwards;
         }
 
         @keyframes intro-luz-assenta {
@@ -276,12 +290,56 @@ export function Intro() {
           z-index: 1;
           background: #120303;
           transform-origin: left center;
-          animation: intro-folha 1000ms 3750ms cubic-bezier(0.5, 0, 0.3, 1) forwards;
+          animation: intro-folha 1700ms 3750ms cubic-bezier(0.45, 0, 0.35, 1) forwards;
         }
 
         @keyframes intro-folha {
           from { transform: scaleX(1); filter: brightness(1); }
           to   { transform: scaleX(0.05); filter: brightness(0.3); }
+        }
+
+        /*
+          O feixe no chão nasce junto com a luz que escapa: começa como uma
+          lâmina estreita, do tamanho do vão recém-aberto, e abre até o feixe
+          cheio do hero. Assim, quando a abertura sai de cena, o chão já está
+          iluminado do jeito certo e não há salto.
+        */
+        .intro-feixe {
+          position: absolute;
+          inset: 0;
+          background: var(--color-blood);
+          opacity: 0;
+          clip-path: ${beamPolygon({ topHalf: 1.6, bottomHalf: 5 })};
+          animation: intro-feixe-mobile 1650ms 3900ms cubic-bezier(0.35, 0, 0.3, 1) forwards;
+        }
+
+        @keyframes intro-feixe-mobile {
+          from {
+            opacity: 0;
+            clip-path: ${beamPolygon({ topHalf: 1.6, bottomHalf: 5 })};
+          }
+          22% { opacity: 1; }
+          to {
+            opacity: 1;
+            clip-path: ${beamPolygon(BEAM_MOBILE)};
+          }
+        }
+
+        @media (min-width: 640px) {
+          .intro-feixe {
+            animation-name: intro-feixe-desktop;
+          }
+          @keyframes intro-feixe-desktop {
+            from {
+              opacity: 0;
+              clip-path: ${beamPolygon({ topHalf: 0.9, bottomHalf: 3 })};
+            }
+            22% { opacity: 1; }
+            to {
+              opacity: 1;
+              clip-path: ${beamPolygon(BEAM_DESKTOP)};
+            }
+          }
         }
 
         /* A luz não fica presa no batente: ela vaza para o escuro em volta. */
@@ -299,7 +357,7 @@ export function Intro() {
             rgba(255, 26, 18, 0.18) 42%,
             transparent 74%
           );
-          animation: intro-brilho 1100ms 3800ms ease-out forwards;
+          animation: intro-brilho 1700ms 3850ms ease-out forwards;
         }
 
         @keyframes intro-brilho {
@@ -310,12 +368,12 @@ export function Intro() {
         /* A maçaneta acompanha a folha até a dobradiça e se apaga com ela. */
         @keyframes intro-macaneta-viaja {
           from {
-            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.055);
+            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.085);
             opacity: 1;
           }
           70% { opacity: 0.7; }
           to {
-            transform: translate(calc(-50% - var(--macaneta-x)), -50%) scale(0.05);
+            transform: translate(calc(-50% - var(--macaneta-x)), -50%) scale(0.078);
             opacity: 0;
           }
         }
