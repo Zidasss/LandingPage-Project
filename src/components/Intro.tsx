@@ -6,6 +6,7 @@ import {
   BEAM_DESKTOP,
   BEAM_MOBILE,
   DOOR_BOTTOM,
+  DOOR_RATIO,
   DOOR_TOP,
 } from "@/lib/beam";
 import { amostrar, cubicBezier } from "@/lib/easing";
@@ -65,6 +66,36 @@ export function Intro() {
       node.addEventListener("transitionend", () => node.remove(), { once: true });
     };
 
+    // O feixe acompanha a mesma curva da folha, amostrada uma vez só. Desenhar
+    // por script é o que permite medir a porta a cada quadro — com keyframes
+    // fixos, o vértice descolaria do vão nas telas em que a porta muda de
+    // largura.
+    const feixe = node.querySelector<HTMLElement>(".intro-feixe");
+    const suavizacao = cubicBezier(0.45, 0, 0.35, 1);
+    let quadro = 0;
+    let ultimo = "";
+    const desenharFeixe = (agora: number) => {
+      const decorrido = agora - inicioDaCena;
+      const t = (decorrido - ABRE_EM) / ABRE_POR;
+      if (t >= 0 && feixe) {
+        const valor = suavizacao(Math.min(1, t));
+        const porta = node.querySelector<HTMLElement>(".intro-porta");
+        const meia = porta
+          ? (porta.offsetWidth / window.innerWidth) * 50
+          : BEAM_DESKTOP.topHalf;
+        const base = window.innerWidth >= 640 ? BEAM_DESKTOP : BEAM_MOBILE;
+        const forma = beamGapPolygon({ ...base, topHalf: meia }, valor);
+        if (forma !== ultimo) {
+          feixe.style.clipPath = forma;
+          feixe.style.opacity = "1";
+          ultimo = forma;
+        }
+      }
+      if (t < 1) quadro = requestAnimationFrame(desenharFeixe);
+    };
+    const inicioDaCena = performance.now();
+    quadro = requestAnimationFrame(desenharFeixe);
+
     // some sozinha ao fim da sequência, e a qualquer sinal de impaciência
     const fim = window.setTimeout(encerrar, 5750);
     const pular = () => {
@@ -75,7 +106,10 @@ export function Intro() {
       window.addEventListener(evento, pular, { once: true, passive: true });
     }
 
-    return () => window.clearTimeout(fim);
+    return () => {
+      window.clearTimeout(fim);
+      cancelAnimationFrame(quadro);
+    };
   }, []);
 
   return (
@@ -252,17 +286,15 @@ export function Intro() {
           left: 50%;
           top: var(--porta-topo);
           height: var(--porta-altura);
-          width: 40vw;
+          /* mesma regra do hero: a largura sai da altura, para a porta manter
+             proporção de porta em qualquer formato de janela */
+          width: min(46vw, ${(DOOR_BOTTOM - DOOR_TOP) / DOOR_RATIO}svh);
           transform: translateX(-50%);
           z-index: 1;
           background: #120303;
           border: 1px solid rgba(255, 26, 18, 0.22);
           opacity: 0;
           animation: intro-porta 500ms 3300ms ease-out forwards;
-        }
-
-        @media (min-width: 640px) {
-          .intro-porta { width: 22vw; }
         }
 
         @keyframes intro-porta {
@@ -319,42 +351,16 @@ export function Intro() {
         }
 
         /*
-          O feixe no chão acompanha o vão, e não a porta.
-
-          O vão começa como uma fresta na borda da maçaneta e vai abrindo em
-          direção à dobradiça — luz não atravessa a folha fechada, então o feixe
-          não pode nascer no meio da porta.
-
-          Os passos vêm da mesma amostragem da folha, e a animação roda em tempo
-          linear: em CSS a suavização é aplicada entre cada par de keyframes, e
-          uma curva declarada aqui faria o feixe acelerar e frear a cada passo.
-          Era isso que se via como engasgo — e o que fazia a ponta do feixe
-          descolar do canto da porta.
+          O feixe é desenhado por script, e não por keyframes: a largura da
+          porta agora depende da altura da janela, então não há valor fixo que
+          sirva para todas as telas. Medindo a porta, o vértice do feixe nunca
+          descola do vão.
         */
         .intro-feixe {
           position: absolute;
           inset: 0;
           background: var(--color-blood);
           opacity: 0;
-          animation: intro-feixe-mobile ${ABRE_POR}ms ${ABRE_EM}ms linear forwards;
-        }
-
-        @keyframes intro-feixe-mobile {
-          ${ABERTURA.map(
-            ({ tempo, valor }, i) =>
-              `${(tempo * 100).toFixed(2)}% { opacity: ${i === 0 ? 0 : 1}; clip-path: ${beamGapPolygon(BEAM_MOBILE, valor)}; }`,
-          ).join("\n          ")}
-        }
-
-        @media (min-width: 640px) {
-          .intro-feixe { animation-name: intro-feixe-desktop; }
-
-          @keyframes intro-feixe-desktop {
-            ${ABERTURA.map(
-              ({ tempo, valor }, i) =>
-                `${(tempo * 100).toFixed(2)}% { opacity: ${i === 0 ? 0 : 1}; clip-path: ${beamGapPolygon(BEAM_DESKTOP, valor)}; }`,
-            ).join("\n            ")}
-          }
         }
 
         /* A luz não fica presa no batente: ela vaza para o escuro em volta. */

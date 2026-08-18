@@ -10,6 +10,16 @@
  * celular e no desktop, e o feixe precisa sair do tamanho certo nos dois.
  */
 
+/**
+ * Proporção da porta: quantas vezes ela é mais alta que larga.
+ *
+ * A largura sai da altura, e não da largura da tela. Com as duas medidas
+ * independentes — largura em vw, altura em % — a porta mudava de forma conforme
+ * o formato da janela: 2,4 no celular, 1,1 num monitor largo e 0,7 numa janela
+ * baixa, onde deixava de parecer porta.
+ */
+export const DOOR_RATIO = 2.2;
+
 /** Onde a base da porta encosta, em porcentagem da altura da tela. */
 export const DOOR_BOTTOM = 50;
 /** Onde o topo da porta começa. Porta comprida: quase metade da cena. */

@@ -9,6 +9,7 @@ import {
   BEAM_TOP,
   DOOR_BOTTOM,
   DOOR_GAP,
+  DOOR_RATIO,
   DOOR_TOP,
 } from "./beam.ts";
 
@@ -59,6 +60,11 @@ test("o polígono tem quatro vértices em porcentagem", () => {
   const d = beamPolygon(BEAM_DESKTOP);
   assert.match(d, /^polygon\(/);
   assert.equal(d.split(",").length, 4);
+});
+
+test("a proporção da porta é de porta, não de janela", () => {
+  assert.ok(DOOR_RATIO >= 2, `porta larga demais: ${DOOR_RATIO}`);
+  assert.ok(DOOR_RATIO <= 3, `porta estreita demais: ${DOOR_RATIO}`);
 });
 
 test("a porta é mais alta que larga", () => {

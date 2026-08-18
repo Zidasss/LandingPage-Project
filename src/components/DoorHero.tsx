@@ -7,6 +7,7 @@ import {
   BEAM_DESKTOP,
   BEAM_MOBILE,
   DOOR_BOTTOM,
+  DOOR_RATIO,
   DOOR_TOP,
 } from "@/lib/beam";
 import { event } from "@/config/event";
@@ -36,8 +37,18 @@ export function DoorHero() {
       {/* z-10 · a porta */}
       <div
         data-porta
-        className="absolute left-1/2 z-10 w-[40vw] -translate-x-1/2 sm:w-[22vw]"
-        style={{ top: `${DOOR_TOP}%`, height: `${DOOR_BOTTOM - DOOR_TOP}%` }}
+        className="absolute left-1/2 z-10 -translate-x-1/2"
+        style={{
+          top: `${DOOR_TOP}%`,
+          height: `${DOOR_BOTTOM - DOOR_TOP}%`,
+          /*
+            A largura sai da altura, e não da largura da tela: assim a porta
+            mantém proporção de porta em qualquer formato de janela. O limite em
+            vw existe só para telas muito estreitas, onde 
+            uma porta proporcional ficaria maior que a tela.
+          */
+          width: `min(46vw, ${(DOOR_BOTTOM - DOOR_TOP) / DOOR_RATIO}svh)`,
+        }}
       >
         <Doorway />
       </div>
@@ -59,7 +70,15 @@ export function DoorHero() {
         }}
       >
         <div
-          className="flex w-[80vw] items-end justify-center pb-[1vh] sm:w-[62vw]"
+          /*
+            A largura tem teto em svh pelo mesmo motivo da porta: a luz nasce da
+            largura da porta, que agora vem da altura da janela. Numa janela
+            baixa a porta fica estreita, o topo do feixe também, e um bloco
+            medido só em vw jogava as primeiras linhas para fora da luz — onde
+            texto preto some no fundo. Conferido medindo em celular, notebook,
+            monitor largo e janela baixa.
+          */
+          className="flex w-[min(80vw,56svh)] items-end justify-center pb-[1vh] sm:w-[min(48vw,72svh)]"
           style={{ transform: "rotateX(34deg)", transformOrigin: "50% 100%" }}
         >
           <h1 className="sr-only">

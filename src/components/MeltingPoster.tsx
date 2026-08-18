@@ -107,8 +107,15 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
           Math.max(0, (p - t.atraso) / (1 - t.atraso)),
         );
 
-        // Abre para os lados no ritmo da luz.
-        t.linha.style.transform = `scale3d(${(1 + local * local * 1.35).toFixed(3)}, ${(1 - local * 0.16).toFixed(3)}, 1)`;
+        // O espalhamento lateral segue só a rolagem, nunca a entrada: quem
+        // abre espaço para ele é a boca da luz, que só se mexe no scroll. Na
+        // entrada a luz está parada, e espalhar aqui jogaria as letras para
+        // fora dela, por cima da porta e do preto.
+        const espalha = Math.min(
+          1,
+          Math.max(0, (rolagem - t.atraso) / (1 - t.atraso)),
+        );
+        t.linha.style.transform = `scale3d(${(1 + espalha * espalha * 1.35).toFixed(3)}, ${(1 - espalha * 0.16).toFixed(3)}, 1)`;
 
         if (!telaGrande || !t.desloca || !t.borrao || !t.ruido || !t.limiar) {
           // Sem filtro, só resta desaparecer por opacidade — devagar, para não
