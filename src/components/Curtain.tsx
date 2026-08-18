@@ -17,6 +17,19 @@ import { useEffect, useRef } from "react";
  * 2. A borda de baixo é um degradê, não um corte. Uma aresta reta descendo lê
  *    como cortina de teatro caindo; o degradê lê como a luz se apagando.
  */
+/**
+ * Posição de repouso, em % da altura do palco. A faixa difusa termina em 68% da
+ * altura do elemento (136% do palco), então o elemento precisa nascer 136% acima
+ * para que nada seja escurecido antes da primeira rolagem.
+ */
+const REPOUSO = -136;
+/**
+ * Deslocamento até o preto cobrir o palco inteiro, em % da altura do elemento.
+ * translateY em porcentagem é relativo à própria altura — 1% aqui vale 2% do
+ * palco, porque o elemento tem o dobro da altura dele.
+ */
+const PERCURSO = 76;
+
 export function Curtain() {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -33,7 +46,7 @@ export function Curtain() {
       const rect = palco.getBoundingClientRect();
       const percurso = rect.height || 1;
       const p = Math.min(1, Math.max(0, -rect.top / percurso));
-      node.style.transform = `translate3d(0, ${(p * 118).toFixed(2)}%, 0)`;
+      node.style.transform = `translate3d(0, ${(p * PERCURSO).toFixed(2)}%, 0)`;
     };
     const aoRolar = () => {
       if (!frame) frame = requestAnimationFrame(aplicar);
@@ -55,7 +68,7 @@ export function Curtain() {
       aria-hidden
       className="absolute inset-x-0 z-20 will-change-transform"
       style={{
-        top: "-100%",
+        top: `${REPOUSO}%`,
         height: "200%",
         // O preto ocupa a metade de cima e se dissolve ao longo de um quarto da
         // altura: é essa faixa difusa que atravessa a cena, não uma borda.

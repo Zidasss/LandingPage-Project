@@ -45,6 +45,24 @@ export function DoorHero() {
       {/* z-20 · a cortina, entre a cena e a luz */}
       <Curtain />
 
+      {/*
+        z-25 · o encontro com a seção seguinte.
+
+        A base do feixe não alcança as bordas da tela, então sobram duas cunhas
+        pretas nos cantos de baixo. Encostando direto no vermelho da seção
+        seguinte, elas desenham uma linha reta atravessando a página — a troca
+        fica seca. Este degradê acende o chão perto de quem olha até o vermelho
+        cheio, e as duas seções passam a se encontrar sem aresta.
+      */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 z-[25] h-[30%]"
+        style={{
+          background:
+            "linear-gradient(to bottom, transparent 0%, rgba(255,26,18,0.35) 42%, rgba(255,26,18,0.85) 74%, var(--color-blood) 100%)",
+        }}
+      />
+
       {/* z-30 · o feixe */}
       <div aria-hidden className="feixe bg-blood absolute inset-0 z-30">
         <div
