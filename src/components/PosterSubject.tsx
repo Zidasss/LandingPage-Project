@@ -9,7 +9,7 @@
 export function PosterSubject({ src }: { src?: string }) {
   if (src) {
     return (
-      <div className="relative h-[34svh] w-auto max-w-[80vw] sm:h-[42svh]">
+      <div className="relative h-auto w-[58vw] max-w-[440px] sm:w-[30vw]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
@@ -24,7 +24,7 @@ export function PosterSubject({ src }: { src?: string }) {
   return (
     <svg
       viewBox="0 0 460 560"
-      className="h-[34svh] w-auto max-w-[80vw] sm:h-[42svh]"
+      className="h-auto w-[58vw] max-w-[440px] sm:w-[30vw]"
       role="img"
       aria-label="Espaço reservado para a imagem do cartaz"
     >

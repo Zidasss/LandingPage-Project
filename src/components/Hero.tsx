@@ -3,92 +3,78 @@ import { Barcode } from "@/components/Barcode";
 import { Marquee } from "@/components/Marquee";
 import { Parallax } from "@/components/Parallax";
 import { PosterSubject } from "@/components/PosterSubject";
+import { PosterWord } from "@/components/PosterWord";
 import { event } from "@/config/event";
 
 /**
- * Hero em formato de cartaz: o nome quebrado em duas palavras gigantes,
- * o personagem entre elas e os textos de apoio nas laterais.
- * A leitura é a de um pôster impresso — por isso quase nada se move sozinho.
+ * Hero em formato de cartaz: o nome quebrado em duas palavras que sangram de
+ * margem a margem, o personagem entre elas e os textos de apoio nas laterais.
  */
 export function Hero() {
   return (
-    <section className="relative flex min-h-svh flex-col justify-between overflow-hidden py-5">
+    <section className="relative flex min-h-svh flex-col justify-between overflow-hidden px-5 pt-5 pb-8">
       {/* ---- topo ---- */}
-      <header className="relative z-30 px-5">
-        <h1 className="poster-type text-bone pt-[3vw] text-center text-[21vw] sm:text-[15vw]">
+      <header className="relative z-30">
+        <h1 className="text-pumpkin">
           <span className="sr-only">{event.name}</span>
-          <span aria-hidden>Volvo</span>
+          <PosterWord>Volvo</PosterWord>
         </h1>
-        <div className="font-heading text-bone mt-2 flex items-baseline justify-between text-[3vw] font-bold tracking-tight uppercase sm:text-[1.35vw]">
+        <div className="font-heading text-bone -mt-1 flex items-baseline justify-between text-[3vw] font-bold tracking-tight uppercase sm:text-[1.15vw]">
           <span>Halloween</span>
           <span>{event.edition}</span>
         </div>
       </header>
 
       {/* ---- miolo ---- */}
-      <div className="relative flex flex-1 items-center px-5 py-4">
-        {/* eco vazado do nome, bem ao fundo, correndo mais devagar */}
-        <Parallax
-          speed={0.3}
-          className="pointer-events-none absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 select-none"
-        >
-          <p className="poster-type outline-type text-center text-[13vw] opacity-20">
-            {event.dateLabel}
+      {/*
+        Três colunas: texto | personagem | contagem. O personagem tem coluna
+        própria, então nunca cobre os textos — e transborda na vertical de
+        propósito, passando por trás das duas palavras.
+      */}
+      <div className="relative grid flex-1 grid-cols-[auto_1fr] items-center gap-3 sm:grid-cols-[1fr_auto_1fr]">
+        {/* No celular não cabem três colunas: o parágrafo sai do cartaz. */}
+        <Parallax speed={0.06} className="hidden sm:block">
+          <p className="text-bone max-w-[21ch] text-[0.82rem] leading-snug">
+            Uma noite na {event.venue.name}, onde as luzes apagam cedo e
+            ninguém sai como entrou. Venha fantasiado. Não venha sozinho.
           </p>
         </Parallax>
 
-        {/* personagem, correndo mais rápido que a página */}
-        <Parallax
-          speed={-0.14}
-          className="absolute inset-x-0 top-1/2 z-0 flex -translate-y-1/2 justify-center"
-        >
+        <Parallax speed={-0.12} className="relative z-0">
           <PosterSubject src={event.hero.src || undefined} />
         </Parallax>
 
-        {/* colunas de apoio */}
-        <div className="relative z-20 grid w-full grid-cols-2 items-start gap-4">
-          <Parallax speed={0.07}>
-            <p className="text-bone max-w-[24ch] text-[0.72rem] leading-snug sm:text-sm">
-              Uma noite na {event.venue.name}, onde as luzes apagam cedo e
-              ninguém sai como entrou. Venha fantasiado. Não venha sozinho.
-            </p>
-          </Parallax>
-
-          <Parallax speed={0.07} className="justify-self-end">
-            <div className="w-32 sm:w-44">
-              <p className="font-heading text-bone mb-2 text-[0.6rem] font-bold tracking-[0.3em] uppercase">
-                Falta
-              </p>
-              <Countdown target={event.startsAt} />
-            </div>
-          </Parallax>
-        </div>
+        <Parallax speed={0.06} className="justify-self-end">
+          <div className="w-24 sm:w-36">
+            <Countdown target={event.startsAt} />
+          </div>
+        </Parallax>
       </div>
 
       {/* ---- base ---- */}
       <footer className="relative z-30">
-        <div className="flex items-end justify-between px-5 pb-3">
+        <div className="mb-2 flex items-end justify-between">
           <Barcode code="016.102.026" />
-          <p className="font-script text-pumpkin text-5xl leading-none sm:text-6xl">
+          <p className="font-script text-bone text-4xl leading-none sm:text-5xl">
             Boo
           </p>
         </div>
 
-        <Marquee
-          items={[
-            event.dateLabel,
-            event.venue.name,
-            event.timeLabel,
-            "fantasia obrigatória",
-          ]}
-          className="bg-pumpkin text-ink font-heading py-1.5 text-[0.7rem] font-bold tracking-[0.25em] uppercase"
-        />
-
-        {/* pb compensa a tinta do Anton, que desenha fora da caixa da linha */}
-        <h2 className="poster-type text-pumpkin mt-1 pb-[4.5vw] text-center text-[21vw] sm:text-[15vw]">
-          Ween
+        <h2 className="text-pumpkin">
+          <PosterWord>Ween</PosterWord>
         </h2>
       </footer>
+
+      {/* faixa correndo, rente à borda de baixo */}
+      <Marquee
+        items={[
+          event.dateLabel,
+          event.venue.name,
+          event.timeLabel,
+          "fantasia obrigatória",
+        ]}
+        className="bg-pumpkin text-ink font-heading absolute inset-x-0 bottom-0 z-30 py-1 text-[0.6rem] font-bold tracking-[0.25em] uppercase"
+      />
     </section>
   );
 }
