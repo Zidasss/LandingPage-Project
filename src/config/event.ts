@@ -46,11 +46,14 @@ export const event = {
 
   /** Arte do cartaz. Deixe src vazio para usar a silhueta provisória. */
   hero: {
-    /** Caminho da imagem em /public, ex.: "/fantasma.png". */
-    src: "",
+    /** Caminho da imagem em /public. */
+    src: "/fantasma.png",
     /** Crédito da imagem, exigido por alguns bancos de imagem. */
     credit: "",
   },
+
+  /** Endereço divulgado no topo do cartaz. */
+  site: "@volvoween.com",
 
   contact: {
     /** WhatsApp em formato internacional, só dígitos. TODO: preencher. */

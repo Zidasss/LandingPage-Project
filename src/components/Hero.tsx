@@ -1,80 +1,75 @@
-import { Countdown } from "@/components/Countdown";
-import { Barcode } from "@/components/Barcode";
-import { Marquee } from "@/components/Marquee";
+import Image from "next/image";
 import { Parallax } from "@/components/Parallax";
-import { PosterSubject } from "@/components/PosterSubject";
 import { PosterWord } from "@/components/PosterWord";
+import { brl } from "@/lib/format";
 import { event } from "@/config/event";
 
 /**
- * Hero em formato de cartaz: o nome quebrado em duas palavras que sangram de
- * margem a margem, o personagem entre elas e os textos de apoio nas laterais.
+ * Hero em formato de cartaz: a foto ocupa a tela inteira, o nome vem por cima
+ * dela em vermelho, e a chamada de pagamento fecha embaixo.
+ *
+ * A foto é de estúdio, com fundo cinza claro. As camadas escuras por cima
+ * puxam esse cinza para o clima noturno do cartaz e garantem contraste para
+ * o texto branco, que de outro modo sumiria no lençol.
  */
 export function Hero() {
   return (
-    <section className="relative flex min-h-svh flex-col justify-between overflow-hidden px-5 pt-5 pb-8">
-      {/* ---- topo ---- */}
-      <header className="relative z-30">
-        <h1 className="text-pumpkin">
-          <span className="sr-only">{event.name}</span>
-          <PosterWord>Volvo</PosterWord>
-        </h1>
-        <div className="font-heading text-bone -mt-1 flex items-baseline justify-between text-[3vw] font-bold tracking-tight uppercase sm:text-[1.15vw]">
-          <span>Halloween</span>
-          <span>{event.edition}</span>
-        </div>
-      </header>
+    <section className="relative flex min-h-svh flex-col justify-between overflow-hidden px-5 py-6">
+      {/* foto, correndo mais devagar que a página */}
+      <Parallax speed={0.18} className="absolute inset-0 -z-20">
+        <Image
+          src={event.hero.src}
+          alt="Fantasma de lençol com óculos escuros redondos"
+          fill
+          priority
+          sizes="100vw"
+          /*
+            A foto é retrato (1080x1350) e a tela do desktop é deitada: o corte
+            por altura joga o fantasma para fora. 22% sobe o enquadramento até
+            a cabeça ficar no terço central em qualquer proporção de tela.
+          */
+          className="scale-110 object-cover object-[center_22%]"
+        />
+      </Parallax>
 
-      {/* ---- miolo ---- */}
-      {/*
-        Três colunas: texto | personagem | contagem. O personagem tem coluna
-        própria, então nunca cobre os textos — e transborda na vertical de
-        propósito, passando por trás das duas palavras.
-      */}
-      <div className="relative grid flex-1 grid-cols-[auto_1fr] items-center gap-3 sm:grid-cols-[1fr_auto_1fr]">
-        {/* No celular não cabem três colunas: o parágrafo sai do cartaz. */}
-        <Parallax speed={0.06} className="hidden sm:block">
-          <p className="text-bone max-w-[21ch] text-[0.82rem] leading-snug">
-            Uma noite na {event.venue.name}, onde as luzes apagam cedo e
-            ninguém sai como entrou. Venha fantasiado. Não venha sozinho.
-          </p>
-        </Parallax>
+      {/* escurecimento: puxa o cinza de estúdio para a noite */}
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(10,8,6,.72) 0%, rgba(10,8,6,.34) 32%, rgba(10,8,6,.5) 62%, rgba(10,8,6,.94) 100%)",
+        }}
+      />
 
-        <Parallax speed={-0.12} className="relative z-0">
-          <PosterSubject src={event.hero.src || undefined} />
-        </Parallax>
-
-        <Parallax speed={0.06} className="justify-self-end">
-          <div className="w-24 sm:w-36">
-            <Countdown target={event.startsAt} />
-          </div>
+      {/* ---- topo: endereço e nome, como no cartaz ---- */}
+      <div className="relative z-10">
+        <p className="font-heading text-bone text-center text-xs font-bold tracking-[0.12em] uppercase sm:text-sm">
+          {event.site}
+        </p>
+        <Parallax speed={-0.05} className="mt-3">
+          <h1 className="text-blood">
+            <span className="sr-only">{event.name}</span>
+            <PosterWord>{event.name}</PosterWord>
+          </h1>
         </Parallax>
       </div>
 
-      {/* ---- base ---- */}
-      <footer className="relative z-30">
-        <div className="mb-2 flex items-end justify-between">
-          <Barcode code="016.102.026" />
-          <p className="font-drip text-bone text-3xl leading-none sm:text-4xl">
-            Boo
-          </p>
-        </div>
-
-        <h2 className="text-pumpkin">
-          <PosterWord>Ween</PosterWord>
-        </h2>
-      </footer>
-
-      {/* faixa correndo, rente à borda de baixo */}
-      <Marquee
-        items={[
-          event.dateLabel,
-          event.venue.name,
-          event.timeLabel,
-          "fantasia obrigatória",
-        ]}
-        className="bg-pumpkin text-ink font-heading absolute inset-x-0 bottom-0 z-30 py-1 text-[0.6rem] font-bold tracking-[0.25em] uppercase"
-      />
+      {/* ---- chamada ---- */}
+      <div className="relative z-10 text-center">
+        <p className="font-heading text-bone text-2xl font-bold tracking-tight uppercase sm:text-4xl">
+          Confirme sua presença
+        </p>
+        <p className="font-heading text-bone/90 mt-1 text-[0.7rem] font-semibold tracking-[0.08em] uppercase sm:text-base">
+          Festa de Halloween — {event.dateLabel}
+        </p>
+        <a
+          href="#ingresso"
+          className="font-heading text-bone hover:text-blood mt-4 inline-block text-lg font-bold tracking-tight uppercase transition-colors sm:text-2xl"
+        >
+          {brl(event.ticket.price)} | Pagar e confirmar &rarr;
+        </a>
+      </div>
     </section>
   );
 }
