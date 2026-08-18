@@ -28,7 +28,12 @@ export function PosterLines() {
   return (
     <div className="flex w-full flex-col items-center gap-[0.5vw]">
       {LINHAS.map(({ texto, familia, largura }) => (
-        <div key={texto} className="text-ink" style={{ width: `${largura}%` }}>
+        <div
+          key={texto}
+          data-linha
+          className="text-ink"
+          style={{ width: `${largura}%` }}
+        >
           <PosterWord familia={familia}>{texto}</PosterWord>
         </div>
       ))}
