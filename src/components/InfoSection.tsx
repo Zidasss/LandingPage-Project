@@ -4,13 +4,13 @@ import { event, fullAddress, priceLabel } from "@/config/event";
 
 export function InfoSection() {
   return (
-    <section id="info" className="relative px-6 py-24 sm:py-32">
+    <section id="info" className="bg-blood text-ink relative px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-5xl">
         <Reveal>
-          <p className="font-mono text-magenta text-[0.65rem] tracking-[0.4em] uppercase">
-            ▶ reproduzindo
+          <p className="font-heading text-ink/70 text-[0.62rem] font-bold tracking-[0.3em] uppercase">
+            você atravessou a porta
           </p>
-          <h2 className="font-drip text-pumpkin mt-3 text-3xl uppercase sm:text-4xl">
+          <h2 className="font-drip text-ink mt-3 text-4xl uppercase sm:text-6xl">
             As coordenadas
           </h2>
         </Reveal>
@@ -37,7 +37,7 @@ export function InfoSection() {
                   href={event.venue.mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-pumpkin hover:text-magenta inline-flex items-center gap-2 text-xs tracking-[0.2em] uppercase transition-colors"
+                  className="font-heading text-ink hover:text-bone inline-flex items-center gap-2 border-b border-current pb-0.5 text-xs font-bold tracking-[0.2em] uppercase transition-colors"
                 >
                   abrir no mapa ↗
                 </a>
