@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 type Remaining = {
   days: number;
@@ -10,8 +10,45 @@ type Remaining = {
   done: boolean;
 };
 
-function diff(target: number): Remaining {
-  const ms = target - Date.now();
+/**
+ * Relógio compartilhado: um único setInterval alimenta todos os assinantes,
+ * e o valor fica em cache para que a leitura seja estável entre renders.
+ */
+const clock = (() => {
+  let now = 0;
+  let timer: ReturnType<typeof setInterval> | null = null;
+  const listeners = new Set<() => void>();
+
+  const tick = () => {
+    now = Date.now();
+    for (const listener of listeners) listener();
+  };
+
+  return {
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      if (!timer) {
+        tick();
+        timer = setInterval(tick, 1000);
+      }
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0 && timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+      };
+    },
+    /** No cliente: o instante do último tique. */
+    getSnapshot: () => now,
+    /** No servidor: 0, para o HTML sair com os placeholders. */
+    getServerSnapshot: () => 0,
+  };
+})();
+
+function remainingUntil(target: number, now: number): Remaining | null {
+  if (now === 0) return null; // ainda não hidratou
+  const ms = target - now;
   if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, done: true };
   const totalSeconds = Math.floor(ms / 1000);
   return {
@@ -25,18 +62,17 @@ function diff(target: number): Remaining {
 
 /**
  * Contagem regressiva até a festa.
- * O cálculo só roda no cliente (o servidor não sabe o fuso de quem acessa),
- * então o primeiro render mostra placeholders para não quebrar a hidratação.
+ * O servidor não sabe que horas são para quem acessa, então o primeiro
+ * render mostra traços e os números entram assim que a página hidrata.
  */
 export function Countdown({ target }: { target: string }) {
   const targetMs = new Date(target).getTime();
-  const [left, setLeft] = useState<Remaining | null>(null);
-
-  useEffect(() => {
-    setLeft(diff(targetMs));
-    const id = setInterval(() => setLeft(diff(targetMs)), 1000);
-    return () => clearInterval(id);
-  }, [targetMs]);
+  const now = useSyncExternalStore(
+    clock.subscribe,
+    clock.getSnapshot,
+    clock.getServerSnapshot,
+  );
+  const left = remainingUntil(targetMs, now);
 
   if (left?.done) {
     return (
@@ -63,10 +99,7 @@ export function Countdown({ target }: { target: string }) {
       {units.map((unit, i) => (
         <div key={unit.label} className="flex items-end gap-2 sm:gap-4">
           <div className="flex flex-col items-center">
-            <span
-              className="font-mono glow-cyan text-cyan border-cyan/30 bg-crypt/60 rounded-md border px-3 py-2 text-4xl leading-none tabular-nums backdrop-blur-sm sm:px-5 sm:py-3 sm:text-6xl"
-              suppressHydrationWarning
-            >
+            <span className="font-mono glow-cyan text-cyan border-cyan/30 bg-crypt/60 rounded-md border px-3 py-2 text-4xl leading-none tabular-nums backdrop-blur-sm sm:px-5 sm:py-3 sm:text-6xl">
               {unit.value === undefined
                 ? "".padStart(unit.pad, "-")
                 : String(unit.value).padStart(unit.pad, "0")}

@@ -33,13 +33,15 @@ export const event = {
     capacity: 80,
   },
 
+  /**
+   * Dados do recebedor do PIX. Vêm de variáveis de ambiente para poderem ser
+   * trocadas na Vercel sem commit — e para a chave não ficar no histórico do git.
+   * Continuam públicas no HTML: é assim que PIX estático funciona.
+   */
   pix: {
-    /** Chave PIX que recebe os pagamentos. TODO: preencher. */
-    key: "",
-    /** Nome do recebedor exatamente como está no banco (máx. 25 caracteres). */
-    receiverName: "",
-    /** Cidade do recebedor (máx. 15 caracteres). */
-    receiverCity: "CURITIBA",
+    key: process.env.NEXT_PUBLIC_PIX_KEY ?? "",
+    receiverName: process.env.NEXT_PUBLIC_PIX_NAME ?? "",
+    receiverCity: process.env.NEXT_PUBLIC_PIX_CITY ?? "CURITIBA",
   },
 
   contact: {
