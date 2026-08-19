@@ -62,7 +62,7 @@ export function CountdownSection() {
 
       <BatSwarm />
 
-      <div className="relative z-10 w-full max-w-md text-center">
+      <div className="relative z-10 w-full max-w-3xl text-center">
         <p className="chapeu font-heading text-ink/70 text-[0.62rem] font-bold tracking-[0.35em] uppercase transition-colors delay-700 duration-700">
           falta pouco
         </p>

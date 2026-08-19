@@ -94,21 +94,26 @@ export function Countdown({ target }: { target: string }) {
       role="timer"
       aria-live="off"
       aria-label="Contagem regressiva para a festa"
-      className="relogio flex flex-col gap-1"
+      className="relogio flex items-end justify-center gap-[3vw] sm:gap-8"
     >
       {units.map((unit) => (
-        <div
-          key={unit.label}
-          className="border-bone/20 flex items-baseline justify-between gap-4 border-b pb-1.5"
-        >
-          <dt className="font-heading text-bone/55 text-[0.6rem] font-semibold tracking-[0.3em] uppercase">
-            {unit.label}
-          </dt>
-          <dd className="font-mono text-bone text-3xl leading-none tabular-nums sm:text-4xl">
+        <div key={unit.label} className="flex flex-col items-center">
+          {/*
+            A largura é reservada por quantidade de dígitos, e não deixada por
+            conta do texto: a fonte escorrida não tem numeral de largura fixa,
+            então a cada tique dos segundos a linha inteira dançaria.
+          */}
+          <dd
+            className="font-drip m-0 text-center leading-[0.9] text-[11vw] sm:text-[5.2vw]"
+            style={{ width: `${unit.pad * 0.72 + 0.2}em` }}
+          >
             {unit.value === undefined
               ? "".padStart(unit.pad, "-")
               : String(unit.value).padStart(unit.pad, "0")}
           </dd>
+          <dt className="font-heading mt-2 text-[0.55rem] font-bold tracking-[0.3em] uppercase sm:text-[0.65rem]">
+            {unit.label}
+          </dt>
         </div>
       ))}
     </dl>
