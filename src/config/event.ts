@@ -59,6 +59,14 @@ export const event = {
     pumpkin: "/abobora.png",
   },
 
+  /** Cena da contagem regressiva. */
+  bats: {
+    /** Arte principal: o morcego grande. */
+    scene: "/morcego.png",
+    /** Sprites do bando, recortados da própria arte. */
+    sprites: ["/morcego-voo-a.png", "/morcego-voo-b.png"],
+  },
+
   /** Endereço divulgado no topo do cartaz. */
   site: "@volvoween.com",
 

@@ -1,3 +1,4 @@
+import { CountdownSection } from "@/components/CountdownSection";
 import { DoorHero } from "@/components/DoorHero";
 import { Intro } from "@/components/Intro";
 import { InfoSection } from "@/components/InfoSection";
@@ -17,6 +18,7 @@ export default function Home() {
       <OpeningBeam />
       <DoorHero />
       <InfoSection />
+      <CountdownSection />
       <TicketSection />
     </>
   );

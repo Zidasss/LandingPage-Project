@@ -76,7 +76,7 @@ export function Countdown({ target }: { target: string }) {
 
   if (left?.done) {
     return (
-      <p className="font-display text-pumpkin text-3xl tracking-tight uppercase">
+      <p className="font-display text-blood text-3xl tracking-tight uppercase">
         A festa começou
       </p>
     );
@@ -94,17 +94,17 @@ export function Countdown({ target }: { target: string }) {
       role="timer"
       aria-live="off"
       aria-label="Contagem regressiva para a festa"
-      className="flex flex-col gap-1"
+      className="relogio flex flex-col gap-1"
     >
       {units.map((unit) => (
         <div
           key={unit.label}
-          className="border-bone/15 flex items-baseline justify-between gap-4 border-b pb-1"
+          className="border-bone/20 flex items-baseline justify-between gap-4 border-b pb-1.5"
         >
-          <dt className="font-heading text-ash text-[0.6rem] font-semibold tracking-[0.3em] uppercase">
+          <dt className="font-heading text-bone/55 text-[0.6rem] font-semibold tracking-[0.3em] uppercase">
             {unit.label}
           </dt>
-          <dd className="font-mono text-pumpkin text-2xl leading-none tabular-nums">
+          <dd className="font-mono text-bone text-3xl leading-none tabular-nums sm:text-4xl">
             {unit.value === undefined
               ? "".padStart(unit.pad, "-")
               : String(unit.value).padStart(unit.pad, "0")}
