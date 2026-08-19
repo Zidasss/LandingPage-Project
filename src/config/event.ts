@@ -44,19 +44,30 @@ export const event = {
     receiverCity: process.env.NEXT_PUBLIC_PIX_CITY ?? "CURITIBA",
   },
 
-  /** Arte do hero. */
-  hero: {
-    /**
-     * Painel de silhuetas que aparece dentro da porta.
-     * PNG com fundo transparente, em /public. Vazio = espaço reservado.
-     */
-    silhouettes: "",
-  },
-
   /** Abertura do site, antes da cena da porta. */
   intro: {
     /** Abóbora que vira a maçaneta. */
     pumpkin: "/abobora.png",
+  },
+
+  /**
+   * A festa vista pelo vão da porta. Todas as figuras são silhuetas pretas
+   * recortadas da arte enviada, e ficam sobre o vermelho da luz.
+   */
+  crowd: {
+    /**
+     * Vultos ao fundo, na pista. A medida de cada recorte vem junto: eles têm
+     * proporções bem diferentes entre si, e sem isso a bruxa — que é alta e
+     * estreita — sairia esmagada na mesma caixa do vulto que segura a garrafa.
+     */
+    figures: [
+      { src: "/vulto-bruxa.png", w: 142, h: 496 },
+      { src: "/vulto-zumbi.png", w: 558, h: 656 },
+      { src: "/vulto-zumbi2.png", w: 208, h: 526 },
+      { src: "/vulto-garrafa.png", w: 409, h: 509 },
+    ],
+    /** Primeiro plano: garras brindando, cortadas na borda de baixo. */
+    foreground: { src: "/garras-tacas.png", w: 422, h: 513 },
   },
 
   /** Cena da contagem regressiva. */
