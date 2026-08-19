@@ -31,12 +31,17 @@ export function Doorway() {
           to   { transform: rotate(var(--balanco)) scaleX(var(--espelho)); }
         }
 
+        /*
+          As garras entram pela quina de baixo, e não pelo meio: braço que
+          nasce no centro da porta parece flutuando. Encostado na quina, ele lê
+          como alguém à frente de quem olha, fora do quadro. Vão à direita
+          porque a multidão já pesa para a esquerda.
+        */
         .garras {
           position: absolute;
-          left: 50%;
-          bottom: -4%;
-          width: 64%;
-          translate: -50% 0;
+          right: -8%;
+          bottom: -6%;
+          width: 70%;
           background-size: contain;
           background-position: bottom center;
           background-repeat: no-repeat;
@@ -54,9 +59,18 @@ export function Doorway() {
           animation: bola-gira 9s ease-in-out infinite alternate;
         }
 
+        /*
+          Só a rotação entra aqui. O Tailwind v4 centraliza pela propriedade
+          "translate", que é independente de "transform" — repetir o
+          deslocamento no keyframe somava os dois, e a bola andava 100% para a
+          esquerda em vez de 50%, saindo pela borda da porta.
+
+          Balanço curto de propósito: com amplitude grande a bola passa longe do
+          eixo e deixa de ler como centrada, mesmo estando.
+        */
         @keyframes bola-gira {
-          from { transform: translateX(-50%) rotate(-7deg); }
-          to   { transform: translateX(-50%) rotate(7deg); }
+          from { transform: rotate(-3.5deg); }
+          to   { transform: rotate(3.5deg); }
         }
 
         @media (prefers-reduced-motion: reduce) {

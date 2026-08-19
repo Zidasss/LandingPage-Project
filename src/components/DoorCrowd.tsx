@@ -50,7 +50,7 @@ const PISTA: Vulto[] = [
 export function DoorCrowd() {
   return (
     <div aria-hidden className="pista absolute inset-0 overflow-hidden">
-      <DiscoBall className="bola text-ink absolute left-1/2 top-[2%] h-[26%] -translate-x-1/2" />
+      <DiscoBall className="bola text-ink absolute left-1/2 top-[5%] h-[34%] -translate-x-1/2" />
 
       {PISTA.map((v, i) => (
         <span
