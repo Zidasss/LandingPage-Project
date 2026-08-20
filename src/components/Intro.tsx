@@ -9,141 +9,203 @@ import {
   DOOR_RATIO,
   DOOR_TOP,
 } from "@/lib/beam";
-import { amostrar, cubicBezier } from "@/lib/easing";
+import { cubicBezier } from "@/lib/easing";
+import { DoorCrowd } from "@/components/DoorCrowd";
 import { event } from "@/config/event";
 
 /**
- * Abertura do site.
+ * Abertura do site, amarrada ao scroll.
  *
- * A abóbora aparece no escuro, ri, e recua. Recuando, ela vai perdendo
+ * A abóbora aparece no escuro, e conforme a página rola ela recua perdendo
  * definição até não sobrar desenho nenhum — só um círculo vermelho. É essa
  * perda que faz a virada funcionar: ninguém precisa reconhecer uma abóbora
  * minúscula, porque a essa altura ela já é forma pura, e um círculo vermelho no
- * escuro lê como maçaneta sozinho. A porta se desenha em volta dele e então uma
- * fresta de luz se abre e cresce até virar a porta iluminada do hero.
+ * escuro lê como maçaneta sozinho. A porta se desenha em volta dele e então a
+ * folha gira, revelando a luz — e cada etapa avança com o dedo de quem rola.
  *
- * A porta da intro usa as mesmas medidas da porta do hero, então quando a
- * abertura termina as duas estão exatamente no mesmo lugar e a passagem de uma
- * cena para a outra não tem emenda.
+ * É uma seção alta com o palco preso no topo: a página rola, mas a cena
+ * permanece na tela, e o quanto já se rolou dentro da seção vira o progresso da
+ * abertura. Rolar para trás desfaz na mesma ordem.
  *
- * Roda uma vez por visitante e sai fora com qualquer toque, clique, tecla ou
- * rolagem — a informação da festa não pode ficar refém de uma animação.
+ * A porta usa as mesmas medidas da porta do hero, então quando a abertura
+ * termina as duas estão no mesmo lugar e a passagem não tem emenda.
  */
 
-/** Chave que marca quem já viu a abertura. */
-const MARCA = "volvoween:intro";
 /** Avisa o resto da página que a porta terminou de abrir. */
 export const PORTA_ABERTA = "volvoween:porta-aberta";
 
-/**
- * A folha e o feixe são gerados desta mesma amostragem, e as duas animações
- * rodam em tempo linear. É o que mantém a ponta do feixe grudada no canto da
- * porta: com curvas ou durações diferentes, uma sempre adianta a outra.
- */
-const ABERTURA = amostrar(cubicBezier(0.45, 0, 0.35, 1), 14);
-/** Quando a folha começa a girar, e quanto tempo leva. */
-const ABRE_EM = 3750;
-const ABRE_POR = 1700;
+/** Altura da seção. O que passa de 100svh é a distância de rolagem. */
+const ALTURA = "300svh";
+
+/** Fatias do progresso em que cada fase acontece. */
+const RECUO = [0.05, 0.36] as const; // abóbora recua e vira maçaneta
+const MACANETA = [0.3, 0.42] as const; // o círculo aparece
+const PORTA = [0.38, 0.52] as const; // a porta se desenha em volta
+const ABRE = [0.54, 0.98] as const; // a folha gira e a luz escapa
+
+const suavizar = cubicBezier(0.45, 0, 0.35, 1);
+
+function clamp01(v: number): number {
+  return Math.min(1, Math.max(0, v));
+}
+
+/** Reposiciona `v` dentro de [a, b] e devolve de 0 a 1. */
+function fatia(v: number, [a, b]: readonly [number, number]): number {
+  return clamp01((v - a) / (b - a));
+}
+
+function lerp(de: number, ate: number, t: number): number {
+  return de + (ate - de) * t;
+}
 
 export function Intro() {
-  const ref = useRef<HTMLDivElement>(null);
+  const secao = useRef<HTMLElement>(null);
+  const palco = useRef<HTMLDivElement>(null);
+  const abobora = useRef<HTMLDivElement>(null);
+  const macaneta = useRef<HTMLDivElement>(null);
+  const porta = useRef<HTMLDivElement>(null);
+  const folha = useRef<HTMLDivElement>(null);
+  const feixe = useRef<HTMLDivElement>(null);
+  const brilho = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
+    const alvo = secao.current;
+    if (!alvo) return;
 
-    const encerrar = () => {
-      node.dataset.saindo = "1";
-      try {
-        localStorage.setItem(MARCA, "1");
-      } catch {
-        // navegação privada pode recusar: a abertura só roda de novo, sem erro
-      }
-      // O cartaz espera este aviso para se formar: as letras aparecem pelo
-      // caminho inverso do derretimento, e não faria sentido começarem antes de
-      // a porta ter aberto.
+    const reduzido = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reduzido.matches) {
+      // Sem movimento: a seção some e a porta já conta como aberta, para o
+      // cartaz do hero se formar sozinho.
+      alvo.style.display = "none";
       window.dispatchEvent(new CustomEvent(PORTA_ABERTA));
-      node.addEventListener("transitionend", () => node.remove(), { once: true });
-    };
-
-    // O feixe acompanha a mesma curva da folha, amostrada uma vez só. Desenhar
-    // por script é o que permite medir a porta a cada quadro — com keyframes
-    // fixos, o vértice descolaria do vão nas telas em que a porta muda de
-    // largura.
-    const feixe = node.querySelector<HTMLElement>(".intro-feixe");
-    const suavizacao = cubicBezier(0.45, 0, 0.35, 1);
-    let quadro = 0;
-    let ultimo = "";
-    const desenharFeixe = (agora: number) => {
-      const decorrido = agora - inicioDaCena;
-      const t = (decorrido - ABRE_EM) / ABRE_POR;
-      if (t >= 0 && feixe) {
-        const valor = suavizacao(Math.min(1, t));
-        const porta = node.querySelector<HTMLElement>(".intro-porta");
-        const meia = porta
-          ? (porta.offsetWidth / window.innerWidth) * 50
-          : BEAM_DESKTOP.topHalf;
-        const base = window.innerWidth >= 640 ? BEAM_DESKTOP : BEAM_MOBILE;
-        const forma = beamGapPolygon({ ...base, topHalf: meia }, valor);
-        if (forma !== ultimo) {
-          feixe.style.clipPath = forma;
-          feixe.style.opacity = "1";
-          ultimo = forma;
-        }
-      }
-      if (t < 1) quadro = requestAnimationFrame(desenharFeixe);
-    };
-    const inicioDaCena = performance.now();
-    quadro = requestAnimationFrame(desenharFeixe);
-
-    // some sozinha ao fim da sequência, e a qualquer sinal de impaciência
-    const fim = window.setTimeout(encerrar, 5750);
-    const pular = () => {
-      window.clearTimeout(fim);
-      encerrar();
-    };
-    for (const evento of ["pointerdown", "keydown", "wheel", "touchstart"]) {
-      window.addEventListener(evento, pular, { once: true, passive: true });
+      return;
     }
 
+    let frame = 0;
+    let avisado = false;
+
+    const desenhar = () => {
+      frame = 0;
+      const rect = alvo.getBoundingClientRect();
+      const percurso = rect.height - window.innerHeight;
+      const p = percurso > 0 ? clamp01(-rect.top / percurso) : 0;
+
+      // A maçaneta assenta na borda da porta, do lado do vão. Como a largura da
+      // porta agora vem da altura da janela, esse deslocamento é medido da
+      // própria porta a cada quadro — um valor fixo em vw a jogava para fora nas
+      // telas em que a porta encolhe.
+      const larguraPorta = porta.current?.offsetWidth ?? 0;
+      if (larguraPorta) {
+        alvo.style.setProperty("--macaneta-x", `${larguraPorta / 2 - 14}px`);
+      }
+
+      // --- abóbora: recua, some, e caminha até o lugar da maçaneta ---
+      const rec = suavizar(fatia(p, RECUO));
+      if (abobora.current) {
+        abobora.current.style.opacity = String(1 - clamp01((rec - 0.72) / 0.28));
+        abobora.current.style.transform =
+          `translate(calc(-50% + var(--macaneta-x) * ${rec.toFixed(3)}), ` +
+          `calc(-50% + var(--macaneta-dy) * ${rec.toFixed(3)})) ` +
+          `scale(${lerp(1, 0.115, rec).toFixed(3)})`;
+        abobora.current.style.filter =
+          `blur(${(rec * 12).toFixed(1)}px) saturate(${(1 - rec * 0.6).toFixed(2)}) ` +
+          `hue-rotate(${(-rec * 30).toFixed(0)}deg) brightness(${(1 - rec * 0.3).toFixed(2)})`;
+      }
+
+      // --- abertura: a folha gira, medida pela porta a cada quadro ---
+      const o = suavizar(fatia(p, ABRE));
+      const largura = 1 - o * 0.95;
+
+      // --- maçaneta: aparece e depois viaja com a borda da folha ---
+      if (macaneta.current) {
+        const aparece = fatia(p, MACANETA);
+        const some = 1 - clamp01((o - 0.55) / 0.45);
+        const lado = 2 * largura - 1;
+        macaneta.current.style.opacity = String(Math.min(aparece, some));
+        macaneta.current.style.transform =
+          `translate(calc(-50% + var(--macaneta-x) * ${lado.toFixed(3)}), -50%) ` +
+          `scale(${lerp(0.115, 0.085, aparece).toFixed(3)})`;
+      }
+
+      if (porta.current) porta.current.style.opacity = String(fatia(p, PORTA));
+
+      if (folha.current) {
+        folha.current.style.transform = `scaleX(${largura.toFixed(4)})`;
+        folha.current.style.filter = `brightness(${(1 - o * 0.7).toFixed(3)})`;
+      }
+
+      if (feixe.current) {
+        const el = porta.current;
+        const meia = el ? (el.offsetWidth / window.innerWidth) * 50 : BEAM_DESKTOP.topHalf;
+        const base = window.innerWidth >= 640 ? BEAM_DESKTOP : BEAM_MOBILE;
+        feixe.current.style.clipPath = beamGapPolygon({ ...base, topHalf: meia }, o);
+        feixe.current.style.opacity = o > 0 ? "1" : "0";
+      }
+
+      if (brilho.current) brilho.current.style.opacity = String(fatia(p, ABRE));
+
+      // Sem fade para o preto no fim: a porta aberta já mostra a mesma festa do
+      // hero, e o feixe da abertura é idêntico ao do hero. Ao passar da seção, o
+      // palco sobe e o hero — porta, galera e feixe no mesmo lugar — toma seu
+      // lugar sem emenda.
+
+      // o cartaz do hero espera este aviso para se formar
+      if (p > 0.99 && !avisado) {
+        avisado = true;
+        window.dispatchEvent(new CustomEvent(PORTA_ABERTA));
+      }
+    };
+
+    const aoRolar = () => {
+      if (!frame) frame = requestAnimationFrame(desenhar);
+    };
+
+    desenhar();
+    window.addEventListener("scroll", aoRolar, { passive: true });
+    window.addEventListener("resize", aoRolar, { passive: true });
     return () => {
-      window.clearTimeout(fim);
-      cancelAnimationFrame(quadro);
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", aoRolar);
+      window.removeEventListener("resize", aoRolar);
     };
   }, []);
 
   return (
-    <div
-      ref={ref}
-      className="intro bg-ink fixed inset-0 z-[100] overflow-hidden"
-      aria-hidden
-    >
-      {/* a abóbora: aparece, ri, recua e perde a forma */}
-      <div className="intro-abobora">
-        {event.intro.pumpkin ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.intro.pumpkin} alt="" className="h-full w-full object-contain" />
-        ) : (
-          <div className="intro-marcador">abóbora</div>
-        )}
+    <section ref={secao} className="intro relative z-[100]" style={{ height: ALTURA }}>
+      <div ref={palco} className="bg-ink sticky top-0 h-svh overflow-hidden" aria-hidden>
+        {/* a abóbora: presente, e recua perdendo a forma conforme rola */}
+        <div ref={abobora} className="intro-abobora">
+          {event.intro.pumpkin ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={event.intro.pumpkin}
+              alt=""
+              className="intro-risada h-full w-full object-contain"
+            />
+          ) : (
+            <div className="intro-marcador">abóbora</div>
+          )}
+        </div>
+
+        {/* o que sobra dela: a maçaneta */}
+        <div ref={macaneta} className="intro-macaneta" />
+
+        {/* o feixe no chão, que nasce junto com a luz que escapa */}
+        <div ref={feixe} className="intro-feixe" />
+
+        {/* o brilho que escapa do batente conforme a porta abre */}
+        <div ref={brilho} className="intro-brilho" />
+
+        {/* a porta: a luz e a festa ficam atrás, a folha por cima delas */}
+        <div ref={porta} className="intro-porta">
+          <div className="intro-luz" />
+          {/* a mesma festa do hero, para a porta aberta emendar sem pulo */}
+          <DoorCrowd />
+          <div ref={folha} className="intro-folha" />
+        </div>
+
+        <p className="intro-dica font-heading">role para abrir a porta ▾</p>
       </div>
-
-      {/* o que sobra dela: a maçaneta, que viaja junto com a folha */}
-      <div className="intro-macaneta" />
-
-      {/* o feixe no chão, que nasce junto com a luz que escapa */}
-      <div className="intro-feixe" />
-
-      {/* o brilho que escapa do batente conforme a porta abre */}
-      <div className="intro-brilho" />
-
-      {/* a porta: a luz fica atrás, a folha por cima dela */}
-      <div className="intro-porta">
-        <div className="intro-luz" />
-        <div className="intro-folha" />
-      </div>
-
-      <p className="intro-pular font-heading">toque para pular</p>
 
       <style>{`
         .intro {
@@ -154,46 +216,40 @@ export function Intro() {
           /*
             Distância vertical que a abóbora percorre até a maçaneta, em altura
             de tela. Precisa ser vh e não %: dentro de um transform, a
-            porcentagem é relativa ao próprio elemento, não à viewport — foi o
-            que jogou a abóbora para fora da porta.
+            porcentagem é relativa ao próprio elemento, não à viewport.
           */
           --macaneta-dy: ${(DOOR_TOP + DOOR_BOTTOM) / 2 - 38}vh;
           /* Deslocamento lateral até a borda oposta à fresta de luz. */
           --macaneta-x: 14.4vw;
-          transition: opacity 520ms ease;
-        }
-        .intro[data-saindo] { opacity: 0; pointer-events: none; }
-
-        .intro-abobora,
-        .intro-macaneta {
-          position: absolute;
-          left: 50%;
-          top: 38%;
-          transform: translate(-50%, -50%);
         }
 
         @media (min-width: 640px) {
           .intro { --macaneta-x: 7.9vw; }
         }
 
-        /* Fase 1 e 2: entra e ri. O riso é pulso de escala com uma leve
-           inclinação alternada — ombros sacudindo, não a imagem tremendo. */
+        .intro-abobora,
+        .intro-macaneta {
+          position: absolute;
+          left: 50%;
+          top: 38%;
+        }
+
         .intro-abobora {
           width: min(34vw, 220px);
           aspect-ratio: 1;
-          opacity: 0;
-          /*
-            Os tempos são encadeados, não escolhidos soltos: a maçaneta só pode
-            entrar depois de a abóbora ter chegado ao lugar dela, senão as duas
-            aparecem juntas e a troca fica visível.
-              entrada  0 → 380
-              risada   380 → 1300
-              recuo    1300 → 3200
-          */
-          animation:
-            intro-entra 380ms ease-out forwards,
-            intro-risada 460ms 380ms ease-in-out 2,
-            intro-recua 1900ms 1300ms cubic-bezier(0.42, 0, 0.6, 1) forwards;
+          transform: translate(-50%, -50%);
+        }
+
+        /* O riso vive no próprio desenho, num ritmo independente do scroll:
+           enquanto a abóbora está presente, os ombros sacodem de leve. */
+        .intro-risada {
+          transform-origin: 50% 60%;
+          animation: intro-risada 620ms ease-in-out infinite alternate;
+        }
+
+        @keyframes intro-risada {
+          from { transform: scale(1) rotate(-2deg); }
+          to   { transform: scale(1.04) rotate(2deg); }
         }
 
         .intro-marcador {
@@ -210,109 +266,33 @@ export function Intro() {
           text-transform: uppercase;
         }
 
-        @keyframes intro-entra {
-          from { opacity: 0; transform: translate(-50%, -50%) scale(0.72); }
-          to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
-
-        @keyframes intro-risada {
-          0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-          25%      { transform: translate(-50%, -52%) scale(1.07) rotate(-3deg); }
-          50%      { transform: translate(-50%, -50%) scale(0.99) rotate(0deg); }
-          75%      { transform: translate(-50%, -52%) scale(1.07) rotate(3deg); }
-        }
-
-        /* Fase 3: recua perdendo definição. O desfoque e a dessaturação são o
-           que apagam o desenho; a mudança de matiz leva o laranja para o
-           vermelho da cena seguinte. */
-        /* Recua e, no mesmo gesto, caminha até a borda da porta: maçaneta fica
-           do lado, não no meio. Fazer isso depois seria um pulo. */
-        @keyframes intro-recua {
-          from {
-            transform: translate(-50%, -50%) scale(1);
-            filter: blur(0) saturate(1) hue-rotate(0deg) brightness(1);
-            opacity: 1;
-          }
-          70% {
-            filter: blur(7px) saturate(0.7) hue-rotate(-22deg) brightness(0.85);
-            opacity: 1;
-          }
-          to {
-            transform: translate(calc(-50% + var(--macaneta-x)), calc(-50% + var(--macaneta-dy))) scale(0.115);
-            filter: blur(12px) saturate(0.4) hue-rotate(-30deg) brightness(0.7);
-            opacity: 0;
-          }
-        }
-
-        /* O círculo que sobra: entra por baixo enquanto a abóbora se apaga. */
         .intro-macaneta {
-          /* Acima da porta: ela é a maçaneta dela, não algo atrás dela. */
           z-index: 2;
-          left: 50%;
           top: var(--macaneta-y);
-          /*
-            Mesma largura de base da abóbora: é dela que a maçaneta nasce. As
-            escalas abaixo compensam, para o círculo final ter o tamanho de uma
-            maçaneta e não acompanhar o tamanho do desenho.
-          */
           width: min(34vw, 220px);
           aspect-ratio: 1;
           border-radius: 50%;
           background: var(--color-blood);
           box-shadow: 0 0 2.5vw rgba(255, 26, 18, 0.45);
           opacity: 0;
-          animation: intro-macaneta 400ms 3100ms ease-out forwards,
-            intro-macaneta-viaja ${ABRE_POR}ms ${ABRE_EM}ms linear forwards;
+          transform: translate(-50%, -50%) scale(0.115);
         }
 
-        @keyframes intro-macaneta {
-          from {
-            opacity: 0;
-            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.115);
-          }
-          40% {
-            opacity: 1;
-            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.115);
-          }
-          to {
-            opacity: 1;
-            transform: translate(calc(-50% + var(--macaneta-x)), -50%) scale(0.085);
-          }
-        }
-
-        /* Fase 4: a porta se desenha em volta, já nas medidas do hero. */
         .intro-porta {
           position: absolute;
           left: 50%;
           top: var(--porta-topo);
           height: var(--porta-altura);
-          /* mesma regra do hero: a largura sai da altura, para a porta manter
-             proporção de porta em qualquer formato de janela */
+          /* a largura sai da altura, para a porta manter proporção de porta em
+             qualquer formato de janela */
           width: min(46vw, ${(DOOR_BOTTOM - DOOR_TOP) / DOOR_RATIO}svh);
           transform: translateX(-50%);
           z-index: 1;
           background: #120303;
           border: 1px solid rgba(255, 26, 18, 0.22);
           opacity: 0;
-          animation: intro-porta 500ms 3300ms ease-out forwards;
         }
 
-        @keyframes intro-porta {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-
-        /*
-          Fase 5: a porta abre da direita para a esquerda.
-
-          A luz não é pintada por cima da porta: ela já está atrás, e quem se
-          move é a folha. A folha encolhe na horizontal a partir da dobradiça,
-          na esquerda — que é o que uma porta girando para longe faz na tela — e
-          vai escurecendo, porque de perfil ela recebe cada vez menos luz.
-
-          Este tratamento de luz vive só aqui, na abertura. Depois dela, quem
-          manda é o feixe chapado do hero.
-        */
         .intro-luz {
           position: absolute;
           inset: 0;
@@ -323,15 +303,6 @@ export function Intro() {
             var(--color-blood) 24%,
             #c8110c 100%
           );
-          /*
-            No fim assenta no vermelho chapado do hero: terminar em gradiente
-            daria um pulo de tom quando a abertura sai e a cena entra.
-          */
-          animation: intro-luz-assenta 500ms 5150ms ease-out forwards;
-        }
-
-        @keyframes intro-luz-assenta {
-          to { background: var(--color-blood); }
         }
 
         .intro-folha {
@@ -340,22 +311,9 @@ export function Intro() {
           z-index: 1;
           background: #120303;
           transform-origin: left center;
-          animation: intro-folha ${ABRE_POR}ms ${ABRE_EM}ms linear forwards;
+          transform: scaleX(1);
         }
 
-        @keyframes intro-folha {
-          ${ABERTURA.map(
-            ({ tempo, valor }) =>
-              `${(tempo * 100).toFixed(2)}% { transform: scaleX(${(1 - valor * 0.95).toFixed(4)}); filter: brightness(${(1 - valor * 0.7).toFixed(3)}); }`,
-          ).join("\n          ")}
-        }
-
-        /*
-          O feixe é desenhado por script, e não por keyframes: a largura da
-          porta agora depende da altura da janela, então não há valor fixo que
-          sirva para todas as telas. Medindo a porta, o vértice do feixe nunca
-          descola do vão.
-        */
         .intro-feixe {
           position: absolute;
           inset: 0;
@@ -363,7 +321,6 @@ export function Intro() {
           opacity: 0;
         }
 
-        /* A luz não fica presa no batente: ela vaza para o escuro em volta. */
         .intro-brilho {
           position: absolute;
           left: 50%;
@@ -378,29 +335,9 @@ export function Intro() {
             rgba(255, 26, 18, 0.18) 42%,
             transparent 74%
           );
-          animation: intro-brilho ${ABRE_POR}ms ${ABRE_EM}ms linear forwards;
         }
 
-        @keyframes intro-brilho {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-
-        /*
-          A maçaneta acompanha a borda da folha até a dobradiça e se apaga com
-          ela. O deslocamento sai da mesma amostragem, então ela não desliza
-          por conta própria enquanto a porta gira.
-        */
-        @keyframes intro-macaneta-viaja {
-          ${ABERTURA.map(({ tempo, valor }) => {
-            const folha = 1 - valor * 0.95;
-            const lado = (2 * folha - 1).toFixed(3);
-            const opacidade = Math.max(0, 1 - Math.max(0, (valor - 0.55) / 0.45)).toFixed(2);
-            return `${(tempo * 100).toFixed(2)}% { transform: translate(calc(-50% + var(--macaneta-x) * ${lado}), -50%) scale(0.085); opacity: ${opacidade}; }`;
-          }).join("\n          ")}
-        }
-
-        .intro-pular {
+        .intro-dica {
           position: absolute;
           bottom: 6%;
           left: 50%;
@@ -410,22 +347,9 @@ export function Intro() {
           font-weight: 700;
           letter-spacing: 0.3em;
           text-transform: uppercase;
-          opacity: 0;
-          animation: intro-pular 400ms 800ms ease-out forwards;
-        }
-
-        @keyframes intro-pular {
-          to { opacity: 0.55; }
-        }
-
-        /* Quem já viu, e quem pediu menos movimento, não vê a abertura. */
-        [data-intro-vista] .intro,
-        .intro:where([data-parado]) { display: none; }
-
-        @media (prefers-reduced-motion: reduce) {
-          .intro { display: none; }
+          opacity: 0.55;
         }
       `}</style>
-    </div>
+    </section>
   );
 }

@@ -56,16 +56,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${poster.variable} ${drip.variable} ${grotesk.variable} ${term.variable} h-full antialiased`}
     >
       <body className="relative min-h-full">
-        {/*
-          Roda antes de a abertura ser pintada: quem já viu não pode ver nem um
-          quadro de tela preta. Decidir isso depois da hidratação piscaria.
-        */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              'try{if(localStorage.getItem("volvoween:intro"))document.documentElement.dataset.introVista="1"}catch(e){}',
-          }}
-        />
         <PaperGrain />
         <main className="relative z-10">{children}</main>
       </body>

@@ -165,10 +165,10 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
     };
     const comecarEntrada = () => requestAnimationFrame(formar);
 
-    // Quem já viu a abertura não vai receber o aviso dela: o cartaz se forma
-    // assim que a página monta.
-    if (document.documentElement.dataset.introVista) comecarEntrada();
-    else window.addEventListener(PORTA_ABERTA, comecarEntrada, { once: true });
+    // A abertura fica acima do hero, então quem chega aqui já rolou por ela e
+    // já disparou o aviso. O cartaz se forma nesse aviso, pelo caminho inverso
+    // do derretimento.
+    window.addEventListener(PORTA_ABERTA, comecarEntrada, { once: true });
 
     aplicar();
     window.addEventListener("scroll", aoRolar, { passive: true });
