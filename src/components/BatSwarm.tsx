@@ -18,19 +18,43 @@ import { event } from "@/config/event";
  * navegador desenharem coisas diferentes, e a hidratação acusaria.
  */
 
-/** De onde cada morcego vem, em vw/vh, e o atraso dele. */
-const BANDO = [
-  { x: -60, y: -30, giro: -18, escala: 0.9, atraso: 0, sprite: 0 },
-  { x: 65, y: -38, giro: 22, escala: 0.7, atraso: 90, sprite: 1 },
-  { x: -72, y: 18, giro: 12, escala: 0.55, atraso: 150, sprite: 1 },
-  { x: 70, y: 12, giro: -14, escala: 0.85, atraso: 60, sprite: 0 },
-  { x: -45, y: -52, giro: 26, escala: 0.5, atraso: 220, sprite: 1 },
-  { x: 48, y: -55, giro: -24, escala: 0.62, atraso: 180, sprite: 0 },
-  { x: -80, y: -8, giro: 8, escala: 0.75, atraso: 300, sprite: 0 },
-  { x: 82, y: -4, giro: -10, escala: 0.45, atraso: 260, sprite: 1 },
-  { x: -30, y: -60, giro: 16, escala: 0.4, atraso: 350, sprite: 1 },
-  { x: 34, y: -62, giro: -20, escala: 0.52, atraso: 400, sprite: 0 },
-];
+/** Quantos morcegos cruzam a tela. */
+const QUANTIDADE = 28;
+
+/**
+ * Gerador pseudoaleatório com semente fixa (mulberry32).
+ *
+ * O bando precisa parecer disperso, mas sorteio de verdade no render faria
+ * servidor e cliente desenharem posições diferentes e a hidratação acusaria.
+ * Uma semente fixa dá a mesma sequência nos dois lados: aleatório aos olhos,
+ * determinístico na prática.
+ */
+function semeado(semente: number): () => number {
+  return () => {
+    semente |= 0;
+    semente = (semente + 0x6d2b79f5) | 0;
+    let t = Math.imul(semente ^ (semente >>> 15), 1 | semente);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Cada morcego entra de fora da tela e converge para o centro. Metade vem da
+ * esquerda, metade da direita, alternadas, para o bando não pesar de um lado só.
+ */
+const BANDO = Array.from({ length: QUANTIDADE }, (_, i) => {
+  const r = semeado(i * 97 + 13);
+  const daEsquerda = i % 2 === 0;
+  return {
+    x: (daEsquerda ? -1 : 1) * (42 + r() * 48), // 42vw a 90vw de distância
+    y: -68 + r() * 78, // espalhado no eixo vertical
+    giro: (r() - 0.5) * 64, // inclinação de voo
+    escala: 0.32 + r() * 0.7, // profundidade: perto e longe
+    atraso: Math.round(r() * 620), // ninguém chega no mesmo instante
+    sprite: i % 2, // alterna os dois recortes
+  };
+});
 
 export function BatSwarm() {
   const ref = useRef<HTMLDivElement>(null);
