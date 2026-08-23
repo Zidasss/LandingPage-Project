@@ -41,7 +41,13 @@ body {
   background-color: var(--color-ink);
   color: var(--color-bone);
   font-family: var(--font-sans);
-  overflow-x: hidden;
+  /*
+    clip, e não hidden: overflow-x:hidden faz o body virar um contêiner de
+    scroll no iOS Safari, o que quebra o position:sticky da abertura — o palco
+    para de grudar e a porta duplica. clip recorta a horizontal sem criar
+    contêiner de scroll, então o sticky continua funcionando.
+  */
+  overflow-x: clip;
 }
 
 ::selection {

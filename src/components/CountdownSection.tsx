@@ -56,6 +56,7 @@ export function CountdownSection() {
         alt="Morcego gigante recortado contra um céu vermelho"
         fill
         sizes="100vw"
+        quality={90}
         className="arte object-cover object-top"
         priority={false}
       />
