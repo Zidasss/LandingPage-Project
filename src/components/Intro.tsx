@@ -83,6 +83,7 @@ export function Intro() {
 
     let frame = 0;
     let avisado = false;
+    let escondido = false;
 
     const desenhar = () => {
       frame = 0;
@@ -144,10 +145,17 @@ export function Intro() {
 
       if (brilho.current) brilho.current.style.opacity = String(fatia(p, ABRE));
 
-      // Sem fade para o preto no fim: a porta aberta já mostra a mesma festa do
-      // hero, e o feixe da abertura é idêntico ao do hero. Ao passar da seção, o
-      // palco sobe e o hero — porta, galera e feixe no mesmo lugar — toma seu
-      // lugar sem emenda.
+      // O palco é fixo e cobre o viewport inteiro durante a abertura. Quando ela
+      // termina, ele some e deixa o hero — porta, galera e feixe no mesmo lugar —
+      // tomar seu lugar sem emenda. Sticky com h-svh não servia: no iOS a barra
+      // do Safari muda a altura do viewport e sobrava uma faixa embaixo onde a
+      // porta do hero aparecia, duplicada.
+      const fim = p >= 1;
+      if (fim !== escondido) {
+        palco.current!.style.opacity = fim ? "0" : "1";
+        palco.current!.style.pointerEvents = fim ? "none" : "";
+        escondido = fim;
+      }
 
       // o cartaz do hero espera este aviso para se formar
       if (p > 0.99 && !avisado) {
@@ -171,8 +179,18 @@ export function Intro() {
   }, []);
 
   return (
-    <section ref={secao} className="intro relative z-[100]" style={{ height: ALTURA }}>
-      <div ref={palco} className="bg-ink sticky top-0 h-svh overflow-hidden" aria-hidden>
+    <section ref={secao} className="intro relative" style={{ height: ALTURA }}>
+      {/*
+        O palco é fixo, não sticky: um overlay fixed inset-0 cobre o viewport
+        inteiro sem depender de svh nem do sticky, que no iOS deixavam uma faixa
+        descoberta embaixo. A seção alta continua em fluxo só para dar a
+        distância de rolagem; o script esconde o palco quando a abertura acaba.
+      */}
+      <div
+        ref={palco}
+        className="bg-ink fixed inset-0 z-[100] overflow-hidden transition-opacity duration-300"
+        aria-hidden
+      >
         {/* a abóbora: presente, e recua perdendo a forma conforme rola */}
         <div ref={abobora} className="intro-abobora">
           {event.intro.pumpkin ? (
