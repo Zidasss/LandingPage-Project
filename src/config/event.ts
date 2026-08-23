@@ -28,7 +28,7 @@ export const event = {
 
   ticket: {
     /** Valor por pessoa, em reais. Placeholder — confirmar. */
-    price: 60,
+    price: 80,
     /** Quantidade máxima de convidados. TODO: confirmar. */
     capacity: 80,
   },
@@ -39,8 +39,11 @@ export const event = {
    * Continuam públicas no HTML: é assim que PIX estático funciona.
    */
   pix: {
-    key: process.env.NEXT_PUBLIC_PIX_KEY ?? "",
-    receiverName: process.env.NEXT_PUBLIC_PIX_NAME ?? "",
+    // Chave de telefone. As variáveis de ambiente continuam podendo
+    // sobrescrever na Vercel sem commit; o valor abaixo é o padrão que já
+    // funciona sem configurar nada.
+    key: process.env.NEXT_PUBLIC_PIX_KEY ?? "+5541996475299",
+    receiverName: process.env.NEXT_PUBLIC_PIX_NAME ?? "VOLVOWEEN",
     receiverCity: process.env.NEXT_PUBLIC_PIX_CITY ?? "CURITIBA",
   },
 
