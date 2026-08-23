@@ -72,6 +72,10 @@ export function Intro() {
     const alvo = secao.current;
     if (!alvo) return;
 
+    // A porta do hero: é atrás dela que o palco se apaga, quando as duas se
+    // sobrepõem. Medida a cada quadro para saber a hora exata da troca.
+    const hero = document.querySelector<HTMLElement>("[data-hero]");
+
     const reduzido = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (reduzido.matches) {
       // Sem movimento: a seção some e a porta já conta como aberta, para o
@@ -145,20 +149,29 @@ export function Intro() {
 
       if (brilho.current) brilho.current.style.opacity = String(fatia(p, ABRE));
 
-      // O palco é fixo e cobre o viewport inteiro durante a abertura. Quando ela
-      // termina, ele some e deixa o hero — porta, galera e feixe no mesmo lugar —
-      // tomar seu lugar sem emenda. Sticky com h-svh não servia: no iOS a barra
-      // do Safari muda a altura do viewport e sobrava uma faixa embaixo onde a
-      // porta do hero aparecia, duplicada.
-      const fim = p >= 1;
+      // A troca para o hero acontece quando a porta dele encosta no topo da
+      // tela — e não quando a animação termina. Nesse instante a porta do hero
+      // ocupa exatamente o mesmo lugar da porta da abertura (mesma proporção,
+      // mesma altura, a mesma galera atrás), então apagar o palco não revela
+      // porta nova: revela a mesma porta, agora no hero.
+      //
+      // A animação acaba antes disso (a uns 2/3 da rolagem); daí até a troca o
+      // palco apenas segura o quadro final, com a porta aberta. Era essa folga
+      // que faltava: apagando o palco assim que a animação terminava, o hero
+      // ainda estava uma tela abaixo e entrava deslizando de baixo — a "segunda
+      // porta" que aparecia. Rolar para trás desfaz a troca.
+      const heroTop = hero ? hero.getBoundingClientRect().top : Infinity;
+      const fim = heroTop <= 1;
       if (fim !== escondido) {
         palco.current!.style.opacity = fim ? "0" : "1";
         palco.current!.style.pointerEvents = fim ? "none" : "";
         escondido = fim;
       }
 
-      // o cartaz do hero espera este aviso para se formar
-      if (p > 0.99 && !avisado) {
+      // O cartaz do hero espera este aviso para se formar. Disparado na troca (e
+      // não ao fim da animação), para o derretimento acontecer à vista, e não
+      // escondido atrás do palco.
+      if (fim && !avisado) {
         avisado = true;
         window.dispatchEvent(new CustomEvent(PORTA_ABERTA));
       }
