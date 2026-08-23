@@ -41,8 +41,23 @@ export function OpeningBeam() {
 
     let frame = 0;
     let anterior = "";
+    let visivel = true;
     const aplicar = () => {
       frame = 0;
+      const heroRect = palco.getBoundingClientRect();
+
+      // A luz é fixa e calcula o formato a partir da porta do hero. Enquanto o
+      // hero ainda está abaixo da dobra (durante a abertura), a porta fica fora
+      // da tela e o vértice de cima cai abaixo da base — desenhando um trapézio
+      // invertido que vazava no topo no celular. Enquanto o hero não encosta no
+      // topo da viewport, a luz fica escondida; a abertura mostra a sua própria.
+      const dentro = heroRect.top <= 1;
+      if (dentro !== visivel) {
+        node.style.opacity = dentro ? "1" : "0";
+        visivel = dentro;
+      }
+      if (!dentro) return;
+
       const porta = palco.querySelector<HTMLElement>("[data-porta]");
       const tela = window.innerHeight;
 
@@ -60,8 +75,9 @@ export function OpeningBeam() {
         ? (porta.getBoundingClientRect().bottom / tela) * 100 + DOOR_GAP
         : undefined;
 
-      const rect = palco.getBoundingClientRect();
-      const p = parado ? 0 : Math.min(1, Math.max(0, -rect.top / (rect.height || 1)));
+      const p = parado
+        ? 0
+        : Math.min(1, Math.max(0, -heroRect.top / (heroRect.height || 1)));
       // acelera no fim: a luz demora a sair do lugar e depois toma a tela
       const alvo = base.bottomHalf + (ABERTURA_FINAL - base.bottomHalf) * p * p;
       const bottomHalf = Math.round(alvo / DEGRAU) * DEGRAU;
