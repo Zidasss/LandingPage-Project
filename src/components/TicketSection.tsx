@@ -60,19 +60,28 @@ export function TicketSection() {
   return (
     <section
       id="ingresso"
-      className="bg-ink relative z-40 overflow-hidden px-6 py-24 sm:py-32"
+      className="bg-ink relative z-40 overflow-hidden px-6 pt-[42vh] pb-20 sm:py-32"
     >
       {/* cenário: a parede de ingressos correndo */}
       <TicketWall />
 
       {/*
-        Spotlight: escurece a parede e concentra a luz no centro, onde fica o
-        ingresso de destaque. Sem isso, a parede briga com a leitura do
-        formulário.
+        No celular a parede não cabe atrás do cartão — ele toma a tela toda. Por
+        isso ela vira um cabeçalho visível no topo: um degradê deixa o alto claro
+        (parede à mostra) e escurece onde o formulário começa. No desktop sobra
+        espaço nas laterais, então o spotlight volta a concentrar a luz no centro.
       */}
       <div
         aria-hidden
-        className="absolute inset-0"
+        className="absolute inset-0 sm:hidden"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.15) 26%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.94) 52%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 hidden sm:block"
         style={{
           background:
             "radial-gradient(ellipse 60% 60% at 50% 45%, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.82) 55%, rgba(0,0,0,0.96) 100%)",
