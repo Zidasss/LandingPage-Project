@@ -1,0 +1,52 @@
+/**
+ * A linha do tempo da abertura.
+ *
+ * Existe uma cena só — porta, galera, luz e cartaz — e um progresso só, que vem
+ * de quanto já se rolou dentro da seção da abertura. Todas as fases são fatias
+ * desse mesmo progresso, e é isso que faz a sequência inteira parecer um
+ * movimento contínuo em vez de animações emendadas.
+ *
+ * As constantes moram aqui porque quem desenha a luz (um elemento fixo, fora da
+ * cena) precisa das mesmas marcas de quem desenha a porta. Com cada um usando a
+ * sua própria conta, a luz e a porta saíam de fase.
+ */
+
+/** Altura da seção. O que passa de 100svh é a distância de rolagem. */
+export const ALTURA_ABERTURA = "240svh";
+
+/* Fases, em fatias do progresso. Elas se sobrepõem de propósito: cada uma
+   começa antes de a anterior terminar, para não haver degrau entre elas. */
+
+/** A abóbora recua e perde a forma até virar um círculo. */
+export const RECUO = [0.03, 0.26] as const;
+/** O círculo assenta como maçaneta. */
+export const MACANETA = [0.22, 0.32] as const;
+/** A porta se desenha em volta da maçaneta. */
+export const PORTA = [0.28, 0.4] as const;
+/** A folha gira e a luz escapa pelo vão. */
+export const ABRE = [0.42, 0.62] as const;
+/** O cartaz se forma dentro da luz, a partir das gotas. */
+export const CARTAZ = [0.56, 0.72] as const;
+/** A luz toma a tela e o cartaz escorre para os lados. */
+export const ALARGA = [0.72, 1] as const;
+
+export function clamp01(v: number): number {
+  return Math.min(1, Math.max(0, v));
+}
+
+/** Reposiciona `v` dentro de [a, b] e devolve de 0 a 1. */
+export function fatia(v: number, [a, b]: readonly [number, number]): number {
+  return clamp01((v - a) / (b - a));
+}
+
+/**
+ * Quanto já se rolou dentro da seção da abertura, de 0 a 1.
+ *
+ * O percurso desconta uma tela: o palco fica preso no topo enquanto a seção
+ * passa, então a rolagem útil é o que sobra da altura dela.
+ */
+export function progresso(secao: HTMLElement): number {
+  const rect = secao.getBoundingClientRect();
+  const percurso = rect.height - window.innerHeight;
+  return percurso > 0 ? clamp01(-rect.top / percurso) : 0;
+}

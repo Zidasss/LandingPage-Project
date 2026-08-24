@@ -21,8 +21,6 @@ const LIMIAR_INICIAL = -8;
 const LIMIAR_FINAL = -26;
 /** Quanto do percurso separa a primeira linha a se formar da última. */
 const ATRASO_TOTAL = 0.34;
-/** Fração da rolagem do hero em que o cartaz termina de se formar. */
-const FORMA = 0.62;
 /** Quantos filtros existem no documento — teto de linhas atendidas. */
 const FILTROS = 8;
 
@@ -48,14 +46,27 @@ const FILTROS = 8;
  * Por isso ele fica restrito a telas grandes; no celular o mesmo movimento
  * acontece só com transform, que desliza liso.
  */
-export function MeltingPoster({ children }: { children: ReactNode }) {
+/** O quanto o cartaz está derretido agora, e o quanto escorre para os lados. */
+export type EstadoCartaz = { derretido: number; espalha: number };
+
+export function MeltingPoster({
+  children,
+  fonte,
+}: {
+  children: ReactNode;
+  /**
+   * De onde vem o estado do cartaz. Quem manda é a linha do tempo da abertura —
+   * a mesma que abre a porta e alarga a luz. Medindo por conta própria, o cartaz
+   * andava num compasso e a cena em outro, e as duas coisas pareciam animações
+   * separadas.
+   */
+  fonte: () => EstadoCartaz;
+}) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
-    const palco = node.closest("section");
-    if (!palco) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const linhas = [...node.querySelectorAll<HTMLElement>("[data-linha]")];
@@ -91,27 +102,24 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
     let frame = 0;
     const aplicar = () => {
       frame = 0;
-      const rect = palco.getBoundingClientRect();
-      // Só o scroll do hero manda. Em zero (porta recém-aberta) as letras estão
-      // liquefeitas; a rolagem, dividida por FORMA, é o quanto elas já voltaram
-      // à forma — 1 = formado. O resto da rolagem segura o cartaz pronto até o
-      // hero sair de cena.
-      const rolagem = Math.min(1, Math.max(0, -rect.top / (rect.height || 1)));
-      const forma0 = Math.min(1, rolagem / FORMA);
+      const { derretido, espalha } = fonte();
 
       for (const t of trilhas) {
-        // As de baixo (atraso menor) endurecem primeiro.
-        const formado = Math.min(
+        // As de baixo (atraso menor) endurecem primeiro e escorrem por último.
+        const local = Math.min(
           1,
-          Math.max(0, (forma0 - t.atraso) / (1 - t.atraso)),
+          Math.max(0, (derretido - t.atraso) / (1 - t.atraso)),
         );
-        // `local` é o quanto ainda está derretido: 1 liquefeito, 0 formado.
-        const local = 1 - formado;
+        const abre = Math.min(
+          1,
+          Math.max(0, (espalha - t.atraso) / (1 - t.atraso)),
+        );
 
-        // Um leve escorrido vertical enquanto a massa ainda é líquida, que
-        // assenta quando a letra endurece. Nada de espalhar para os lados: perto
-        // da porta a luz é estreita e as letras sairiam dela para o preto.
-        t.linha.style.transform = `scale3d(1, ${(1 + local * 0.09).toFixed(3)}, 1)`;
+        // Escorre para os lados só quando a luz alarga — é ela que abre espaço.
+        // Antes disso a luz é estreita e as letras sairiam dela, para o preto.
+        t.linha.style.transform =
+          `scale3d(${(1 + abre * abre * 1.35).toFixed(3)}, ` +
+          `${(1 + local * 0.09 - abre * 0.16).toFixed(3)}, 1)`;
 
         if (!telaGrande || !t.desloca || !t.borrao || !t.ruido || !t.limiar) {
           // Sem filtro, a linha surge por opacidade conforme endurece.
@@ -158,7 +166,7 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
       window.removeEventListener("scroll", aoRolar);
       window.removeEventListener("resize", aoRolar);
     };
-  }, []);
+  }, [fonte]);
 
   return (
     <>
