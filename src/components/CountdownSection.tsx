@@ -59,31 +59,59 @@ export function CountdownSection() {
         e é aí que a cena vira escura.
       */
       className="cena-morcego bg-blood relative z-40 min-h-svh overflow-hidden"
+      style={{ "--arte-h": "min(66svh, 116vw)" } as React.CSSProperties}
     >
       {/* o bando, no fundo de tudo: voa sobre o vermelho (onde as silhuetas
           pretas aparecem) e o preto o cobre conforme ele converge e some */}
       <BatSwarm />
 
-      {/* o preto que toma a cena na revelação, cobrindo o vermelho do bando */}
-      <div aria-hidden className="fundo bg-ink absolute inset-0" />
-
       {/*
-        O teto em vw evita que, num celular estreito, a largura da arte (que sai
-        da altura) passe da tela e corte as pontas das asas.
+        A cena do bicho, num elemento só: o preto que toma a tela, a faixa que
+        continua a arte até as bordas, e a própria arte.
+
+        Estarem juntos importa. Antes o preto era uma camada à parte e chegava
+        antes da arte — dava para ver o escuro entrar sozinho, e a moldura
+        retangular da arte aparecia como bloco. Numa peça só, tudo surge no mesmo
+        gesto: o vermelho do bando escurece e o morcego já está ali.
+
+        A faixa existe porque a arte tem uma tira de céu vermelho no topo que
+        atravessa toda a largura dela (até ~4% da altura) e vira preto abaixo,
+        onde a asa começa. Como a arte é mais estreita que a tela, essa tira
+        terminava seca na borda do retângulo — era o "bloco preto na lateral". A
+        faixa repete esse mesmo corte até as pontas da tela: o céu continua e a
+        asa entra no preto, sem borda.
       */}
-      <div
-        className="absolute left-1/2 top-0 aspect-[4/5] -translate-x-1/2"
-        style={{ height: "min(66svh, 116vw)" }}
-      >
-        <Image
-          src={event.bats.scene}
-          alt="Morcego gigante recortado contra um céu vermelho"
-          fill
-          sizes="(min-width: 640px) 66vh, 116vw"
-          quality={95}
-          className="arte object-cover object-top"
-          priority={false}
+      <div className="arte-cena absolute inset-0">
+        <div aria-hidden className="bg-ink absolute inset-0" />
+
+        <div
+          aria-hidden
+          className="absolute inset-x-0 top-0"
+          style={{
+            height: "var(--arte-h)",
+            background:
+              "linear-gradient(to bottom, var(--color-blood) 0 3.8%, var(--color-ink) 4.2%, var(--color-ink) 100%)",
+          }}
         />
+
+        {/*
+          O teto em vw evita que, num celular estreito, a largura da arte (que
+          sai da altura) passe da tela e corte as pontas das asas.
+        */}
+        <div
+          className="relative mx-auto aspect-[4/5]"
+          style={{ height: "var(--arte-h)" }}
+        >
+          <Image
+            src={event.bats.scene}
+            alt="Morcego gigante recortado contra um céu vermelho"
+            fill
+            sizes="(min-width: 640px) 66vh, 116vw"
+            quality={95}
+            className="object-cover object-top"
+            priority={false}
+          />
+        </div>
       </div>
 
       {/* o relógio, ancorado no corpo escuro, sempre abaixo da cara */}
@@ -106,35 +134,30 @@ export function CountdownSection() {
         .cena-morcego .relogio dt { opacity: 0.6; }
         .cena-morcego .relogio > div { border-color: color-mix(in srgb, var(--color-bone) 22%, transparent); }
 
-        /* O preto entra depois do bando começar: o vermelho segura enquanto os
-           morcegos cruzam a tela (visíveis), e escurece conforme eles convergem
-           e somem na cara do bicho. */
-        .cena-morcego .fundo {
-          opacity: 0;
-          transition: opacity 1100ms ease 350ms;
-        }
-        .cena-morcego[data-revelada] .fundo { opacity: 1; }
-
-        .cena-morcego .arte {
+        /* A cena inteira — preto, faixa e morcego — entra como uma peça só,
+           enquanto o bando converge. O vermelho segura até aqui, para os
+           morcegos (silhuetas pretas) aparecerem; então tudo escurece de uma vez
+           e o bicho já está no lugar deles. */
+        .cena-morcego .arte-cena {
           opacity: 0;
           transform: scale(1.06);
+          transform-origin: 50% 0;
           transition:
-            opacity 900ms ease-out 200ms,
-            transform 1400ms cubic-bezier(0.3, 0, 0.2, 1) 200ms;
+            opacity 1000ms ease-out 420ms,
+            transform 1400ms cubic-bezier(0.3, 0, 0.2, 1) 420ms;
         }
-        .cena-morcego[data-revelada] .arte {
+        .cena-morcego[data-revelada] .arte-cena {
           opacity: 1;
           transform: scale(1);
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .cena-morcego .arte {
+          /* Sem bando (ele fica escondido), a cena já nasce pronta. */
+          .cena-morcego .arte-cena {
             opacity: 1;
             transform: none;
             transition: none;
           }
-          /* Sem bando (ele fica escondido), a cena já nasce escura. */
-          .cena-morcego .fundo { opacity: 1; transition: none; }
         }
       `}</style>
     </section>
