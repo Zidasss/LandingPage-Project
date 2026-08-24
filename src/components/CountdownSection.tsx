@@ -44,60 +44,63 @@ export function CountdownSection() {
       ref={ref}
       id="contagem"
       /*
-        Uma tela cheia: no celular a arte cobre tudo com o bicho inteiro à
-        mostra — a cara e os olhos no alto, o corpo preto ocupando o meio e a base. Centralizado, o relógio assenta nesse corpo, logo abaixo dos
-        olhos, e não pendurado na base como antes.
+        A arte é dimensionada pela ALTURA da tela (svh), não por `cover` sobre a
+        seção. Assim o morcego tem sempre o mesmo tamanho em relação à tela e a
+        cara cai sempre na mesma faixa — em retrato ou paisagem, celular ou
+        monitor. Antes, com `cover`, o recorte mudava a cada proporção e a cara
+        ora batia bem em cima dos números. O relógio fica ancorado num ponto fixo
+        em svh, no corpo escuro do bicho, logo abaixo dos olhos: como o corpo já é
+        preto e se funde com o fundo, ele assenta ali em qualquer tela.
       */
-      className="cena-morcego bg-blood relative z-40 flex min-h-svh flex-col items-center justify-center overflow-hidden px-6 py-24"
+      className="cena-morcego bg-ink relative z-40 min-h-svh overflow-hidden"
     >
-      <Image
-        src={event.bats.scene}
-        alt="Morcego gigante recortado contra um céu vermelho"
-        fill
-        sizes="100vw"
-        quality={95}
-        className="arte object-cover object-top"
-        priority={false}
-      />
+      {/*
+        O teto em vw evita que, num celular estreito, a largura da arte (que sai
+        da altura) passe da tela e corte as pontas das asas.
+      */}
+      <div
+        className="absolute left-1/2 top-0 aspect-[4/5] -translate-x-1/2"
+        style={{ height: "min(66svh, 116vw)" }}
+      >
+        <Image
+          src={event.bats.scene}
+          alt="Morcego gigante recortado contra um céu vermelho"
+          fill
+          sizes="(min-width: 640px) 66vh, 116vw"
+          quality={95}
+          className="arte object-cover object-top"
+          priority={false}
+        />
+      </div>
 
       <BatSwarm />
 
-      <div className="relative z-10 w-full max-w-3xl text-center">
-        <p className="chapeu font-heading text-ink/70 text-[0.62rem] font-bold tracking-[0.35em] uppercase transition-colors delay-700 duration-700">
+      {/* o relógio, ancorado no corpo escuro, sempre abaixo da cara */}
+      <div className="absolute inset-x-0 top-[47svh] z-10 px-6 text-center">
+        <p className="chapeu font-heading text-bone/70 text-[0.62rem] font-bold tracking-[0.35em] uppercase">
           falta pouco
         </p>
-        <h2 className="titulo font-drip text-ink mt-3 text-4xl uppercase transition-colors delay-700 duration-700 sm:text-5xl">
+        <h2 className="titulo font-drip text-blood mt-3 text-4xl uppercase sm:text-5xl">
           A espera
         </h2>
-        <div className="mt-8">
+        <div className="mt-7">
           <Countdown target={event.startsAt} />
         </div>
       </div>
 
       <style>{`
-        /* Enquanto o fundo é vermelho o texto é preto; quando a arte chega e o
-           corpo do morcego toma a tela, ele vira claro. */
-        .cena-morcego[data-revelada] .titulo { color: var(--color-blood); }
-        .cena-morcego[data-revelada] .chapeu { color: color-mix(in srgb, var(--color-bone) 70%, transparent); }
-
-        /* O relógio segue o mesmo caminho: preto sobre o vermelho, claro
-           depois que o corpo preto do morcego chega. */
-        .cena-morcego .relogio { --tinta: var(--color-ink); }
-        .cena-morcego[data-revelada] .relogio { --tinta: var(--color-bone); }
-        /* A espera de 700ms casa com a entrada da arte: o texto só clareia
-           quando o corpo preto do morcego já está atrás dele. Trocando junto
-           com o disparo, ele ficava claro sobre o vermelho e sumia. */
+        /* Relógio claro sobre o corpo escuro. */
         .cena-morcego .relogio dd,
-        .cena-morcego .relogio dt { color: var(--tinta); transition: color 700ms ease 700ms; }
+        .cena-morcego .relogio dt { color: var(--color-bone); }
         .cena-morcego .relogio dt { opacity: 0.6; }
-        .cena-morcego .relogio > div { border-color: color-mix(in srgb, var(--tinta) 25%, transparent); transition: border-color 700ms ease 700ms; }
+        .cena-morcego .relogio > div { border-color: color-mix(in srgb, var(--color-bone) 22%, transparent); }
 
         .cena-morcego .arte {
           opacity: 0;
           transform: scale(1.06);
           transition:
-            opacity 900ms ease-out 620ms,
-            transform 1400ms cubic-bezier(0.3, 0, 0.2, 1) 620ms;
+            opacity 900ms ease-out 200ms,
+            transform 1400ms cubic-bezier(0.3, 0, 0.2, 1) 200ms;
         }
         .cena-morcego[data-revelada] .arte {
           opacity: 1;

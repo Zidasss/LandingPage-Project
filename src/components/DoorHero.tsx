@@ -1,5 +1,4 @@
 import { Doorway } from "@/components/Doorway";
-import { Floor } from "@/components/Floor";
 import { MeltingPoster } from "@/components/MeltingPoster";
 import { PosterLines } from "@/components/PosterLines";
 import {
@@ -29,11 +28,6 @@ import { event } from "@/config/event";
 export function DoorHero() {
   return (
     <section data-hero className="bg-ink relative h-svh overflow-hidden">
-      {/* z-0 · chão em perspectiva, com o ponto de fuga na porta */}
-      <div className="text-blood/40 absolute inset-0 z-0">
-        <Floor />
-      </div>
-
       {/* z-10 · a porta */}
       <div
         data-porta

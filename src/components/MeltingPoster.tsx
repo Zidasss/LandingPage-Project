@@ -19,28 +19,29 @@ const DEGRAU = 3;
  */
 const LIMIAR_INICIAL = -8;
 const LIMIAR_FINAL = -26;
-/** Quanto do percurso separa a primeira linha a derreter da última. */
+/** Quanto do percurso separa a primeira linha a se formar da última. */
 const ATRASO_TOTAL = 0.34;
+/** Fração da rolagem do hero em que o cartaz termina de se formar. */
+const FORMA = 0.62;
 /** Quantos filtros existem no documento — teto de linhas atendidas. */
 const FILTROS = 8;
 
 /**
- * Derrete o cartaz conforme a página rola: as letras escorrem para os lados,
- * empurradas pela boca da luz que se abre, e se desfazem antes de o vermelho
- * virar fundo.
+ * O cartaz se **forma derretendo**, conforme a página rola — tudo guiado só pelo
+ * scroll, sem relógio nenhum.
  *
- * Tudo aqui obedece só ao scroll. Quando a porta termina de abrir, a rolagem do
- * hero está em zero e o cartaz está formado, parado dentro da luz — ele é
- * revelado junto com a porta, não por uma animação à parte. A partir daí, cada
- * pixel de rolagem funde as letras e as espalha para os lados, no mesmo compasso
- * em que a luz cresce e toma a tela. Não há relógio nenhum: parar de rolar
- * congela o quadro, voltar desfaz. É uma coisa só com a abertura.
+ * Quando a porta termina de abrir, a rolagem do hero está em zero e as letras
+ * estão liquefeitas, gotas espalhadas dentro da luz. A partir daí, cada pixel de
+ * rolagem puxa a massa de volta à forma: as gotas se juntam, as bordas endurecem
+ * e as palavras aparecem — no mesmo compasso em que a luz cresce e toma a tela. É
+ * o derretimento ao contrário, e é uma coisa só com a abertura: parar de rolar
+ * congela o quadro, voltar torna a derreter.
  *
  * Cada linha tem o **seu próprio filtro**, com semente e ritmo diferentes. Com
- * um filtro só, todas derretiam no mesmo instante e com o mesmo desenho — o
+ * um filtro só, todas se formavam no mesmo instante e com o mesmo desenho — o
  * efeito ficava mecânico, que é o oposto do que derretimento parece. Aqui as
- * de baixo começam primeiro, por estarem mais perto de quem olha, e cada uma
- * se desfaz com uma textura própria.
+ * de baixo endurecem primeiro, por estarem mais perto de quem olha, e cada uma
+ * com uma textura própria.
  *
  * A deformação é `feDisplacementMap` seguido de liquefação: filtro é o efeito
  * mais caro que existe para animar, porque não roda na camada de composição.
@@ -91,26 +92,30 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
     const aplicar = () => {
       frame = 0;
       const rect = palco.getBoundingClientRect();
-      // Só o scroll do hero manda: em zero (porta recém-aberta) o cartaz está
-      // formado; cada pixel de rolagem funde e espalha as letras.
-      const local0 = Math.min(1, Math.max(0, -rect.top / (rect.height || 1)));
+      // Só o scroll do hero manda. Em zero (porta recém-aberta) as letras estão
+      // liquefeitas; a rolagem, dividida por FORMA, é o quanto elas já voltaram
+      // à forma — 1 = formado. O resto da rolagem segura o cartaz pronto até o
+      // hero sair de cena.
+      const rolagem = Math.min(1, Math.max(0, -rect.top / (rect.height || 1)));
+      const forma0 = Math.min(1, rolagem / FORMA);
 
       for (const t of trilhas) {
-        const local = Math.min(
+        // As de baixo (atraso menor) endurecem primeiro.
+        const formado = Math.min(
           1,
-          Math.max(0, (local0 - t.atraso) / (1 - t.atraso)),
+          Math.max(0, (forma0 - t.atraso) / (1 - t.atraso)),
         );
+        // `local` é o quanto ainda está derretido: 1 liquefeito, 0 formado.
+        const local = 1 - formado;
 
-        // O espalhamento lateral acompanha a mesma rolagem: é a boca da luz que
-        // abre espaço para ele, e ela cresce com o scroll.
-        const espalha = local;
-        t.linha.style.transform = `scale3d(${(1 + espalha * espalha * 1.35).toFixed(3)}, ${(1 - espalha * 0.16).toFixed(3)}, 1)`;
+        // Um leve escorrido vertical enquanto a massa ainda é líquida, que
+        // assenta quando a letra endurece. Nada de espalhar para os lados: perto
+        // da porta a luz é estreita e as letras sairiam dela para o preto.
+        t.linha.style.transform = `scale3d(1, ${(1 + local * 0.09).toFixed(3)}, 1)`;
 
         if (!telaGrande || !t.desloca || !t.borrao || !t.ruido || !t.limiar) {
-          // Sem filtro, só resta desaparecer por opacidade — devagar, para não
-          // piscar.
-          const desvanecer = Math.min(1, Math.max(0, (local - 0.3) / 0.34));
-          t.linha.style.opacity = (1 - desvanecer * desvanecer).toFixed(3);
+          // Sem filtro, a linha surge por opacidade conforme endurece.
+          t.linha.style.opacity = (1 - local * local).toFixed(3);
           continue;
         }
         const escala = Math.round((local * DERRETIMENTO) / DEGRAU) * DEGRAU;
