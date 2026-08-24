@@ -2,18 +2,18 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import {
-  ABRE,
   ALARGA,
   ALTURA_ABERTURA,
   CARTAZ,
   MACANETA,
   PORTA,
   RECUO,
+  aberturaDaFolha,
   fatia,
   progresso,
+  suavizar,
 } from "@/lib/abertura";
 import { DOOR_BOTTOM, DOOR_RATIO, DOOR_TOP } from "@/lib/beam";
-import { cubicBezier } from "@/lib/easing";
 import { DoorCrowd } from "@/components/DoorCrowd";
 import { MeltingPoster } from "@/components/MeltingPoster";
 import { PosterLines } from "@/components/PosterLines";
@@ -43,6 +43,8 @@ export function Opening() {
   const macaneta = useRef<HTMLDivElement>(null);
   const porta = useRef<HTMLDivElement>(null);
   const folha = useRef<HTMLDivElement>(null);
+  const quina = useRef<HTMLDivElement>(null);
+  const galera = useRef<HTMLDivElement>(null);
   const brilho = useRef<HTMLDivElement>(null);
   const cartaz = useRef<HTMLDivElement>(null);
   const dica = useRef<HTMLParagraphElement>(null);
@@ -68,7 +70,6 @@ export function Opening() {
     const alvo = secao.current;
     if (!alvo) return;
 
-    const suavizar = cubicBezier(0.45, 0, 0.35, 1);
     const lerp = (de: number, ate: number, t: number) => de + (ate - de) * t;
 
     const reduzido = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -107,8 +108,8 @@ export function Opening() {
           `hue-rotate(${(-rec * 30).toFixed(0)}deg) brightness(${(1 - rec * 0.3).toFixed(2)})`;
       }
 
-      // --- abertura: a folha gira ---
-      const o = suavizar(fatia(p, ABRE));
+      // --- abertura: a folha gira (mesma conta que a luz lê) ---
+      const o = aberturaDaFolha(p);
       const largura = 1 - o * 0.95;
 
       // --- maçaneta: aparece e depois viaja com a borda da folha ---
@@ -127,6 +128,23 @@ export function Opening() {
       if (folha.current) {
         folha.current.style.transform = `scaleX(${largura.toFixed(4)})`;
         folha.current.style.filter = `brightness(${(1 - o * 0.7).toFixed(3)})`;
+      }
+
+      // A quina da folha, virada para dentro, pega a luz da sala. É o que dá
+      // espessura à porta: sem ela a folha é um retângulo preto encolhendo, e
+      // não uma folha girando na frente de uma luz. Ela viaja com a borda e
+      // acende conforme o vão abre — some no fim, quando a folha já saiu.
+      if (quina.current) {
+        quina.current.style.left = `${(largura * 100).toFixed(3)}%`;
+        quina.current.style.opacity = String(
+          fatia(o, [0, 0.12]) * (1 - fatia(o, [0.86, 1])),
+        );
+      }
+
+      // A festa assenta enquanto é revelada: entra um tico maior e recua para o
+      // lugar. Parada, ela lê como adesivo colado atrás do vão.
+      if (galera.current) {
+        galera.current.style.transform = `scale(${lerp(1.08, 1, o).toFixed(4)})`;
       }
 
       // O brilho do batente é da porta se abrindo: cresce com o vão e se apaga
@@ -197,8 +215,14 @@ export function Opening() {
         {/* a porta: a luz e a festa atrás, a folha por cima delas */}
         <div ref={porta} data-porta className="abertura-porta">
           <div className="abertura-luz" />
-          <DoorCrowd />
+          <div ref={galera} className="abertura-galera">
+            <DoorCrowd />
+          </div>
+          {/* a sombra do batente, que dá fundo ao vão */}
+          <div aria-hidden className="abertura-batente" />
           <div ref={folha} className="abertura-folha" />
+          {/* a quina da folha, acesa pela luz de dentro */}
+          <div ref={quina} aria-hidden className="abertura-quina" />
         </div>
 
         {/*
@@ -306,6 +330,27 @@ export function Opening() {
           background: var(--color-blood);
         }
 
+        .abertura-galera {
+          position: absolute;
+          inset: 0;
+          transform-origin: 50% 100%;
+        }
+
+        /*
+          A sombra que o batente joga para dentro. Só no alto e nas laterais: em
+          baixo o vão emenda com o feixe, e escurecer ali abriria uma costura
+          entre a luz da porta e a luz que desce pelo chão.
+        */
+        .abertura-batente {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background:
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent 22%),
+            linear-gradient(to right, rgba(0, 0, 0, 0.35), transparent 12%),
+            linear-gradient(to left, rgba(0, 0, 0, 0.35), transparent 12%);
+        }
+
         .abertura-folha {
           position: absolute;
           inset: 0;
@@ -313,6 +358,27 @@ export function Opening() {
           background: #120303;
           transform-origin: left center;
           transform: scaleX(1);
+        }
+
+        /*
+          Fora da folha, e não uma borda dela: a folha é escalada em X, e uma
+          borda encolheria junto até sumir. Solta, a quina mantém a espessura e
+          só acompanha a posição da aresta.
+        */
+        .abertura-quina {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          z-index: 2;
+          width: 0.5vh;
+          min-width: 2px;
+          transform: translateX(-100%);
+          opacity: 0;
+          background: linear-gradient(
+            to right,
+            rgba(255, 140, 90, 0.15),
+            rgba(255, 190, 150, 0.85)
+          );
         }
 
         .abertura-brilho {

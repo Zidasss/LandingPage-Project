@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import {
-  ABRE,
-  ALARGA,
-  fatia,
-  progresso,
-} from "@/lib/abertura";
+import { ALARGA, aberturaDaFolha, fatia, progresso } from "@/lib/abertura";
 import {
   beamGapPolygon,
   beamPolygon,
@@ -67,7 +62,9 @@ export function OpeningBeam() {
 
       // Antes de a folha começar a girar não há luz nenhuma para mostrar: o
       // vermelho apareceria como um bloco no fundo, sem porta que o justifique.
-      const aberto = fatia(p, ABRE);
+      // O número vem da mesma conta da folha, já suavizado — é o que mantém a
+      // boca da luz exatamente do tamanho da fresta.
+      const aberto = aberturaDaFolha(p);
       const mostrar = aberto > 0;
       if (mostrar !== visivel) {
         node.style.opacity = mostrar ? "1" : "0";
