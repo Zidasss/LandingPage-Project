@@ -118,12 +118,6 @@ export function CountdownSection() {
         .cena-morcego .arte {
           opacity: 0;
           transform: scale(1.06);
-          /* As laterais da arte se dissolvem no preto atrás dela: sem isso o céu
-             vermelho terminava numa borda reta contra o preto dos lados, e as
-             pontas das asas paravam no ar. Com a máscara, a asa some no preto — o
-             bicho encosta nos lados sem costura. */
-          -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
-          mask-image: linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
           transition:
             opacity 900ms ease-out 200ms,
             transform 1400ms cubic-bezier(0.3, 0, 0.2, 1) 200ms;

@@ -64,6 +64,7 @@ export function Intro() {
   const folha = useRef<HTMLDivElement>(null);
   const feixe = useRef<HTMLDivElement>(null);
   const brilho = useRef<HTMLDivElement>(null);
+  const dica = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     const alvo = secao.current;
@@ -142,7 +143,15 @@ export function Intro() {
         feixe.current.style.opacity = o > 0 ? "1" : "0";
       }
 
-      if (brilho.current) brilho.current.style.opacity = String(fatia(p, ABRE));
+      // O brilho e a dica são exclusivos da abertura: o hero não os tem. Se
+      // continuassem cheios até a troca, sumiam de repente no handoff e a porta
+      // parecia "outra", sem os efeitos. Por isso somem ANTES da troca — o
+      // brilho cresce com a porta e se apaga no fim, quando o feixe assume.
+      const saida = 1 - fatia(p, [0.82, 1]);
+      if (brilho.current)
+        brilho.current.style.opacity = String(fatia(p, ABRE) * saida);
+      if (dica.current)
+        dica.current.style.opacity = String(0.55 * (1 - fatia(p, ABRE)));
 
       // A troca para o hero acontece quando a porta dele encosta no topo da
       // tela — e não quando a animação termina. Nesse instante a porta do hero
@@ -228,7 +237,9 @@ export function Intro() {
           <div ref={folha} className="intro-folha" />
         </div>
 
-        <p className="intro-dica font-heading">role para abrir a porta ▾</p>
+        <p ref={dica} className="intro-dica font-heading">
+          role para abrir a porta ▾
+        </p>
       </div>
 
       <style>{`
