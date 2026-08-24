@@ -44,19 +44,18 @@ export function CountdownSection() {
       ref={ref}
       id="contagem"
       /*
-        Mais alta que a tela de propósito: a arte é ancorada no topo, e numa
-        tela baixa a cara do morcego cai no meio, bem onde o texto fica. Com
-        folga extra, o corpo preto sempre sobra embaixo da cara — e é lá que os
-        números moram.
+        Uma tela cheia: no celular a arte cobre tudo com o bicho inteiro à
+        mostra — a cara e os olhos no alto, o corpo preto ocupando o meio e a base. Centralizado, o relógio assenta nesse corpo, logo abaixo dos
+        olhos, e não pendurado na base como antes.
       */
-      className="cena-morcego bg-blood relative z-40 flex min-h-[118svh] flex-col items-center justify-end overflow-hidden px-6 pb-[12svh]"
+      className="cena-morcego bg-blood relative z-40 flex min-h-svh flex-col items-center justify-center overflow-hidden px-6 py-24"
     >
       <Image
         src={event.bats.scene}
         alt="Morcego gigante recortado contra um céu vermelho"
         fill
         sizes="100vw"
-        quality={90}
+        quality={95}
         className="arte object-cover object-top"
         priority={false}
       />

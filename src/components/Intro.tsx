@@ -11,6 +11,7 @@ import {
 } from "@/lib/beam";
 import { cubicBezier } from "@/lib/easing";
 import { DoorCrowd } from "@/components/DoorCrowd";
+import { Floor } from "@/components/Floor";
 import { event } from "@/config/event";
 
 /**
@@ -30,9 +31,6 @@ import { event } from "@/config/event";
  * A porta usa as mesmas medidas da porta do hero, então quando a abertura
  * termina as duas estão no mesmo lugar e a passagem não tem emenda.
  */
-
-/** Avisa o resto da página que a porta terminou de abrir. */
-export const PORTA_ABERTA = "volvoween:porta-aberta";
 
 /** Altura da seção. O que passa de 100svh é a distância de rolagem. */
 const ALTURA = "300svh";
@@ -62,6 +60,7 @@ export function Intro() {
   const secao = useRef<HTMLElement>(null);
   const palco = useRef<HTMLDivElement>(null);
   const abobora = useRef<HTMLDivElement>(null);
+  const chao = useRef<HTMLDivElement>(null);
   const macaneta = useRef<HTMLDivElement>(null);
   const porta = useRef<HTMLDivElement>(null);
   const folha = useRef<HTMLDivElement>(null);
@@ -78,15 +77,13 @@ export function Intro() {
 
     const reduzido = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (reduzido.matches) {
-      // Sem movimento: a seção some e a porta já conta como aberta, para o
-      // cartaz do hero se formar sozinho.
+      // Sem movimento: a seção some e o hero, logo abaixo, já mostra a porta
+      // aberta com o cartaz formado.
       alvo.style.display = "none";
-      window.dispatchEvent(new CustomEvent(PORTA_ABERTA));
       return;
     }
 
     let frame = 0;
-    let avisado = false;
     let escondido = false;
 
     const desenhar = () => {
@@ -134,6 +131,11 @@ export function Intro() {
 
       if (porta.current) porta.current.style.opacity = String(fatia(p, PORTA));
 
+      // O chão em perspectiva nasce junto com a porta e chega a cheio na troca,
+      // já igual ao do hero. Sem ele aqui, as linhas surgiam de repente no
+      // handoff, como um segundo quadro entrando.
+      if (chao.current) chao.current.style.opacity = String(fatia(p, PORTA));
+
       if (folha.current) {
         folha.current.style.transform = `scaleX(${largura.toFixed(4)})`;
         folha.current.style.filter = `brightness(${(1 - o * 0.7).toFixed(3)})`;
@@ -167,14 +169,6 @@ export function Intro() {
         palco.current!.style.pointerEvents = fim ? "none" : "";
         escondido = fim;
       }
-
-      // O cartaz do hero espera este aviso para se formar. Disparado na troca (e
-      // não ao fim da animação), para o derretimento acontecer à vista, e não
-      // escondido atrás do palco.
-      if (fim && !avisado) {
-        avisado = true;
-        window.dispatchEvent(new CustomEvent(PORTA_ABERTA));
-      }
     };
 
     const aoRolar = () => {
@@ -204,6 +198,11 @@ export function Intro() {
         className="bg-ink fixed inset-0 z-[100] overflow-hidden transition-opacity duration-300"
         aria-hidden
       >
+        {/* o chão em perspectiva, o mesmo do hero, atrás de tudo */}
+        <div ref={chao} className="text-blood/40 absolute inset-0 opacity-0">
+          <Floor />
+        </div>
+
         {/* a abóbora: presente, e recua perdendo a forma conforme rola */}
         <div ref={abobora} className="intro-abobora">
           {event.intro.pumpkin ? (

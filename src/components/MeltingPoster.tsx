@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
-import { PORTA_ABERTA } from "@/components/Intro";
 
 /** Deformação máxima, em pixels do espaço do filtro. */
 const DERRETIMENTO = 118;
@@ -24,25 +23,24 @@ const LIMIAR_FINAL = -26;
 const ATRASO_TOTAL = 0.34;
 /** Quantos filtros existem no documento — teto de linhas atendidas. */
 const FILTROS = 8;
-/** Tempo que o cartaz leva para se formar depois que a porta abre. */
-const ENTRADA = 1200;
 
 /**
  * Derrete o cartaz conforme a página rola: as letras escorrem para os lados,
  * empurradas pela boca da luz que se abre, e se desfazem antes de o vermelho
  * virar fundo.
  *
+ * Tudo aqui obedece só ao scroll. Quando a porta termina de abrir, a rolagem do
+ * hero está em zero e o cartaz está formado, parado dentro da luz — ele é
+ * revelado junto com a porta, não por uma animação à parte. A partir daí, cada
+ * pixel de rolagem funde as letras e as espalha para os lados, no mesmo compasso
+ * em que a luz cresce e toma a tela. Não há relógio nenhum: parar de rolar
+ * congela o quadro, voltar desfaz. É uma coisa só com a abertura.
+ *
  * Cada linha tem o **seu próprio filtro**, com semente e ritmo diferentes. Com
  * um filtro só, todas derretiam no mesmo instante e com o mesmo desenho — o
  * efeito ficava mecânico, que é o oposto do que derretimento parece. Aqui as
  * de baixo começam primeiro, por estarem mais perto de quem olha, e cada uma
  * se desfaz com uma textura própria.
- *
- * O mesmo caminho serve para o cartaz **aparecer**: quando a porta da abertura
- * termina de abrir, o derretimento é percorrido de trás para frente e as letras
- * se formam a partir das gotas. Reaproveitar o percurso é o que faz a entrada e
- * a saída parecerem o mesmo material — uma animação de entrada escrita à parte
- * seria outra linguagem no meio da mesma cena.
  *
  * A deformação é `feDisplacementMap` seguido de liquefação: filtro é o efeito
  * mais caro que existe para animar, porque não roda na camada de composição.
@@ -90,31 +88,22 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
     });
 
     let frame = 0;
-    /** 1 = ainda derretido, 0 = formado. Cai para zero na entrada. */
-    let entrada = 1;
     const aplicar = () => {
       frame = 0;
       const rect = palco.getBoundingClientRect();
-      const rolagem = Math.min(1, Math.max(0, -rect.top / (rect.height || 1)));
-      // Entrada e saída dividem o mesmo percurso: o que estiver mais derretido
-      // manda. Assim quem rola antes de o cartaz terminar de se formar não vê
-      // as duas animações brigando.
-      const p = Math.max(rolagem, entrada);
+      // Só o scroll do hero manda: em zero (porta recém-aberta) o cartaz está
+      // formado; cada pixel de rolagem funde e espalha as letras.
+      const local0 = Math.min(1, Math.max(0, -rect.top / (rect.height || 1)));
 
       for (const t of trilhas) {
         const local = Math.min(
           1,
-          Math.max(0, (p - t.atraso) / (1 - t.atraso)),
+          Math.max(0, (local0 - t.atraso) / (1 - t.atraso)),
         );
 
-        // O espalhamento lateral segue só a rolagem, nunca a entrada: quem
-        // abre espaço para ele é a boca da luz, que só se mexe no scroll. Na
-        // entrada a luz está parada, e espalhar aqui jogaria as letras para
-        // fora dela, por cima da porta e do preto.
-        const espalha = Math.min(
-          1,
-          Math.max(0, (rolagem - t.atraso) / (1 - t.atraso)),
-        );
+        // O espalhamento lateral acompanha a mesma rolagem: é a boca da luz que
+        // abre espaço para ele, e ela cresce com o scroll.
+        const espalha = local;
         t.linha.style.transform = `scale3d(${(1 + espalha * espalha * 1.35).toFixed(3)}, ${(1 - espalha * 0.16).toFixed(3)}, 1)`;
 
         if (!telaGrande || !t.desloca || !t.borrao || !t.ruido || !t.limiar) {
@@ -156,20 +145,6 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
       if (!frame) frame = requestAnimationFrame(aplicar);
     };
 
-    let inicio = 0;
-    const formar = (agora: number) => {
-      if (!inicio) inicio = agora;
-      entrada = Math.max(0, 1 - (agora - inicio) / ENTRADA);
-      aplicar();
-      if (entrada > 0) requestAnimationFrame(formar);
-    };
-    const comecarEntrada = () => requestAnimationFrame(formar);
-
-    // A abertura fica acima do hero, então quem chega aqui já rolou por ela e
-    // já disparou o aviso. O cartaz se forma nesse aviso, pelo caminho inverso
-    // do derretimento.
-    window.addEventListener(PORTA_ABERTA, comecarEntrada, { once: true });
-
     aplicar();
     window.addEventListener("scroll", aoRolar, { passive: true });
     window.addEventListener("resize", aoRolar, { passive: true });
@@ -177,7 +152,6 @@ export function MeltingPoster({ children }: { children: ReactNode }) {
       if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("scroll", aoRolar);
       window.removeEventListener("resize", aoRolar);
-      window.removeEventListener(PORTA_ABERTA, comecarEntrada);
     };
   }, []);
 
