@@ -51,9 +51,22 @@ export function CountdownSection() {
         ora batia bem em cima dos números. O relógio fica ancorado num ponto fixo
         em svh, no corpo escuro do bicho, logo abaixo dos olhos: como o corpo já é
         preto e se funde com o fundo, ele assenta ali em qualquer tela.
+
+        O fundo começa VERMELHO, não preto: os morcegos do bando são silhuetas
+        pretas e, sobre preto, sumiam — a animação parecia não existir. Sobre o
+        vermelho eles aparecem, e o vermelho ainda emenda com a seção anterior. O
+        preto entra por cima na revelação (a camada `.fundo`), junto com a arte,
+        e é aí que a cena vira escura.
       */
-      className="cena-morcego bg-ink relative z-40 min-h-svh overflow-hidden"
+      className="cena-morcego bg-blood relative z-40 min-h-svh overflow-hidden"
     >
+      {/* o bando, no fundo de tudo: voa sobre o vermelho (onde as silhuetas
+          pretas aparecem) e o preto o cobre conforme ele converge e some */}
+      <BatSwarm />
+
+      {/* o preto que toma a cena na revelação, cobrindo o vermelho do bando */}
+      <div aria-hidden className="fundo bg-ink absolute inset-0" />
+
       {/*
         O teto em vw evita que, num celular estreito, a largura da arte (que sai
         da altura) passe da tela e corte as pontas das asas.
@@ -72,8 +85,6 @@ export function CountdownSection() {
           priority={false}
         />
       </div>
-
-      <BatSwarm />
 
       {/* o relógio, ancorado no corpo escuro, sempre abaixo da cara */}
       <div className="absolute inset-x-0 top-[47svh] z-10 px-6 text-center">
@@ -95,6 +106,15 @@ export function CountdownSection() {
         .cena-morcego .relogio dt { opacity: 0.6; }
         .cena-morcego .relogio > div { border-color: color-mix(in srgb, var(--color-bone) 22%, transparent); }
 
+        /* O preto entra depois do bando começar: o vermelho segura enquanto os
+           morcegos cruzam a tela (visíveis), e escurece conforme eles convergem
+           e somem na cara do bicho. */
+        .cena-morcego .fundo {
+          opacity: 0;
+          transition: opacity 1100ms ease 350ms;
+        }
+        .cena-morcego[data-revelada] .fundo { opacity: 1; }
+
         .cena-morcego .arte {
           opacity: 0;
           transform: scale(1.06);
@@ -113,6 +133,8 @@ export function CountdownSection() {
             transform: none;
             transition: none;
           }
+          /* Sem bando (ele fica escondido), a cena já nasce escura. */
+          .cena-morcego .fundo { opacity: 1; transition: none; }
         }
       `}</style>
     </section>

@@ -185,10 +185,16 @@ export function Intro() {
         inteiro sem depender de svh nem do sticky, que no iOS deixavam uma faixa
         descoberta embaixo. A seção alta continua em fluxo só para dar a
         distância de rolagem; o script esconde o palco quando a abertura acaba.
+
+        A troca é INSTANTÂNEA, sem transição: as portas estão sobrepostas pixel a
+        pixel no quadro da troca, então trocar na hora é invisível. Com um fade de
+        300ms, a rolagem continuava durante o fade — o palco ficava congelado
+        enquanto a porta do hero subia, e via-se as duas ao mesmo tempo: a
+        duplicação da porta e do feixe onde as letras apareciam.
       */}
       <div
         ref={palco}
-        className="bg-ink fixed inset-0 z-[100] overflow-hidden transition-opacity duration-300"
+        className="bg-ink fixed inset-0 z-[100] overflow-hidden"
         aria-hidden
       >
         {/* a abóbora: presente, e recua perdendo a forma conforme rola */}

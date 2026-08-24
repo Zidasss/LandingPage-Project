@@ -19,7 +19,7 @@ import { event } from "@/config/event";
  */
 
 /** Quantos morcegos cruzam a tela. */
-const QUANTIDADE = 28;
+const QUANTIDADE = 60;
 
 /**
  * Gerador pseudoaleatório com semente fixa (mulberry32).
@@ -47,11 +47,13 @@ const BANDO = Array.from({ length: QUANTIDADE }, (_, i) => {
   const r = semeado(i * 97 + 13);
   const daEsquerda = i % 2 === 0;
   return {
-    x: (daEsquerda ? -1 : 1) * (42 + r() * 48), // 42vw a 90vw de distância
-    y: -68 + r() * 78, // espalhado no eixo vertical
+    // Espalhados pela tela toda, começando mais para dentro (12vw a 66vw): longe
+    // demais e o bicho passava o voo fora da tela, deixando o bando ralo.
+    x: (daEsquerda ? -1 : 1) * (12 + r() * 54),
+    y: -58 + r() * 116, // de cima e de baixo, cobrindo a altura da tela
     giro: (r() - 0.5) * 64, // inclinação de voo
-    escala: 0.32 + r() * 0.7, // profundidade: perto e longe
-    atraso: Math.round(r() * 620), // ninguém chega no mesmo instante
+    escala: 0.3 + r() * 0.72, // profundidade: perto e longe
+    atraso: Math.round(r() * 440), // stagger que vira um fluxo contínuo
     sprite: i % 2, // alterna os dois recortes
   };
 });
@@ -100,7 +102,10 @@ export function BatSwarm() {
         .morcego {
           position: absolute;
           left: 50%;
-          top: 46%;
+          /* Convergem para a cara do morcego grande, no alto — não para o centro
+             da tela. A arte agora é dimensionada pela altura (svh) e a cara fica
+             por volta de 21svh; o bando some exatamente ali, virando o bicho. */
+          top: 21svh;
           width: 12vmin;
           aspect-ratio: 153 / 115;
           background-size: contain;
@@ -112,20 +117,21 @@ export function BatSwarm() {
 
         .bando[data-chegando] .morcego {
           animation:
-            morcego-chega 1150ms cubic-bezier(0.3, 0, 0.2, 1) forwards,
-            morcego-bate 260ms ease-in-out 5;
+            morcego-chega 1500ms cubic-bezier(0.3, 0, 0.2, 1) forwards,
+            morcego-bate 260ms ease-in-out 6;
         }
 
-        /* A vinda: de fora da tela até o centro, encolhendo — some ao chegar,
-           porque quem fica no lugar dele é a arte inteira. */
+        /* A vinda: de fora da tela até a cara do bicho, encolhendo — some só no
+           fim, ao chegar, porque quem fica no lugar dele é a arte inteira.
+           Ficam visíveis quase o voo todo, para o bando ter volume. */
         @keyframes morcego-chega {
           0% {
             opacity: 0;
             transform: translate3d(var(--de-x), var(--de-y), 0)
               rotate(var(--giro)) scale(var(--escala));
           }
-          12% { opacity: 1; }
-          72% { opacity: 1; }
+          9% { opacity: 1; }
+          86% { opacity: 1; }
           100% {
             opacity: 0;
             transform: translate3d(-50%, -10%, 0) rotate(0deg) scale(0.14);
