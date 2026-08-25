@@ -3,6 +3,20 @@
  * Tudo que muda de ano para ano (ou que o Gustavo quiser ajustar) mora aqui.
  * Campos marcados com TODO ainda precisam ser confirmados.
  */
+
+/**
+ * O valor da variável de ambiente, ou o padrão quando ela não diz nada.
+ *
+ * `??` não serve aqui: ele só cai no padrão quando a variável **não existe**, e
+ * variável de ambiente é sempre texto. Criada em branco no painel da Vercel —
+ * que é o passo mais fácil de errar — ela chega como `""`, atravessa o `??` e
+ * derruba o que dependia dela. Foi assim que o PIX sumiu do site: a chave
+ * existia, vazia, e o padrão nunca entrou.
+ */
+export function ouPadrao(valor: string | undefined, padrao: string): string {
+  const limpo = valor?.trim();
+  return limpo ? limpo : padrao;
+}
 export const event = {
   name: "Volvoween",
   tagline: "A noite em que a fita não rebobina",
@@ -41,10 +55,10 @@ export const event = {
   pix: {
     // Chave de telefone. As variáveis de ambiente continuam podendo
     // sobrescrever na Vercel sem commit; o valor abaixo é o padrão que já
-    // funciona sem configurar nada.
-    key: process.env.NEXT_PUBLIC_PIX_KEY ?? "+5541996475299",
-    receiverName: process.env.NEXT_PUBLIC_PIX_NAME ?? "VOLVOWEEN",
-    receiverCity: process.env.NEXT_PUBLIC_PIX_CITY ?? "CURITIBA",
+    // funciona sem configurar nada — inclusive se a variável existir em branco.
+    key: ouPadrao(process.env.NEXT_PUBLIC_PIX_KEY, "+5541996475299"),
+    receiverName: ouPadrao(process.env.NEXT_PUBLIC_PIX_NAME, "VOLVOWEEN"),
+    receiverCity: ouPadrao(process.env.NEXT_PUBLIC_PIX_CITY, "CURITIBA"),
   },
 
   /** Abertura do site, antes da cena da porta. */

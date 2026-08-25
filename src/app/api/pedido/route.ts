@@ -77,7 +77,9 @@ export async function POST(req: Request): Promise<Response> {
   pedido.ingressos = Math.min(pedido.ingressos, MAX_INGRESSOS);
   pedido.valor = event.ticket.price * pedido.ingressos;
 
-  const destino = process.env.SHEETS_WEBHOOK_URL;
+  // Aparado: variável criada em branco no painel chega como texto vazio ou com
+  // espaço, e um endereço de um espaço só passaria por "configurado".
+  const destino = process.env.SHEETS_WEBHOOK_URL?.trim();
   if (!destino)
     return responder({ registrado: false, motivo: "planilha não configurada" }, 200);
 
@@ -87,7 +89,7 @@ export async function POST(req: Request): Promise<Response> {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         acao,
-        segredo: process.env.SHEETS_WEBHOOK_SECRET ?? "",
+        segredo: process.env.SHEETS_WEBHOOK_SECRET?.trim() ?? "",
         quando: new Date().toISOString(),
         evento: event.name,
         ...pedido,
