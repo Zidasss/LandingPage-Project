@@ -61,6 +61,16 @@ export const event = {
     receiverCity: ouPadrao(process.env.NEXT_PUBLIC_PIX_CITY, "CURITIBA"),
   },
 
+  /** Quem recebe os comprovantes e confirma as vagas. */
+  organizacao: {
+    /**
+     * WhatsApp que recebe o comprovante. Só dígitos, com país e DDD — é o
+     * formato que o link `wa.me` exige; com `+`, parênteses ou traço ele abre
+     * o app sem a conversa.
+     */
+    whatsapp: ouPadrao(process.env.NEXT_PUBLIC_WHATSAPP, "5541996475299"),
+  },
+
   /** Abertura do site, antes da cena da porta. */
   intro: {
     /** Abóbora que vira a maçaneta. */

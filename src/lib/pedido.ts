@@ -43,6 +43,34 @@ export function apenasDigitos(valor: string): string {
   return valor.replace(/\D/g, "");
 }
 
+/**
+ * O link que abre o WhatsApp da organização com o recado já escrito.
+ *
+ * É o que fecha o ciclo do pagamento. O PIX cai na conta como um valor solto —
+ * pode haver dois Gustavos, ou a conta estar no nome de outra pessoa. O código
+ * do pedido vai no recado, e é por ele que o dinheiro encontra a linha da
+ * planilha.
+ *
+ * Sem isto o site pedia o comprovante sem dizer para quem nem como, e a pessoa
+ * ficava com o print na mão sem destino.
+ */
+export function linkComprovante(dados: {
+  numero: string;
+  festa: string;
+  txid: string;
+  nome: string;
+  ingressos: number;
+  valor: string;
+}): string {
+  const plural = dados.ingressos === 1 ? "ingresso" : "ingressos";
+  const recado =
+    `Oi! Fiz o PIX da ${dados.festa}. ` +
+    `Pedido ${dados.txid} — ${dados.nome}, ` +
+    `${dados.ingressos} ${plural}, ${dados.valor}. ` +
+    `Segue o comprovante:`;
+  return `https://wa.me/${apenasDigitos(dados.numero)}?text=${encodeURIComponent(recado)}`;
+}
+
 export function validarPedido(pedido: Partial<Pedido>): ErrosPedido {
   const erros: ErrosPedido = {};
 

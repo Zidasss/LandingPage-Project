@@ -7,6 +7,7 @@ import { TicketWall } from "@/components/TicketWall";
 import { brl, makeTxid, maskPhone } from "@/lib/format";
 import {
   MAX_INGRESSOS,
+  linkComprovante,
   validarPedido,
   type Acao,
   type ErrosPedido,
@@ -80,12 +81,21 @@ export function TicketSection() {
     void avisarPlanilha("novo", convidado, codigo);
   }
 
-  async function confirmarPagamento() {
+  /**
+   * O aviso sai enquanto o WhatsApp abre.
+   *
+   * Não se espera a planilha responder para deixar o link seguir: navegador
+   * bloqueia janela aberta depois de um `await`, e o comprovante — que é o que
+   * garante a vaga — é mais importante que o registro. Por isso o botão é um
+   * link de verdade, e isto só corre ao lado.
+   */
+  function registrarEnvio() {
     if (!txid || avisando) return;
     setAvisando(true);
-    const ok = await avisarPlanilha("pagou", convidado, txid);
-    setAvisouPagamento(ok);
-    setAvisando(false);
+    void avisarPlanilha("pagou", convidado, txid).then((ok) => {
+      setAvisouPagamento(ok);
+      setAvisando(false);
+    });
   }
 
   function update<K extends keyof Convidado>(campo: K, valor: Convidado[K]) {
@@ -224,39 +234,46 @@ export function TicketSection() {
                   <p className="font-heading text-blood text-sm font-bold tracking-[0.2em] uppercase">
                     Próximo passo
                   </p>
-                  {avisouPagamento === null ? (
-                    <>
-                      <p className="text-bone/70 mt-3 text-sm leading-relaxed">
-                        Faça o PIX e toque no botão abaixo. A organização confere
-                        o pagamento e confirma sua vaga pelo WhatsApp.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={confirmarPagamento}
-                        disabled={avisando}
-                        className="font-heading border-blood text-blood hover:bg-blood hover:text-ink mt-5 w-full border px-6 py-3 text-xs font-bold tracking-[0.25em] uppercase transition-colors disabled:opacity-50"
-                      >
-                        {avisando ? "avisando…" : "já fiz o pix"}
-                      </button>
-                    </>
-                  ) : (
-                    <p className="text-bone/70 mt-3 text-sm leading-relaxed">
-                      {avisouPagamento ? (
-                        <>
-                          Avisamos a organização. Guarde o comprovante e o código{" "}
-                          <strong className="text-bone">{txid}</strong> — a
-                          confirmação chega no seu WhatsApp.
-                        </>
-                      ) : (
-                        <>
-                          Não conseguimos avisar automaticamente. Mande o
-                          comprovante e o código{" "}
-                          <strong className="text-bone">{txid}</strong> para a
-                          organização — sua vaga é garantida do mesmo jeito.
-                        </>
-                      )}
+                  <p className="text-bone/70 mt-3 text-sm leading-relaxed">
+                    Faça o PIX e mande o comprovante no WhatsApp — é o
+                    comprovante que garante sua vaga. O botão abaixo já abre a
+                    conversa com a mensagem escrita; é só anexar o print.
+                  </p>
+
+                  {/*
+                    Link de verdade, e não botão com window.open: aberto depois
+                    de esperar a planilha, o navegador bloquearia a janela. Aqui
+                    o WhatsApp abre no gesto da pessoa e o registro corre ao lado.
+                  */}
+                  <a
+                    href={linkComprovante({
+                      numero: event.organizacao.whatsapp,
+                      festa: event.name,
+                      txid,
+                      nome: convidado.nome,
+                      ingressos: convidado.ingressos,
+                      valor: brl(total),
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={registrarEnvio}
+                    className="font-heading bg-blood text-ink hover:bg-ember mt-5 block w-full px-6 py-4 text-center text-xs font-bold tracking-[0.25em] uppercase transition-colors"
+                  >
+                    enviar comprovante no whatsapp
+                  </a>
+
+                  {avisouPagamento !== null && (
+                    <p className="text-ash mt-4 text-xs leading-relaxed">
+                      {avisouPagamento
+                        ? "Avisamos a organização que você pagou."
+                        : "Não conseguimos avisar a organização automaticamente — o comprovante no WhatsApp resolve do mesmo jeito."}
                     </p>
                   )}
+
+                  <p className="text-ash mt-4 text-xs leading-relaxed">
+                    Guarde o código <strong className="text-bone">{txid}</strong>
+                    : é por ele que seu pagamento é encontrado.
+                  </p>
                 </div>
 
                 <button
