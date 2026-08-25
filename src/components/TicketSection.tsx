@@ -5,23 +5,44 @@ import { Field } from "@/components/Field";
 import { PixPanel } from "@/components/PixPanel";
 import { TicketWall } from "@/components/TicketWall";
 import { brl, makeTxid, maskPhone } from "@/lib/format";
+import {
+  MAX_INGRESSOS,
+  validarPedido,
+  type Acao,
+  type ErrosPedido,
+} from "@/lib/pedido";
 import { event } from "@/config/event";
 
-type Guest = { name: string; email: string; phone: string; quantity: number };
-type Errors = Partial<Record<keyof Guest, string>>;
+type Convidado = {
+  nome: string;
+  email: string;
+  whatsapp: string;
+  ingressos: number;
+};
 
-const MAX_TICKETS = 5;
-
-function validate(guest: Guest): Errors {
-  const errors: Errors = {};
-  if (guest.name.trim().length < 3) errors.name = "Escreva seu nome completo.";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(guest.email.trim()))
-    errors.email = "E-mail inválido — é nele que chega a confirmação.";
-  if (guest.phone.replace(/\D/g, "").length < 10)
-    errors.phone = "Informe o WhatsApp com DDD.";
-  if (guest.quantity < 1 || guest.quantity > MAX_TICKETS)
-    errors.quantity = `Entre 1 e ${MAX_TICKETS} ingressos.`;
-  return errors;
+/**
+ * Avisa a planilha, sem nunca atrapalhar a venda.
+ *
+ * O PIX já está na tela quando isto roda. Se a planilha estiver fora do ar, o
+ * pagamento continua de pé — o que se perde é o registro, e esse a organização
+ * recupera pelo comprovante. Por isso a falha só é devolvida, nunca lançada.
+ */
+async function avisarPlanilha(
+  acao: Acao,
+  convidado: Convidado,
+  txid: string,
+): Promise<boolean> {
+  try {
+    const resposta = await fetch("/api/pedido", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ acao, txid, ...convidado }),
+    });
+    const corpo = (await resposta.json()) as { registrado?: boolean };
+    return corpo.registrado === true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -33,28 +54,43 @@ function validate(guest: Guest): Errors {
  * o corpo escuro segura os campos, para o texto ficar legível sobre a parede.
  */
 export function TicketSection() {
-  const [guest, setGuest] = useState<Guest>({
-    name: "",
+  const [convidado, setConvidado] = useState<Convidado>({
+    nome: "",
     email: "",
-    phone: "",
-    quantity: 1,
+    whatsapp: "",
+    ingressos: 1,
   });
-  const [errors, setErrors] = useState<Errors>({});
+  const [erros, setErros] = useState<ErrosPedido>({});
   const [txid, setTxid] = useState<string | null>(null);
+  /** null = ainda não avisou que pagou; depois, se o aviso entrou na planilha. */
+  const [avisouPagamento, setAvisouPagamento] = useState<boolean | null>(null);
+  const [avisando, setAvisando] = useState(false);
 
-  const total = event.ticket.price * guest.quantity;
+  const total = event.ticket.price * convidado.ingressos;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    const found = validate(guest);
-    setErrors(found);
-    if (Object.keys(found).length > 0) return;
-    setTxid(makeTxid());
+    const achados = validarPedido(convidado);
+    setErros(achados);
+    if (Object.keys(achados).length > 0) return;
+    const codigo = makeTxid();
+    setTxid(codigo);
+    // O pedido entra na planilha como aguardando. A pessoa não espera por isso:
+    // o PIX aparece na mesma hora.
+    void avisarPlanilha("novo", convidado, codigo);
   }
 
-  function update<K extends keyof Guest>(key: K, value: Guest[K]) {
-    setGuest((current) => ({ ...current, [key]: value }));
-    setErrors((current) => ({ ...current, [key]: undefined }));
+  async function confirmarPagamento() {
+    if (!txid || avisando) return;
+    setAvisando(true);
+    const ok = await avisarPlanilha("pagou", convidado, txid);
+    setAvisouPagamento(ok);
+    setAvisando(false);
+  }
+
+  function update<K extends keyof Convidado>(campo: K, valor: Convidado[K]) {
+    setConvidado((atual) => ({ ...atual, [campo]: valor }));
+    setErros((atual) => ({ ...atual, [campo]: undefined }));
   }
 
   return (
@@ -125,9 +161,9 @@ export function TicketSection() {
                   type="text"
                   autoComplete="name"
                   placeholder="Como está no seu documento"
-                  value={guest.name}
-                  error={errors.name}
-                  onChange={(e) => update("name", e.target.value)}
+                  value={convidado.nome}
+                  error={erros.nome}
+                  onChange={(e) => update("nome", e.target.value)}
                 />
                 <Field
                   id="email"
@@ -137,8 +173,8 @@ export function TicketSection() {
                   autoComplete="email"
                   placeholder="voce@email.com"
                   hint="A confirmação e o comprovante chegam aqui."
-                  value={guest.email}
-                  error={errors.email}
+                  value={convidado.email}
+                  error={erros.email}
                   onChange={(e) => update("email", e.target.value)}
                 />
                 <Field
@@ -148,20 +184,20 @@ export function TicketSection() {
                   inputMode="tel"
                   autoComplete="tel"
                   placeholder="(41) 99999-9999"
-                  value={guest.phone}
-                  error={errors.phone}
-                  onChange={(e) => update("phone", maskPhone(e.target.value))}
+                  value={convidado.whatsapp}
+                  error={erros.whatsapp}
+                  onChange={(e) => update("whatsapp", maskPhone(e.target.value))}
                 />
                 <Field
                   id="quantidade"
                   label="Quantos ingressos"
                   type="number"
                   min={1}
-                  max={MAX_TICKETS}
+                  max={MAX_INGRESSOS}
                   inputMode="numeric"
-                  value={guest.quantity}
-                  error={errors.quantity}
-                  onChange={(e) => update("quantity", Number(e.target.value))}
+                  value={convidado.ingressos}
+                  error={erros.ingressos}
+                  onChange={(e) => update("ingressos", Number(e.target.value))}
                 />
 
                 <div className="border-bone/15 text-bone flex items-center justify-between border-t pt-5">
@@ -182,21 +218,53 @@ export function TicketSection() {
               </form>
             ) : (
               <div className="flex flex-col gap-8">
-                <PixPanel amount={total} txid={txid} guestName={guest.name} />
+                <PixPanel amount={total} txid={txid} guestName={convidado.nome} />
 
                 <div className="border-bone/15 border-t pt-6 text-left">
                   <p className="font-heading text-blood text-sm font-bold tracking-[0.2em] uppercase">
                     Próximo passo
                   </p>
-                  <p className="text-bone/70 mt-3 text-sm leading-relaxed">
-                    Depois de pagar, envie o comprovante para a organização
-                    confirmar sua vaga. O envio pelo site entra no ar em breve.
-                  </p>
+                  {avisouPagamento === null ? (
+                    <>
+                      <p className="text-bone/70 mt-3 text-sm leading-relaxed">
+                        Faça o PIX e toque no botão abaixo. A organização confere
+                        o pagamento e confirma sua vaga pelo WhatsApp.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={confirmarPagamento}
+                        disabled={avisando}
+                        className="font-heading border-blood text-blood hover:bg-blood hover:text-ink mt-5 w-full border px-6 py-3 text-xs font-bold tracking-[0.25em] uppercase transition-colors disabled:opacity-50"
+                      >
+                        {avisando ? "avisando…" : "já fiz o pix"}
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-bone/70 mt-3 text-sm leading-relaxed">
+                      {avisouPagamento ? (
+                        <>
+                          Avisamos a organização. Guarde o comprovante e o código{" "}
+                          <strong className="text-bone">{txid}</strong> — a
+                          confirmação chega no seu WhatsApp.
+                        </>
+                      ) : (
+                        <>
+                          Não conseguimos avisar automaticamente. Mande o
+                          comprovante e o código{" "}
+                          <strong className="text-bone">{txid}</strong> para a
+                          organização — sua vaga é garantida do mesmo jeito.
+                        </>
+                      )}
+                    </p>
+                  )}
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => setTxid(null)}
+                  onClick={() => {
+                    setTxid(null);
+                    setAvisouPagamento(null);
+                  }}
                   className="font-heading text-ash hover:text-bone text-xs font-bold tracking-[0.25em] uppercase transition-colors"
                 >
                   ← corrigir meus dados
