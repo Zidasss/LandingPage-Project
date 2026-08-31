@@ -21,7 +21,8 @@ export function PixPanel({
   guestName: string;
 }) {
   const [qr, setQr] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  /** idle → o botão convida; copiado → deu certo; falhou → a área de transferência recusou. */
+  const [copia, setCopia] = useState<"idle" | "copiado" | "falhou">("idle");
 
   // O payload é determinístico: derivar em vez de guardar em estado.
   const { payload, error } = useMemo(() => {
@@ -61,11 +62,23 @@ export function PixPanel({
     };
   }, [payload]);
 
+  /**
+   * Copia o código, e diz quando não consegue.
+   *
+   * `navigator.clipboard` não existe fora de contexto seguro e pode ser negado
+   * pelo navegador. Sem o `try`, a promessa quebrava calada: o botão não mudava
+   * de texto e a pessoa clicava de novo achando que não tinha apertado direito.
+   * O código está logo acima, à mão — o que faltava era avisar para copiá-lo.
+   */
   async function copy() {
     if (!payload) return;
-    await navigator.clipboard.writeText(payload);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    try {
+      await navigator.clipboard.writeText(payload);
+      setCopia("copiado");
+    } catch {
+      setCopia("falhou");
+    }
+    setTimeout(() => setCopia("idle"), 2500);
   }
 
   if (error) {
@@ -102,7 +115,7 @@ export function PixPanel({
           <img
             src={qr}
             alt={`QR Code do PIX de ${brl(amount)}`}
-            className="h-56 w-56 sm:h-64 sm:w-64"
+            className="pix-qr h-56 w-56 sm:h-64 sm:w-64"
           />
         ) : (
           <div className="text-ink/40 font-mono flex h-56 w-56 items-center justify-center text-xs sm:h-64 sm:w-64">
@@ -124,9 +137,28 @@ export function PixPanel({
           disabled={!payload}
           className="font-heading border-bone/25 text-ember hover:bg-blood hover:text-ink mt-3 w-full border-2 px-6 py-3 text-xs tracking-[0.25em] uppercase transition-colors disabled:opacity-40"
         >
-          {copied ? "copiado ✓" : "copiar código pix"}
+          {copia === "copiado"
+            ? "copiado ✓"
+            : copia === "falhou"
+              ? "copie o código acima"
+              : "copiar código pix"}
         </button>
       </div>
+
+      <style>{`
+        /* O QR leva um instante para ser desenhado; chegar por dentro evita o
+           estalo de um bloco preto e branco surgindo pronto. */
+        .pix-qr { animation: pix-qr 380ms ease-out; }
+
+        @keyframes pix-qr {
+          from { opacity: 0; transform: scale(0.96); }
+          to   { opacity: 1; transform: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .pix-qr { animation: none; }
+        }
+      `}</style>
     </div>
   );
 }

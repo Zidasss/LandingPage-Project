@@ -107,15 +107,45 @@ export function Countdown({ target }: { target: string }) {
             className="font-drip m-0 text-center leading-[0.9] text-[11vw] sm:text-[5.2vw]"
             style={{ width: `${unit.pad * 0.72 + 0.2}em` }}
           >
-            {unit.value === undefined
-              ? "".padStart(unit.pad, "-")
-              : String(unit.value).padStart(unit.pad, "0")}
+            {/*
+              A `key` é o próprio número: quando ele muda, o React troca o nó e a
+              animação recomeça. É o que faz o tique pingar. Nos dias e horas,
+              que mudam de hora em hora, ela quase nunca roda — só os segundos
+              pingam de verdade, que é o certo.
+            */}
+            <span key={unit.value ?? "-"} className="relogio-pingo">
+              {unit.value === undefined
+                ? "".padStart(unit.pad, "-")
+                : String(unit.value).padStart(unit.pad, "0")}
+            </span>
           </dd>
           <dt className="font-heading mt-2 text-[0.55rem] font-bold tracking-[0.3em] uppercase sm:text-[0.65rem]">
             {unit.label}
           </dt>
         </div>
       ))}
+
+      <style>{`
+        /*
+          O número cai e assenta, como a gota da fonte escorrida. Curto e de
+          amplitude pequena de propósito: isto roda a cada segundo, e o que é
+          bonito uma vez vira tique nervoso se for grande demais.
+        */
+        .relogio-pingo {
+          display: inline-block;
+          animation: relogio-pingo 420ms cubic-bezier(0.2, 0.75, 0.25, 1);
+        }
+
+        @keyframes relogio-pingo {
+          from { transform: translateY(-14%) scaleY(1.10); opacity: 0.25; }
+          60%  { transform: translateY(2%) scaleY(0.97); opacity: 1; }
+          to   { transform: none; opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .relogio-pingo { animation: none; }
+        }
+      `}</style>
     </dl>
   );
 }
