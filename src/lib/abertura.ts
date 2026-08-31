@@ -13,24 +13,42 @@
 
 import { cubicBezier } from "@/lib/easing";
 
-/** Altura da seção. O que passa de 100svh é a distância de rolagem. */
-export const ALTURA_ABERTURA = "240svh";
+/**
+ * Altura da seção. O que passa de 100svh é a distância de rolagem.
+ *
+ * Ela é longa por causa de quem rola rápido, que é a maioria. Medindo um flick
+ * de celular (2200px em 380ms, com a desaceleração do momentum) contra a
+ * abertura de 240svh, a pessoa via **6 quadros** de animação e, pior, o gesto
+ * terminava com a cena já fora da tela: ela era cuspida direto na seção
+ * seguinte sem ter visto porta nenhuma.
+ *
+ * O que resolve não é a animação ser mais lenta, é a seção ser mais alta que o
+ * flick. Passando de ~280svh o gesto **termina dentro** da seção: o palco
+ * continua preso na tela e a pessoa fica estacionada na animação, em vez de
+ * além dela. Em 360svh o mesmo flick mostra 20 quadros dos 24.
+ *
+ * O preço disso seria o cartaz ficar quase o dobro mais longe de quem rola
+ * devagar. Por isso as fases abaixo foram comprimidas junto: elas terminam mais
+ * cedo dentro do percurso, e a folga toda vai para a cauda — a luz abrindo, que
+ * é onde ninguém tem pressa porque a seção seguinte já está chegando.
+ */
+export const ALTURA_ABERTURA = "360svh";
 
 /* Fases, em fatias do progresso. Elas se sobrepõem de propósito: cada uma
    começa antes de a anterior terminar, para não haver degrau entre elas. */
 
 /** A abóbora recua e perde a forma até virar um círculo. */
-export const RECUO = [0.03, 0.26] as const;
+export const RECUO = [0.02, 0.18] as const;
 /** O círculo assenta como maçaneta. */
-export const MACANETA = [0.22, 0.32] as const;
+export const MACANETA = [0.155, 0.225] as const;
 /** A porta se desenha em volta da maçaneta. */
-export const PORTA = [0.28, 0.4] as const;
+export const PORTA = [0.2, 0.285] as const;
 /** A folha gira e a luz escapa pelo vão. */
-export const ABRE = [0.42, 0.62] as const;
+export const ABRE = [0.3, 0.47] as const;
 /** O cartaz se forma dentro da luz, a partir das gotas. */
-export const CARTAZ = [0.56, 0.72] as const;
+export const CARTAZ = [0.42, 0.55] as const;
 /** A luz toma a tela e o cartaz escorre para os lados. */
-export const ALARGA = [0.72, 1] as const;
+export const ALARGA = [0.55, 1] as const;
 
 /**
  * A curva de todo movimento da abertura: sai devagar, ganha corpo no meio e
