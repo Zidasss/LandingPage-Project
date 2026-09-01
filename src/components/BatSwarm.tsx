@@ -19,7 +19,7 @@ import { event } from "@/config/event";
  */
 
 /** Quantos morcegos cruzam a tela. */
-const QUANTIDADE = 60;
+const QUANTIDADE = 110;
 
 /**
  * Gerador pseudoaleatório com semente fixa (mulberry32).
@@ -53,7 +53,13 @@ const BANDO = Array.from({ length: QUANTIDADE }, (_, i) => {
     y: -58 + r() * 116, // de cima e de baixo, cobrindo a altura da tela
     giro: (r() - 0.5) * 64, // inclinação de voo
     escala: 0.3 + r() * 0.72, // profundidade: perto e longe
-    atraso: Math.round(r() * 440), // stagger que vira um fluxo contínuo
+    atraso: Math.round(r() * 520), // stagger que vira um fluxo contínuo
+    /*
+      Cada um voa no seu tempo. Com duração única o bando chegava em bloco, como
+      um slide passando; variando, uns cortam a tela na frente dos outros e é
+      isso que faz parecer bicho, e não enfeite sincronizado.
+    */
+    duracao: Math.round(1250 + r() * 700),
     sprite: i % 2, // alterna os dois recortes
   };
 });
@@ -92,6 +98,9 @@ export function BatSwarm() {
               "--giro": `${m.giro}deg`,
               "--escala": m.escala,
               animationDelay: `${m.atraso}ms, ${m.atraso}ms`,
+              // só a vinda ganha a duração própria; o bater de asas segue no
+              // ritmo dele, que é do bicho e não da travessia
+              animationDuration: `${m.duracao}ms, 260ms`,
               backgroundImage: `url(${event.bats.sprites[m.sprite]})`,
             } as React.CSSProperties
           }

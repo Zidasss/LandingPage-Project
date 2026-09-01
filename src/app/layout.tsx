@@ -38,14 +38,39 @@ const term = Share_Tech_Mono({
   display: "swap",
 });
 
+/**
+ * O endereço do site, para o card do link.
+ *
+ * WhatsApp, Instagram e afins não resolvem caminho relativo: sem um endereço
+ * absoluto, a imagem do card simplesmente não aparece. A Vercel entrega o
+ * domínio de produção em `VERCEL_PROJECT_PRODUCTION_URL`, então isto se resolve
+ * sozinho no deploy e não depende de ninguém lembrar de configurar.
+ */
+const endereco =
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
+/*
+ * A imagem do card é `opengraph-image.png`, ao lado deste arquivo: o Next a
+ * encontra pelo nome e monta as tags sozinho. Ela é um retrato da própria cena
+ * do site — a porta aberta com o cartaz formado — e não um desenho à parte, que
+ * envelheceria sem ninguém perceber.
+ */
 export const metadata: Metadata = {
+  metadataBase: new URL(endereco),
   title: `${event.name} — ${event.dateLabel}`,
   description: `${event.tagline}. Festa de Halloween em ${event.dateLabel}, ${event.timeLabel}. Confirme sua presença pelo PIX.`,
   openGraph: {
     title: `${event.name} — ${event.dateLabel}`,
-    description: event.tagline,
+    description: `${event.dateLabel}, ${event.timeLabel} · ${event.venue.name}. Fantasia obrigatória.`,
     type: "website",
     locale: "pt_BR",
+    siteName: event.name,
+  },
+  twitter: {
+    card: "summary_large_image",
   },
 };
 
