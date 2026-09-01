@@ -8,10 +8,12 @@ import { brl, makeTxid, maskPhone } from "@/lib/format";
 import {
   MAX_INGRESSOS,
   linkComprovante,
+  linkEspera,
   validarPedido,
   type Acao,
   type ErrosPedido,
 } from "@/lib/pedido";
+import { recadoDeVagas, type Vagas } from "@/lib/vagas";
 import { event } from "@/config/event";
 
 type Convidado = {
@@ -54,7 +56,10 @@ async function avisarPlanilha(
  * é o próprio formulário: o cabeçalho vermelho carrega a identidade da festa e
  * o corpo escuro segura os campos, para o texto ficar legível sobre a parede.
  */
-export function TicketSection() {
+export function TicketSection({ vagas = null }: { vagas?: Vagas | null }) {
+  const recado = recadoDeVagas(vagas);
+  const lotado = recado?.tom === "lotado";
+
   const [convidado, setConvidado] = useState<Convidado>({
     nome: "",
     email: "",
@@ -139,9 +144,21 @@ export function TicketSection() {
         <div className="border-blood/40 bg-ink/95 border shadow-[0_0_80px_rgba(255,26,18,0.25)] backdrop-blur-sm">
           {/* cabeçalho: a identidade do ingresso */}
           <div className="bg-blood text-ink relative px-6 pt-5 pb-7">
-            <p className="font-heading text-[0.6rem] font-bold tracking-[0.35em] uppercase opacity-80">
-              ▶ garanta seu lugar
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <p className="font-heading text-[0.6rem] font-bold tracking-[0.35em] uppercase opacity-80">
+                ▶ {lotado ? "casa cheia" : "garanta seu lugar"}
+              </p>
+              {/*
+                O selo só existe quando há o que dizer: prova de que a festa está
+                enchendo, ou aviso de que está no fim. No começo da venda ele não
+                aparece — "3 de 80" é propaganda de festa vazia.
+              */}
+              {recado && (
+                <span className="font-heading bg-ink/85 text-bone shrink-0 px-2 py-1 text-[0.55rem] font-bold tracking-[0.2em] uppercase">
+                  {recado.texto}
+                </span>
+              )}
+            </div>
             <p className="font-display mt-1 text-4xl leading-none uppercase sm:text-5xl">
               {event.name}
             </p>
@@ -163,7 +180,33 @@ export function TicketSection() {
 
           {/* corpo: o formulário */}
           <div className="px-6 pt-8 pb-7">
-            {txid === null ? (
+            {lotado ? (
+              /*
+                Com a casa cheia o formulário sai da frente: deixar alguém pagar
+                por um lugar que não existe é pior do que dizer não. Mas a porta
+                não fecha — quem chegou tarde vai para a espera, e desistência
+                acontece.
+              */
+              <div className="flex flex-col gap-6 text-left">
+                <div>
+                  <p className="font-heading text-blood text-sm font-bold tracking-[0.2em] uppercase">
+                    Os {event.ticket.capacity} lugares acabaram
+                  </p>
+                  <p className="text-bone/70 mt-3 text-sm leading-relaxed">
+                    Ainda dá para entrar na lista de espera: sempre aparece
+                    desistência, e a organização chama pela ordem.
+                  </p>
+                </div>
+                <a
+                  href={linkEspera(event.organizacao.whatsapp, event.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-heading bg-blood text-ink hover:bg-ember block w-full px-6 py-4 text-center text-xs font-bold tracking-[0.25em] uppercase transition-colors"
+                >
+                  entrar na lista de espera
+                </a>
+              </div>
+            ) : txid === null ? (
               <form onSubmit={submit} noValidate className="flex flex-col gap-5">
                 <Field
                   id="nome"

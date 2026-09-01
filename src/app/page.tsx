@@ -3,8 +3,47 @@ import { InfoSection } from "@/components/InfoSection";
 import { Opening } from "@/components/Opening";
 import { OpeningBeam } from "@/components/OpeningBeam";
 import { TicketSection } from "@/components/TicketSection";
+import { lerVagas, type Vagas } from "@/lib/vagas";
+import { event } from "@/config/event";
 
-export default function Home() {
+/**
+ * De quanto em quanto tempo a contagem de vagas é buscada de novo.
+ *
+ * Um minuto: a planilha é lenta e tem cota, e ninguém precisa do número ao
+ * segundo. Entre uma busca e outra a página serve o valor guardado, então a
+ * visita não espera pela planilha.
+ */
+export const revalidate = 60;
+
+/**
+ * Quantos lugares já foram confirmados.
+ *
+ * A leitura acontece **no servidor**, e por dois motivos: o segredo da planilha
+ * não pode chegar ao navegador, e assim o número já vem no HTML — sem número
+ * piscando na tela depois que a página carrega.
+ *
+ * Qualquer tropeço devolve `null`, e o site simplesmente não fala de vagas. A
+ * venda nunca depende disto: é enfeite informativo, não caixa.
+ */
+async function vagasConfirmadas(): Promise<Vagas | null> {
+  const planilha = process.env.SHEETS_WEBHOOK_URL?.trim();
+  if (!planilha) return null;
+
+  const segredo = process.env.SHEETS_WEBHOOK_SECRET?.trim() ?? "";
+  const endereco = `${planilha}?segredo=${encodeURIComponent(segredo)}`;
+
+  try {
+    const resposta = await fetch(endereco, { next: { revalidate } });
+    if (!resposta.ok) return null;
+    return lerVagas(await resposta.json(), event.ticket.capacity);
+  } catch {
+    return null;
+  }
+}
+
+export default async function Home() {
+  const vagas = await vagasConfirmadas();
+
   return (
     <>
       {/*
@@ -21,7 +60,7 @@ export default function Home() {
       <Opening />
       <InfoSection />
       <CountdownSection />
-      <TicketSection />
+      <TicketSection vagas={vagas} />
     </>
   );
 }

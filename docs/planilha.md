@@ -76,7 +76,45 @@ function doPost(e) {
 
   return ContentService.createTextOutput('ok');
 }
+
+/**
+ * Quantos lugares já foram confirmados — é o que o site lê para dizer
+ * "N de 80 confirmados" ou "últimas vagas".
+ *
+ * Devolve SÓ um número. Nome, e-mail e telefone nunca saem daqui: o site não
+ * precisa deles, e o que não sai não vaza.
+ *
+ * Conta ingressos das linhas com a coluna PAGO preenchida — não linhas, e não
+ * pedidos sem pagamento. Quem levou dois ocupa dois lugares.
+ */
+function doGet(e) {
+  if (SEGREDO && e.parameter.segredo !== SEGREDO) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ erro: 'nao autorizado' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const aba = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Pedidos');
+  let confirmados = 0;
+
+  if (aba && aba.getLastRow() > 1) {
+    const linhas = aba.getRange(2, 1, aba.getLastRow() - 1, 9).getValues();
+    for (const l of linhas) {
+      const pago = String(l[8]).trim();       // coluna I: PAGO
+      if (!pago) continue;
+      confirmados += Number(l[5]) || 1;       // coluna F: Ingressos
+    }
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ confirmados: confirmados }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 ```
+
+> Depois de colar o `doGet`, **implante de novo** (Implantar → Gerenciar
+> implantações → lápis → Versão: Nova → Implantar). A URL continua a mesma; sem
+> essa etapa o script novo não entra no ar.
 
 Troque `troque-esta-frase` por uma frase sua e **guarde**, que ela vai na Vercel.
 
@@ -110,6 +148,27 @@ Depois **Redeploy**, para o site enxergar as variáveis.
 Abra o site, preencha o formulário com seus dados e gere o PIX. Deve aparecer
 uma linha na planilha. Toque em **já fiz o pix** e a coluna _Disse que pagou_
 deve receber a data.
+
+## As vagas no site
+
+O site mostra um selo no ingresso com base na coluna **PAGO** — e só nela. Um
+pedido sem pagamento não ocupa lugar nenhum, porque a maior parte deles nunca
+vira dinheiro.
+
+Ele fala pouco, de propósito:
+
+| Situação | O que aparece |
+| --- | --- |
+| Menos de 10 confirmados | **nada** — "3 de 80" é propaganda de festa vazia |
+| 10 ou mais, com folga | `24 de 80 confirmados` |
+| 15 vagas ou menos | `7 últimas vagas` |
+| Lotado | `Lotado`, e o formulário dá lugar à lista de espera |
+
+O número é buscado no máximo uma vez por minuto e fica guardado entre uma
+busca e outra — a visita nunca espera pela planilha. Se ela estiver fora do ar,
+o selo simplesmente não aparece e a venda segue normal.
+
+Para mudar o teto, altere `ticket.capacity` em `src/config/event.ts`.
 
 ## Se algo falhar
 

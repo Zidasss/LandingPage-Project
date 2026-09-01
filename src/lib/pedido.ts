@@ -44,6 +44,16 @@ export function apenasDigitos(valor: string): string {
 }
 
 /**
+ * Um link que abre o WhatsApp com o recado já escrito.
+ *
+ * A máscara sai aqui: `wa.me` só aceita dígitos, e com `+`, parênteses ou traço
+ * ele abre o aplicativo sem a conversa — falha silenciosa, que é a pior.
+ */
+export function linkWhatsApp(numero: string, recado: string): string {
+  return `https://wa.me/${apenasDigitos(numero)}?text=${encodeURIComponent(recado)}`;
+}
+
+/**
  * O link que abre o WhatsApp da organização com o recado já escrito.
  *
  * É o que fecha o ciclo do pagamento. O PIX cai na conta como um valor solto —
@@ -68,7 +78,15 @@ export function linkComprovante(dados: {
     `Pedido ${dados.txid} — ${dados.nome}, ` +
     `${dados.ingressos} ${plural}, ${dados.valor}. ` +
     `Segue o comprovante:`;
-  return `https://wa.me/${apenasDigitos(dados.numero)}?text=${encodeURIComponent(recado)}`;
+  return linkWhatsApp(dados.numero, recado);
+}
+
+/** O link de quem chegou com a casa cheia e quer entrar na espera. */
+export function linkEspera(numero: string, festa: string): string {
+  return linkWhatsApp(
+    numero,
+    `Oi! Vi que a ${festa} está lotada. Consigo entrar na lista de espera?`,
+  );
 }
 
 export function validarPedido(pedido: Partial<Pedido>): ErrosPedido {
