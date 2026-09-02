@@ -288,7 +288,7 @@ export function Opening() {
           style={{ height: "34%", perspective: "180px", perspectiveOrigin: "50% 0%" }}
         >
           <div
-            className="flex w-[min(80vw,56svh)] items-end justify-center pb-[1vh] sm:w-[min(48vw,72svh)]"
+            className="flex w-[min(66vw,54svh)] items-end justify-center pb-[4vh] sm:w-[min(58vw,88svh)]"
             style={{ transform: "rotateX(34deg)", transformOrigin: "50% 100%" }}
           >
             <h1 className="sr-only">
