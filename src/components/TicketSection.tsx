@@ -299,8 +299,21 @@ export function TicketSection({
           <Picote cor="text-ink" />
           <DadosImpressos mostrarPrazo={!encerrada} />
 
-          {/* corpo: o formulário */}
-          <div className="px-6 pt-7 pb-7">
+          {/*
+            O corpo troca de conteúdo — formulário, PIX, prazo encerrado — e a
+            troca era seca: um quadro tinha campos, o seguinte tinha um QR. A
+            `key` faz o React montar um nó novo a cada estado, e é isso que
+            permite a entrada acontecer; sem ela o conteúdo muda por dentro do
+            mesmo nó e não há o que animar.
+
+            A entrada é curta e sem deslocamento lateral: o cartão não sai do
+            lugar, só o que está dentro dele assenta. Movimento maior aqui
+            pareceria página trocando, e não ingresso sendo preenchido.
+          */}
+          <div
+            key={encerrada ? "encerrada" : lotado ? "lotado" : txid ? "pix" : "form"}
+            className="troca-conteudo px-6 pt-7 pb-7"
+          >
             {encerrada ? (
               /*
                 Passada a hora da festa, o formulário some. Ele não tem como
@@ -507,6 +520,21 @@ export function TicketSection({
               </div>
             )}
           </div>
+
+          <style>{`
+            .troca-conteudo {
+              animation: troca-entra 260ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+            }
+
+            @keyframes troca-entra {
+              from { opacity: 0; transform: translateY(6px); }
+              to   { opacity: 1; transform: none; }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+              .troca-conteudo { animation: none; }
+            }
+          `}</style>
 
           {/* o pé do ingresso, destacável como o canhoto de cima */}
           <Picote cor="text-bone/25" />

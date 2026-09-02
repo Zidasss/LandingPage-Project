@@ -132,18 +132,25 @@ export function Opening() {
       }
     };
 
+    /*
+      A maçaneta assenta na borda da porta, do lado do vão. Como a largura da
+      porta vem da altura da janela, esse deslocamento é medido da própria porta
+      — um valor fixo em vw a jogava para fora nas telas em que a porta encolhe.
+
+      A medida é tirada só quando pode ter mudado, e não a cada quadro. Ler
+      `offsetWidth` depois de escrever estilos obriga o navegador a refazer o
+      layout na hora, no meio do quadro; a porta não muda de largura enquanto se
+      rola, então era um cálculo caro repetido sessenta vezes por segundo para
+      dar sempre o mesmo número.
+    */
+    const medirPorta = () => {
+      const largura = porta.current?.offsetWidth ?? 0;
+      if (largura) alvo.style.setProperty("--macaneta-x", `${largura / 2 - 14}px`);
+    };
+
     const desenhar = () => {
       frame = 0;
       const p = progresso(alvo);
-
-      // A maçaneta assenta na borda da porta, do lado do vão. Como a largura da
-      // porta vem da altura da janela, esse deslocamento é medido da própria
-      // porta a cada quadro — um valor fixo em vw a jogava para fora nas telas
-      // em que a porta encolhe.
-      const larguraPorta = porta.current?.offsetWidth ?? 0;
-      if (larguraPorta) {
-        alvo.style.setProperty("--macaneta-x", `${larguraPorta / 2 - 14}px`);
-      }
 
       // --- abóbora: recua, some, e caminha até o lugar da maçaneta ---
       const rec = suavizar(fatia(p, RECUO));
@@ -216,13 +223,19 @@ export function Opening() {
       if (!frame) frame = requestAnimationFrame(desenhar);
     };
 
+    const aoRedimensionar = () => {
+      medirPorta();
+      aoRolar();
+    };
+
+    medirPorta();
     desenhar();
     window.addEventListener("scroll", aoRolar, { passive: true });
-    window.addEventListener("resize", aoRolar, { passive: true });
+    window.addEventListener("resize", aoRedimensionar, { passive: true });
     return () => {
       if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("scroll", aoRolar);
-      window.removeEventListener("resize", aoRolar);
+      window.removeEventListener("resize", aoRedimensionar);
     };
   }, []);
 
