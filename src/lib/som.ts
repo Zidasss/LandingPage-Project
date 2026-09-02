@@ -40,14 +40,14 @@ const ARQUIVO_PORTA = "/porta.mp3";
  * Diferentes porque a dinâmica é diferente: o fechamento carrega a batida, que
  * já é o ponto mais alto da gravação e não precisa de ajuda.
  *
- * Os números vêm de medição, não de gosto. Com os ganhos anteriores a porta
- * batia 10 dB acima do pico da música — quase três vezes e meia mais alta, para
- * um som que é detalhe de ambiente. Nestes valores os picos dos dois se
- * igualam: a porta ainda se destaca, porque é transiente e a música é cama,
- * mas para de atropelar.
+ * Os números vêm de medição, não de gosto. No começo a porta batia 10 dB acima
+ * do pico da música — quase três vezes e meia mais alta, para um som que é
+ * detalhe de ambiente. Nestes valores ela fica um pouco **abaixo** do pico da
+ * música e ainda assim se destaca, porque é transiente e a música é cama: o
+ * ouvido nota o que muda, não o que é mais alto.
  */
-const ABRINDO = { de: 0.3, ate: 2.25, ganho: 0.3 };
-const FECHANDO = { de: 3.75, ate: 5.5, ganho: 0.17 };
+const ABRINDO = { de: 0.3, ate: 2.25, ganho: 0.22 };
+const FECHANDO = { de: 3.75, ate: 5.5, ganho: 0.12 };
 
 /**
  * A emenda entre uma volta e a seguinte.
