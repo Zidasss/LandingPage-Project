@@ -15,7 +15,7 @@ export function InfoSection() {
           </h2>
         </Reveal>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <Reveal delay={0}>
             <InfoCard
               label="Quando"
@@ -51,7 +51,22 @@ export function InfoSection() {
             <InfoCard label="Quanto" highlight={`${priceLabel} por pessoa`}>
               <p>
                 Pagamento via PIX pelo próprio site. Sua vaga só é garantida
-                depois da confirmação — são {event.ticket.capacity} lugares.
+                depois da confirmação — vagas limitadas.
+              </p>
+            </InfoCard>
+          </Reveal>
+
+          {/*
+            O que está incluso ganha cartão próprio, e não uma linha dentro do
+            preço: é o que responde "o que eu levo por esse valor", e essa é a
+            pergunta que decide a compra. Enfiada no meio do parágrafo do PIX,
+            a informação viraria letra miúda.
+          */}
+          <Reveal delay={270}>
+            <InfoCard label="Incluso" highlight="Comida e bebida à vontade">
+              <p>
+                Tudo dentro do valor do ingresso. Não precisa levar nada nem
+                pagar mais nada na hora.
               </p>
             </InfoCard>
           </Reveal>

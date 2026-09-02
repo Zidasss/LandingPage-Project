@@ -359,7 +359,7 @@ export function TicketSection({
               <div className="flex flex-col gap-6 text-left">
                 <div>
                   <p className="font-heading text-blood text-sm font-bold tracking-[0.2em] uppercase">
-                    Os {event.ticket.capacity} lugares acabaram
+                    As vagas acabaram
                   </p>
                   <p className="text-bone/70 mt-3 text-sm leading-relaxed">
                     Ainda dá para entrar na lista de espera: sempre aparece
