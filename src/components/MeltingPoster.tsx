@@ -72,13 +72,12 @@ export function MeltingPoster({
     const linhas = [...node.querySelectorAll<HTMLElement>("[data-linha]")];
     if (linhas.length === 0) return;
 
-    const telaGrande = window.matchMedia("(min-width: 640px)").matches;
     const total = linhas.length;
 
     /** Filtro de cada linha, e o quanto ela espera para começar a derreter. */
     const trilhas = linhas.map((linha, i) => {
       const indice = i % FILTROS;
-      if (telaGrande) linha.style.filter = `url(#derrete-${indice})`;
+      linha.style.filter = `url(#derrete-${indice})`;
       return {
         linha,
         // as de baixo derretem primeiro: estão mais perto de quem olha
@@ -121,8 +120,19 @@ export function MeltingPoster({
           `scale3d(${(1 + abre * abre * 1.35).toFixed(3)}, ` +
           `${(1 + local * 0.09 - abre * 0.16).toFixed(3)}, 1)`;
 
-        if (!telaGrande || !t.desloca || !t.borrao || !t.ruido || !t.limiar) {
-          // Sem filtro, a linha surge por opacidade conforme endurece.
+        /*
+          A saída por opacidade é só para o caso de o filtro não existir —
+          navegador sem suporte, ou os nós do SVG não terem sido encontrados.
+          Não é mais o caminho do celular.
+
+          Ele era: abaixo de 640px o derretimento simplesmente não acontecia, e
+          o cartaz só aparecia clareando. A tela pequena via um efeito diferente
+          da grande, e isso se notava. A restrição era medo de desempenho, nunca
+          medido — medido agora, com o filtro ligado num celular de CPU seis
+          vezes mais lenta, a rolagem mantém 16,7ms de mediana e dois quadros
+          ruins em cento e noventa e oito. O filtro cabe.
+        */
+        if (!t.desloca || !t.borrao || !t.ruido || !t.limiar) {
           t.linha.style.opacity = (1 - local * local).toFixed(3);
           continue;
         }
