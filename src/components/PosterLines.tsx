@@ -10,6 +10,10 @@ import { event, shortDateLabel } from "@/config/event";
  * No cartaz de referência é assim — uma palavra domina e as outras acompanham,
  * em vez de todas crescerem no mesmo ritmo.
  *
+ * As linhas ficam coladas umas nas outras, sem espaço entre elas: cada uma já
+ * carrega a folga do acento dentro da própria caixa, e é o empilhamento apertado
+ * que faz o conjunto virar uma massa preta em vez de quatro frases separadas.
+ *
  * A perspectiva de fora é que produz o trapézio; aqui as larguras são relativas
  * ao bloco, não à tela.
  *
@@ -32,7 +36,7 @@ const LINHAS = [
 
 export function PosterLines() {
   return (
-    <div className="flex w-full flex-col items-center gap-[0.5vw]">
+    <div className="flex w-full flex-col items-center gap-0">
       {LINHAS.map(({ texto, familia, largura }) => (
         <div
           key={texto}

@@ -15,6 +15,19 @@
 /** Largura média da letra, em relação à altura, em cada família. */
 const PROPORCAO = { display: 0.56, heading: 0.6 } as const;
 
+/**
+ * O quanto a linha cresce na vertical além do que a proporção pediria.
+ *
+ * Existe por causa da perspectiva: o bloco é deitado no plano do feixe com uma
+ * rotação de 34°, e isso achata a altura em cerca de 17% antes de a letra
+ * chegar à tela. Sem compensar, o texto sai mais baixo do que foi desenhado e o
+ * cartaz lê como uma etiqueta esticada em vez de tipografia de cartaz.
+ *
+ * A compensação é um pouco maior que o achatamento — letra de cartaz é alta de
+ * propósito, e é a altura que dá o peso.
+ */
+const ESTICA = 1.28;
+
 export function PosterWord({
   children,
   familia = "display",
@@ -25,7 +38,7 @@ export function PosterWord({
   className?: string;
 }) {
   const texto = children.toUpperCase();
-  const altura = 1000 / (PROPORCAO[familia] * Math.max(texto.length, 3));
+  const altura = (1000 * ESTICA) / (PROPORCAO[familia] * Math.max(texto.length, 3));
   // O SVG recorta no viewBox. Sem folga, acento de maiúscula (Ó, Ç) e vírgula
   // ficam de fora — a caixa é calculada pela altura das maiúsculas, e eles
   // passam disso. A folga entra na caixa mas não no cálculo da proporção.
