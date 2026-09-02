@@ -54,6 +54,7 @@ site inteiro — cartaz, ingresso, PIX, contagem, textos.
 | Quantas pessoas cabem | `ticket.capacity` | É o teto do selo de vagas e do "Lotado" |
 | Data e hora | `startsAt` | **Mude `dateLabel` e `timeLabel` junto** — veja abaixo |
 | Prazo de pagamento | `ticket.deadline` | Só este campo. O texto "Pague até…" é gerado a partir dele |
+| Cardápio (o que está incluso) | `cardapio` | Lista de grupos, cada um com título e itens. Ver abaixo |
 | Local | `venue.*` | O `mapsUrl` é link do Google Maps; troque se mudar o endereço |
 | WhatsApp | variável `NEXT_PUBLIC_WHATSAPP` na Vercel | Só dígitos, com país e DDD |
 | Chave PIX | variável `NEXT_PUBLIC_PIX_KEY` na Vercel | Depois de mudar, **gere um PIX de teste e pague R$ 0,01 para você mesmo** |
@@ -76,6 +77,30 @@ O prazo de pagamento **não** tem esse problema: só existe `ticket.deadline`, e
 texto "Pague até 25 de setembro" é gerado a partir dele. Mudou a data, mudou o
 texto. O `23:59:59` no fim é de propósito — o prazo é *até* o dia 25, então quem
 paga às onze da noite do 25 pagou dentro do prazo.
+
+### O cardápio
+
+A seção "O que rola" sai inteira do campo `cardapio` no `event.ts`. Cada grupo
+é um título e uma lista de itens:
+
+```ts
+{
+  titulo: "Drinks",
+  itens: ["Caipirinha de limão", "Caipirinha de morango"],
+},
+```
+
+Acrescentar, tirar ou renomear grupo é só mexer nessa lista — nenhum componente
+precisa ser tocado, e o layout se reorganiza sozinho.
+
+O grupo **"Do caldeirão"** tem uma marca a mais, `aDefinir: true`, que é o que
+faz aparecer o aviso "▶ segredo até a porta". Ele existe porque os nomes das
+bebidas temáticas ainda dependem de acerto com o local. Escrever "bebida
+temática 1" soaria inacabado; assim soa intenção. **Quando os nomes existirem,
+troque os itens e apague a linha `aDefinir: true`** — o aviso some junto.
+
+O mesmo vale para a comida: se o `finger food` ganhar descrição, é só trocar os
+itens do grupo "Para comer".
 
 ### O que NÃO mudar sem pensar
 

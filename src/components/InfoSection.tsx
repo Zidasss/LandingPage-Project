@@ -4,7 +4,7 @@ import { event, priceLabel } from "@/config/event";
 
 export function InfoSection() {
   return (
-    <section id="info" className="text-ink relative z-40 px-6 py-24 sm:py-36">
+    <section id="info" className="text-ink relative z-40 px-6 pt-24 pb-20 sm:pt-36 sm:pb-24">
       <div className="mx-auto max-w-5xl">
         <Reveal>
           <p className="font-heading text-ink/70 text-[0.62rem] font-bold tracking-[0.3em] uppercase">

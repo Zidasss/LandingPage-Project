@@ -122,6 +122,51 @@ export const event = {
 
   /** Endereço divulgado no topo do cartaz. */
   site: "@volvoween.com",
+
+  /**
+   * O que está incluso no ingresso, agrupado como se lê num bar.
+   *
+   * É o que responde "o que eu levo por esse valor", e por isso tem seção
+   * própria em vez de virar uma linha no cartão do preço.
+   *
+   * **Para editar:** mexa só aqui. Cada grupo é um título e uma lista de itens;
+   * acrescentar, tirar ou renomear não exige tocar em componente nenhum.
+   *
+   * `aDefinir` marca o grupo cujos nomes ainda não foram acertados com o local.
+   * Ele é escrito como mistério de propósito — "duas criações da casa" soa
+   * intencional, "bebida temática 1" soa inacabado. Quando os nomes existirem,
+   * troque os itens e apague a marca.
+   */
+  cardapio: [
+    {
+      titulo: "Chope",
+      itens: ["Chopeira de 30 ou 50 litros, aberta a noite toda"],
+    },
+    {
+      titulo: "Destilados",
+      itens: ["Vodka com energético", "Energéticos variados"],
+    },
+    {
+      titulo: "Drinks",
+      itens: ["Caipirinha de limão", "Caipirinha de morango"],
+    },
+    {
+      titulo: "Do caldeirão",
+      aDefinir: true,
+      itens: [
+        "Duas criações temáticas da casa",
+        "Os nomes a gente só conta na porta",
+      ],
+    },
+    {
+      titulo: "Sem álcool",
+      itens: ["Coca-Cola normal e zero", "Água com e sem gás"],
+    },
+    {
+      titulo: "Para comer",
+      itens: ["Finger food salgado", "Finger food doce"],
+    },
+  ],
 } as const;
 
 /** Data da festa como objeto Date (usada pela contagem regressiva). */

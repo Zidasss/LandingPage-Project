@@ -1,5 +1,6 @@
 import { CountdownSection } from "@/components/CountdownSection";
 import { InfoSection } from "@/components/InfoSection";
+import { MenuSection } from "@/components/MenuSection";
 import { Opening } from "@/components/Opening";
 import { OpeningBeam } from "@/components/OpeningBeam";
 import { SoundToggle } from "@/components/SoundToggle";
@@ -72,6 +73,7 @@ export default async function Home() {
       <OpeningBeam />
       <Opening />
       <InfoSection />
+      <MenuSection />
       <CountdownSection />
       <TicketSection vagas={vagas} fase={fase} />
     </>
