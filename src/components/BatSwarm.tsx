@@ -124,6 +124,21 @@ export function BatSwarm() {
           transform: translate3d(var(--de-x), var(--de-y), 0) scale(var(--escala));
         }
 
+        /*
+          No celular o bando é menos denso.
+
+          Cada morcego é uma camada composta, e cento e dez camadas animadas ao
+          mesmo tempo é o tipo de conta que passa num computador e cobra caro num
+          telefone. Escondendo um a cada três, o bando perde um terço das camadas
+          e mantém o volume: o que dá a sensação de nuvem é a dispersão, não a
+          contagem exata.
+        */
+        @media (max-width: 639px) {
+          .morcego:nth-child(3n) {
+            display: none;
+          }
+        }
+
         .bando[data-chegando] .morcego {
           animation:
             morcego-chega 1500ms cubic-bezier(0.3, 0, 0.2, 1) forwards,

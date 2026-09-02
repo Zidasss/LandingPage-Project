@@ -377,6 +377,20 @@ function comecarMotivo() {
  */
 function comecarMusica() {
   if (!ligado || voltaAtual || relogio) return;
+  /*
+    Só depois de o áudio destravar de verdade.
+
+    A música tem 2,4 MB no disco e vira 56 MB de PCM ao ser decodificada — 153
+    segundos a 48 kHz, em dois canais. Baixar e decodificar isso no
+    carregamento da página fazia todo visitante pagar a conta, inclusive quem
+    nunca ligaria o som, e num celular essa é a diferença entre uma página leve
+    e uma página que engasga.
+
+    Enquanto o navegador segura o áudio não há o que tocar, então também não há
+    o que decodificar. A porta continua vindo antes, porque ela pesa cem
+    kilobytes e precisa estar pronta na primeira rolagem.
+  */
+  if (ctx?.state !== "running") return;
   void buscarMusica().then(() => {
     // A busca demora; nesse meio-tempo a pessoa pode ter desligado o som.
     if (!ligado || !ctx || voltaAtual || relogio) return;
@@ -695,14 +709,22 @@ export function assinar(ouvinte: () => void): () => void {
 /** Liga o som. Só funciona dentro de um gesto da pessoa — regra do navegador. */
 export function ligar() {
   if (!montar() || !ctx) return;
-  // O `avisar` depois do resume fecha o caso em que o navegador libera sem
-  // disparar `statechange` a tempo de o botão perceber.
-  void ctx.resume().then(avisar, avisar);
   ligado = true;
   // A porta é baixada já: ela pode ser precisa a qualquer rolagem, e esperar o
   // download no momento do gesto atrasaria o som para depois da animação.
   void buscarPorta();
-  comecarMusica();
+  /*
+    A música só entra depois que o navegador libera. O `avisar` no fim fecha o
+    caso em que ele libera sem disparar `statechange` a tempo de o botão
+    perceber.
+  */
+  void ctx.resume().then(
+    () => {
+      avisar();
+      comecarMusica();
+    },
+    avisar,
+  );
   try {
     localStorage.setItem(CHAVE, "1");
   } catch {

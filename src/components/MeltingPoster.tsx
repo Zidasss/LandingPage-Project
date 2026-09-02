@@ -198,11 +198,18 @@ export function MeltingPoster({
               height="200%"
               colorInterpolationFilters="sRGB"
             >
+              {/*
+                Duas oitavas, e não três. Cada oitava é uma passada a mais do
+                ruído fractal, e o custo dobra — num celular, com oito filtros
+                recalculados enquanto se rola, é a diferença entre passar e
+                engasgar. A terceira oitava só acrescenta grão fino, que a
+                própria liquefação logo abaixo apaga.
+              */}
               <feTurbulence
                 id={`ruido-${i}`}
                 type="fractalNoise"
                 baseFrequency="0.004 0.021"
-                numOctaves="3"
+                numOctaves="2"
                 seed={7 + i * 13}
                 result="ruido"
               />
