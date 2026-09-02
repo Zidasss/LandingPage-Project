@@ -91,8 +91,8 @@ Cada grupo é um título e uma lista de itens:
 ```
 
 Acrescentar, tirar ou renomear grupo é só mexer nessa lista — nenhum componente
-precisa ser tocado, e o layout se reorganiza sozinho (três colunas no
-computador, empilhado no celular).
+precisa ser tocado, e o layout se reorganiza sozinho (duas colunas ao lado do
+texto no computador, empilhado no celular).
 
 Os itens são curtos de propósito: detalhe demais no site vira promessa a cumprir
 na porta. A litragem do chope saiu por isso — o que importa é que tem chope.

@@ -130,7 +130,15 @@ export function CountdownSection() {
         <p className="chapeu font-heading text-bone/70 text-[0.62rem] font-bold tracking-[0.35em] uppercase">
           falta pouco
         </p>
-        <h2 className="titulo font-drip text-blood mt-3 text-4xl uppercase sm:text-5xl">
+        {/*
+          O título é de cartaz, e não escorrido, por um motivo bem concreto: a
+          fonte que escorre solta gotas separadas abaixo da linha de base, e em
+          vermelho sobre o preto elas viravam pingos vermelhos soltos entre o
+          título e o relógio — pontinhos sem explicação, logo em cima do
+          horário. Escorrido continua o relógio, que é branco: gota branca no
+          preto lê como parte do número.
+        */}
+        <h2 className="titulo font-display text-blood mt-3 text-4xl tracking-tight uppercase sm:text-5xl">
           A espera
         </h2>
         <div className="mt-7">

@@ -149,7 +149,7 @@ export const event = {
     },
     {
       titulo: "Destilados",
-      itens: ["Vodka com energético", "Energéticos variados"],
+      itens: ["Vodka com energético"],
     },
     {
       titulo: "Drinks",
