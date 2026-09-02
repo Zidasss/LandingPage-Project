@@ -23,30 +23,54 @@ import { event, shortDateLabel } from "@/config/event";
  * em 100 deixava justamente as maiores sobrando espaço dos dois lados. Medido, o
  * texto ocupava de 40% a 72% da largura do feixe.
  *
+ * E o celular precisa de larguras próprias porque essa diferença de ritmo entre
+ * o bloco e o feixe muda com o formato da tela. Numa tela estreita e alta o
+ * trapézio abre bem mais rápido, então as mesmas medidas do computador deixam a
+ * linha de cima sobrando espaço enquanto a de baixo já aperta. Um número só não
+ * atende os dois formatos: no celular as linhas de cima crescem e a última
+ * encolhe, que é o contrário do que o computador pede.
+ *
  * A data fica curta de propósito: "16/10" tem cinco caracteres, e esticá-la até
  * a largura do feixe a deixaria maior que o nome da festa. Aqui é a linha que
  * anuncia, não a que domina.
  */
 const LINHAS = [
-  { texto: shortDateLabel, familia: "heading", largura: 66 },
-  { texto: event.name, familia: "display", largura: 91 },
-  { texto: `a partir das ${event.timeLabel}`, familia: "heading", largura: 97 },
-  { texto: "fantasia obrigatória", familia: "heading", largura: 104 },
+  { texto: shortDateLabel, familia: "heading", largura: 66, celular: 78 },
+  { texto: event.name, familia: "display", largura: 91, celular: 107 },
+  { texto: `a partir das ${event.timeLabel}`, familia: "heading", largura: 97, celular: 105 },
+  { texto: "fantasia obrigatória", familia: "heading", largura: 104, celular: 100 },
 ] as const;
 
 export function PosterLines() {
   return (
     <div className="flex w-full flex-col items-center gap-0">
-      {LINHAS.map(({ texto, familia, largura }) => (
+      {LINHAS.map(({ texto, familia, largura, celular }) => (
         <div
           key={texto}
           data-linha
-          className="text-ink"
-          style={{ width: `${largura}%` }}
+          className="linha-cartaz text-ink"
+          style={
+            {
+              "--larg": `${largura}%`,
+              "--larg-cel": `${celular}%`,
+            } as React.CSSProperties
+          }
         >
           <PosterWord familia={familia}>{texto}</PosterWord>
         </div>
       ))}
+
+      <style>{`
+        .linha-cartaz {
+          width: var(--larg-cel);
+        }
+
+        @media (min-width: 640px) {
+          .linha-cartaz {
+            width: var(--larg);
+          }
+        }
+      `}</style>
     </div>
   );
 }
