@@ -80,7 +80,7 @@ export function SoundToggle() {
       aria-label={rotulo}
       title={rotulo}
       data-estado={estado}
-      className="som-botao font-heading border-bone/25 bg-ink/70 text-bone hover:border-blood hover:text-blood fixed top-4 right-4 z-50 flex items-center gap-2 border px-3 py-2 text-[0.55rem] font-bold tracking-[0.25em] uppercase backdrop-blur-sm transition-colors"
+      className="som-botao font-heading fixed top-5 right-5 z-50 flex items-center gap-2 px-3.5 py-2 text-[0.58rem] font-bold tracking-[0.22em] uppercase"
     >
       <Onda estado={estado} />
       <span className="hidden sm:inline">
@@ -89,19 +89,62 @@ export function SoundToggle() {
 
       <style>{`
         /*
-          Só o estado travado pisca. É o único em que o botão está pedindo
-          alguma coisa — nos outros dois ele apenas informa, e um botão que
-          pulsa sem precisar de nada vira ruído na tela.
+          Adesivo torto, e não botão de sistema.
+
+          O site inteiro é impresso — ingresso, cartaz, carimbo — e o controle
+          de som era o único elemento com cara de barra de ferramentas: caixa
+          cinza, canto reto, alinhada ao pixel. Aqui ele vira um adesivo colado
+          meio torto no canto, na mesma linguagem do resto.
+
+          A inclinação é pequena de propósito: torto o bastante para parecer
+          colado à mão, reto o bastante para ninguém achar que quebrou.
+        */
+        .som-botao {
+          background: var(--color-bone);
+          color: var(--color-ink);
+          transform: rotate(-2.5deg);
+          box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+          transition:
+            transform 180ms cubic-bezier(0.2, 0.8, 0.3, 1),
+            background-color 180ms ease,
+            color 180ms ease;
+        }
+
+        .som-botao:hover {
+          transform: rotate(-2.5deg) translateY(-2px) scale(1.03);
+        }
+
+        /* Apertado, o adesivo afunda: o deslocamento vai junto com a sombra. */
+        .som-botao:active {
+          transform: rotate(-2.5deg) translate(2px, 2px);
+          box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+        }
+
+        /*
+          Mudo é o estado apagado: o adesivo perde a cor e fica de canto, sem
+          disputar atenção com a cena.
+        */
+        .som-botao[data-estado="mudo"] {
+          background: transparent;
+          color: color-mix(in srgb, var(--color-bone) 55%, transparent);
+          box-shadow: none;
+          outline: 1px solid color-mix(in srgb, var(--color-bone) 30%, transparent);
+        }
+
+        /*
+          Travado é o único estado que pede alguma coisa, então é o único que
+          pulsa — em vermelho, que aqui é a cor de "olha para mim". Nos outros o
+          botão só informa, e pulsar sem precisar vira ruído na tela.
         */
         .som-botao[data-estado="travado"] {
-          border-color: var(--color-blood);
-          color: var(--color-blood);
-          animation: som-chama 1600ms ease-in-out infinite;
+          background: var(--color-blood);
+          color: var(--color-ink);
+          animation: som-chama 1500ms ease-in-out infinite;
         }
 
         @keyframes som-chama {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.45; }
+          0%, 100% { transform: rotate(-2.5deg) scale(1); }
+          50% { transform: rotate(-2.5deg) scale(1.07); }
         }
 
         @media (prefers-reduced-motion: reduce) {

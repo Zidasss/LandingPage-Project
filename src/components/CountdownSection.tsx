@@ -58,8 +58,19 @@ export function CountdownSection() {
         preto entra por cima na revelação (a camada `.fundo`), junto com a arte,
         e é aí que a cena vira escura.
       */
+      /*
+        A cena ocupa a tela inteira, e a arte ocupa a cena.
+
+        Antes a arte parava em 66svh e a contagem em 47svh, então o terço de
+        baixo era preto morto: rolava-se quase uma tela de nada entre o morcego
+        e o ingresso. Encolher a seção resolveria o vazio e criaria outro
+        problema — sem uma tela só para ela, a cena nunca fica sozinha e o
+        ingresso já aparece por baixo enquanto o morcego ainda está entrando.
+
+        Então a seção continua com a tela inteira e o que cresce é o conteúdo.
+      */
       className="cena-morcego bg-blood relative z-40 min-h-svh overflow-hidden"
-      style={{ "--arte-h": "min(66svh, 116vw)" } as React.CSSProperties}
+      style={{ "--arte-h": "min(78svh, 130vw)" } as React.CSSProperties}
     >
       {/* o bando, no fundo de tudo: voa sobre o vermelho (onde as silhuetas
           pretas aparecem) e o preto o cobre conforme ele converge e some */}
@@ -115,7 +126,7 @@ export function CountdownSection() {
       </div>
 
       {/* o relógio, ancorado no corpo escuro, sempre abaixo da cara */}
-      <div className="absolute inset-x-0 top-[47svh] z-10 px-6 text-center">
+      <div className="absolute inset-x-0 top-[55svh] z-10 px-6 text-center">
         <p className="chapeu font-heading text-bone/70 text-[0.62rem] font-bold tracking-[0.35em] uppercase">
           falta pouco
         </p>

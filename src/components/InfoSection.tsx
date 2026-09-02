@@ -1,21 +1,21 @@
 import { InfoCard } from "@/components/InfoCard";
 import { Reveal } from "@/components/Reveal";
-import { event, fullAddress, priceLabel } from "@/config/event";
+import { event, priceLabel } from "@/config/event";
 
 export function InfoSection() {
   return (
-    <section id="info" className="text-ink relative z-40 px-6 py-24 sm:py-32">
+    <section id="info" className="text-ink relative z-40 px-6 py-24 sm:py-36">
       <div className="mx-auto max-w-5xl">
         <Reveal>
           <p className="font-heading text-ink/70 text-[0.62rem] font-bold tracking-[0.3em] uppercase">
             você atravessou a porta
           </p>
-          <h2 className="font-drip text-ink mt-3 text-4xl uppercase sm:text-6xl">
+          <h2 className="font-drip text-ink mt-3 text-5xl uppercase sm:text-7xl">
             Anota aí
           </h2>
         </Reveal>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-16 grid gap-x-14 gap-y-14 sm:mt-20 sm:grid-cols-2">
           <Reveal delay={0}>
             <InfoCard
               label="Quando"
@@ -43,7 +43,19 @@ export function InfoSection() {
                 </a>
               }
             >
-              <p>{fullAddress}</p>
+              {/*
+                Endereço em linhas, e não num parágrafo corrido: em parágrafo a
+                medida quebrava o CEP no meio ("81290-" numa linha, "000" na
+                outra). Endereço se escreve em linhas mesmo — assim ele nunca
+                parte no lugar errado, seja qual for a largura.
+              */}
+              <p className="not-italic">
+                {event.venue.street}
+                <br />
+                {event.venue.district}
+                <br />
+                {event.venue.city}/{event.venue.state} · {event.venue.zip}
+              </p>
             </InfoCard>
           </Reveal>
 

@@ -162,9 +162,6 @@ export const deadlineLabel = deadlineDate.toLocaleDateString("pt-BR", {
   timeZone: "America/Sao_Paulo",
 });
 
-/** Endereço completo em uma linha, do jeito que se lê em voz alta. */
-export const fullAddress = `${event.venue.street} — ${event.venue.district}, ${event.venue.city}/${event.venue.state}, ${event.venue.zip}`;
-
 /** Valor do ingresso formatado em reais. */
 export const priceLabel = event.ticket.price.toLocaleString("pt-BR", {
   style: "currency",

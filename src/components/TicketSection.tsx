@@ -224,7 +224,7 @@ export function TicketSection({
   return (
     <section
       id="ingresso"
-      className="bg-ink relative z-40 overflow-hidden px-6 pt-[42vh] pb-20 sm:py-32"
+      className="bg-ink relative z-40 overflow-hidden px-6 pt-[34vh] pb-20 sm:pt-24 sm:pb-28"
     >
       {/* cenário: a parede de ingressos correndo */}
       <TicketWall />
