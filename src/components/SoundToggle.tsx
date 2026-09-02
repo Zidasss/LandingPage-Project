@@ -34,28 +34,41 @@ export function SoundToggle() {
   useEffect(() => acompanharVisibilidade(), []);
 
   /*
-    Quem já tinha ligado o som numa visita anterior não deveria precisar ligar
-    de novo — mas o navegador continua exigindo um gesto, e recarregar a página
-    não é um. Então a preferência fica armada: o primeiro clique, toque ou tecla
-    em qualquer lugar destrava o áudio, uma vez só.
+    O site nasce com o som ligado — mas ligado não é tocando.
+
+    Nenhum navegador deixa um site tocar áudio sozinho no primeiro acesso:
+    Chrome, Safari e Firefox exigem um gesto de verdade, e rolar a página não é
+    um. Então a música fica armada e entra no primeiro clique, toque ou tecla em
+    qualquer lugar da página. No celular, o toque que a pessoa dá para rolar já
+    serve; no computador, o primeiro clique.
+
+    Tentar ligar de cara mesmo assim não é desperdício: o contexto de áudio
+    nasce junto e os arquivos começam a baixar, então quando o gesto vem o som
+    já está pronto — sem o atraso de baixar dois megabytes na hora.
+
+    Roda uma vez só, na montagem. Com o estado do som na lista de dependências,
+    o próprio `ligar` daqui refazia o efeito e removia os ouvintes antes de
+    qualquer gesto acontecer — o som nunca destravava.
   */
   useEffect(() => {
-    if (ligado || !queriaSom()) return;
+    if (!queriaSom()) return;
+    ligar();
 
+    // Chamar `ligar` de novo é inofensivo: ele só retoma o que já existe. O que
+    // importa é que desta vez a chamada acontece dentro de um gesto.
     const destravar = () => {
-      ligar();
+      if (queriaSom()) ligar();
       remover();
     };
+    const eventos = ["pointerdown", "keydown", "touchstart"] as const;
     const remover = () => {
-      for (const ev of ["pointerdown", "keydown", "touchstart"] as const) {
-        window.removeEventListener(ev, destravar);
-      }
+      for (const ev of eventos) window.removeEventListener(ev, destravar);
     };
-    for (const ev of ["pointerdown", "keydown", "touchstart"] as const) {
+    for (const ev of eventos) {
       window.addEventListener(ev, destravar, { once: true, passive: true });
     }
     return remover;
-  }, [ligado]);
+  }, []);
 
   return (
     <button

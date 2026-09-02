@@ -329,10 +329,45 @@ export function Opening() {
           transform: translate(-50%, -50%);
         }
 
-        /* O riso vive no próprio desenho, num ritmo independente do scroll. */
+        /*
+          O riso vive no próprio desenho, num ritmo independente do scroll.
+
+          A entrada vem junto, na mesma tag: a abóbora nasce do escuro em vez de
+          já estar lá quando a página abre. Ela sobe embaçada e sem cor, e ganha
+          foco e brilho conforme aparece — é a lanterna acendendo, não um
+          elemento surgindo.
+
+          As duas animações convivem porque tratam de propriedades diferentes: a
+          entrada mexe em opacidade e filtro, o riso mexe em transform. Se as
+          duas disputassem transform, a última declarada apagaria a outra.
+
+          A opacidade daqui multiplica a que o scroll escreve no elemento de
+          fora — por isso a entrada mora no desenho, e não no contêiner que o
+          laço da rolagem controla a cada quadro.
+        */
         .abertura-risada {
           transform-origin: 50% 60%;
-          animation: abertura-risada 620ms ease-in-out infinite alternate;
+          animation:
+            abertura-nascer 1500ms cubic-bezier(0.22, 0.8, 0.3, 1) both,
+            abertura-risada 620ms ease-in-out infinite alternate;
+        }
+
+        @keyframes abertura-nascer {
+          from {
+            opacity: 0;
+            filter: blur(16px) brightness(0.25) saturate(0.4);
+          }
+          to {
+            opacity: 1;
+            filter: blur(0) brightness(1) saturate(1);
+          }
+        }
+
+        /* Sem movimento, a abóbora já está acesa — nada a fazer nascer. */
+        @media (prefers-reduced-motion: reduce) {
+          .abertura-risada {
+            animation: none;
+          }
         }
 
         @keyframes abertura-risada {

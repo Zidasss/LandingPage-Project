@@ -15,10 +15,13 @@
 /** Onde a escolha da pessoa fica guardada entre visitas. */
 const CHAVE = "volvoween:som";
 
-/** Volume geral. */
-const VOLUME = 0.55;
-/** Volume da música. Ela é fundo, não show. */
-const VOLUME_MUSICA = 0.2;
+/**
+ * Volume geral, baixo de propósito: o som aqui é detalhe de ambiente, não
+ * trilha de filme. Alto demais ele deixa de enfeitar e passa a incomodar.
+ */
+const VOLUME = 0.3;
+/** Volume da música dentro do geral. Ela é fundo, não show. */
+const VOLUME_MUSICA = 0.18;
 /** Para quanto a música cai enquanto a porta soa. */
 const ABAFADO = 0.3;
 
@@ -68,9 +71,6 @@ const SOBREPOR = 0.3;
  */
 const ENTRADA = 7;
 
-/** A partir de que ponto da abertura a música começa a nascer. */
-const MUSICA_EM = 0.55;
-
 /** Semitons a partir do lá 440. */
 function nota(semitons: number): number {
   return 440 * Math.pow(2, semitons / 12);
@@ -96,8 +96,6 @@ let vozMusica: GainNode | null = null;
 let ligado = false;
 const ouvintes = new Set<() => void>();
 
-/** A porta já foi aberta nesta visita. Só então a música entra. */
-let portaAberta = false;
 /** Cada gesto da porta soa uma vez por visita — ver `abriuPorta`. */
 let soouAbrindo = false;
 let soouFechando = false;
@@ -242,7 +240,7 @@ async function carregarMusica(): Promise<void> {
 // -------------------------------------------------------------- a música
 
 let voltaAtual: AudioBufferSourceNode | null = null;
-let costurando: ReturnType<typeof setTimeout> | null = null;
+let costurando: ReturnType<typeof setInterval> | null = null;
 let relogio: ReturnType<typeof setInterval> | null = null;
 let passo = 0;
 let proximoPasso = 0;
@@ -280,15 +278,28 @@ function tocarVolta(buffer: AudioBuffer, quando: number, entrada = ENTRADA_LOOP)
   fonte.stop(fim + 0.05);
   voltaAtual = fonte;
 
-  // A próxima entra quase no fim da atual: no cruzamento as duas já estão
-  // quase mudas, então não se ouvem duas melodias, só a passagem.
-  const daquiAte = (fim - SOBREPOR - ctx.currentTime) * 1000;
-  costurando = setTimeout(
-    () => {
-      if (ligado && ctx) tocarVolta(buffer, ctx.currentTime);
-    },
-    Math.max(50, daquiAte),
-  );
+  /*
+    A hora da próxima volta é marcada no relógio do áudio, e vigiada — não
+    agendada num cronômetro de parede.
+
+    A diferença aparece quando o navegador segura o som: o relógio do áudio
+    congela junto com ele, o de parede não. Uma página aberta e deixada de lado
+    por mais tempo que a música dura teria o cronômetro estourado, e no primeiro
+    clique a segunda volta entraria por cima da primeira — duas músicas juntas,
+    o mesmo defeito por outra porta.
+
+    A próxima entra quase no fim da atual: no cruzamento as duas já estão quase
+    mudas, então se ouve a passagem, não duas melodias.
+  */
+  const horaDaProxima = fim - SOBREPOR;
+  costurando = setInterval(() => {
+    if (!ligado || !ctx) return;
+    if (ctx.currentTime >= horaDaProxima) {
+      clearInterval(costurando!);
+      costurando = null;
+      tocarVolta(buffer, ctx.currentTime);
+    }
+  }, 250);
 }
 
 /** Uma nota do motivo de reserva: ataque seco, cauda longa. */
@@ -338,13 +349,13 @@ function comecarMotivo() {
 }
 
 /**
- * Começa a música — se houver som ligado e a porta já tiver sido aberta.
+ * Começa a música.
  *
- * A música entra depois da porta de propósito: ela é o que se ouve *lá dentro*.
- * Tocar antes entregaria a festa antes de a pessoa atravessar.
+ * Ela toca desde o começo da visita, e não a partir da porta: é a cama sonora
+ * do site inteiro. O fade de entrada é longo para ela nascer em vez de aparecer.
  */
 function comecarMusica() {
-  if (!ligado || !portaAberta || voltaAtual || relogio) return;
+  if (!ligado || voltaAtual || relogio) return;
   void buscarMusica().then(() => {
     // A busca demora; nesse meio-tempo a pessoa pode ter desligado o som.
     if (!ligado || !ctx || voltaAtual || relogio) return;
@@ -355,7 +366,7 @@ function comecarMusica() {
 
 function pararMusica() {
   if (costurando) {
-    clearTimeout(costurando);
+    clearInterval(costurando);
     costurando = null;
   }
   if (voltaAtual) {
@@ -480,10 +491,6 @@ function grao(abertura: number, atraso = 0) {
  * ouvir a mesma porta dez vezes. Para ouvir de novo, recarregar.
  */
 export function abrindoPorta(abertura: number) {
-  // Mesmo em silêncio a porta conta como aberta, para a música entrar se a
-  // pessoa ligar o som depois de já ter passado por ela.
-  portaAberta = true;
-
   const anterior = aberturaAnterior;
   const passo = Math.abs(abertura - anterior);
   aberturaAnterior = abertura;
@@ -497,10 +504,6 @@ export function abrindoPorta(abertura: number) {
     // aqui, no começo do movimento.
     if (!porta) rangidoSintetico(false);
   }
-
-  // A música nasce perto do fim do curso, não no começo: ela é o que se ouve
-  // lá dentro, e o fade longo faz ela crescer por baixo do rangido.
-  if (abertura >= MUSICA_EM) comecarMusica();
 
   if (!porta) return;
   andado += passo;
@@ -532,18 +535,9 @@ export function abrindoPorta(abertura: number) {
   andado = quantos >= 8 ? 0 : andado - quantos * GRAO;
 }
 
-/**
- * A folha chegou ao fim do curso: o rangido não volta mais nesta visita.
- *
- * A música também nasce aqui, e não só no gatilho do meio da abertura. Numa
- * rolagem rápida a folha pula de fechada a aberta entre dois quadros, sem
- * nenhum quadro cair na faixa que dispara a música — e ela nunca tocaria.
- * Medido: com um salto de rolagem, a música não entrava.
- */
+/** A folha chegou ao fim do curso: o rangido não volta mais nesta visita. */
 export function abriuDeVez() {
   soouAbrindo = true;
-  portaAberta = true;
-  comecarMusica();
 }
 
 /**
@@ -707,13 +701,31 @@ export function alternar() {
   else ligar();
 }
 
-/** Se a pessoa já tinha ligado o som numa visita anterior. */
+/**
+ * Se o site deve tentar ter som.
+ *
+ * O padrão é sim: quem chega encontra a festa tocando. Só fica mudo quem
+ * escolheu ficar mudo — e essa escolha sobrevive à visita.
+ */
 export function queriaSom(): boolean {
   try {
-    return localStorage.getItem(CHAVE) === "1";
+    return localStorage.getItem(CHAVE) !== "0";
   } catch {
-    return false;
+    // Sem `localStorage` (navegação privada, cookies bloqueados) vale o padrão.
+    return true;
   }
+}
+
+/**
+ * Se o navegador ainda está segurando o áudio.
+ *
+ * Existe porque **não dá para tocar som sozinho**: Chrome, Safari e Firefox
+ * bloqueiam áudio até um gesto de verdade — clique, toque, tecla. Rolar não
+ * conta. O site pode nascer com o som ligado, mas ele só sai quando a pessoa
+ * encostar em alguma coisa. No celular, o primeiro toque para rolar já basta.
+ */
+export function travadoPeloNavegador(): boolean {
+  return ligado && ctx?.state === "suspended";
 }
 
 /**
