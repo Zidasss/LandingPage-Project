@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Barcode } from "@/components/Barcode";
 import { Field } from "@/components/Field";
 import { PixPanel } from "@/components/PixPanel";
 import { TicketWall } from "@/components/TicketWall";
@@ -22,6 +23,64 @@ type Convidado = {
   whatsapp: string;
   ingressos: number;
 };
+
+/**
+ * A linha de picote: o tracejado e as duas mordidas nas bordas.
+ *
+ * Fica numa caixa de altura zero, para poder ser posta *entre* dois blocos sem
+ * empurrar nada — o tracejado nasce exatamente na emenda, que é onde o papel se
+ * rasgaria.
+ *
+ * As mordidas são círculos centrados na borda do cartão. Metade de cada um cai
+ * para fora e é o `overflow-hidden` do cartão que a corta; sem esse corte elas
+ * viram bolas pretas boiando sobre a parede.
+ */
+function Picote({ cor }: { cor: string }) {
+  return (
+    <div aria-hidden className={`relative h-0 ${cor}`}>
+      <div
+        className="absolute inset-x-4 top-0 h-px -translate-y-1/2"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(to right, currentColor 0 5px, transparent 5px 11px)",
+        }}
+      />
+      <span className="bg-ink absolute top-0 left-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full" />
+      <span className="bg-ink absolute top-0 right-0 h-4 w-4 -translate-y-1/2 translate-x-1/2 rounded-full" />
+    </div>
+  );
+}
+
+/**
+ * Os dados impressos do ingresso: onde é a festa.
+ *
+ * Um ingresso de verdade carrega o endereço, porque é o papel que a pessoa tem
+ * na mão na hora de sair de casa. Aqui ele também é o que faz o corpo do cartão
+ * parecer ingresso, e não formulário: sem isto o picote separava o canhoto
+ * vermelho de uma caixa de campos qualquer.
+ */
+function DadosImpressos() {
+  return (
+    <dl className="divide-bone/10 border-bone/10 text-left grid grid-cols-2 divide-x border-b">
+      <div className="px-5 py-4">
+        <dt className="font-heading text-ash text-[0.55rem] font-bold tracking-[0.28em] uppercase">
+          Local
+        </dt>
+        <dd className="text-bone/85 mt-1.5 text-[0.72rem] leading-snug">
+          {event.venue.name}
+        </dd>
+      </div>
+      <div className="px-5 py-4">
+        <dt className="font-heading text-ash text-[0.55rem] font-bold tracking-[0.28em] uppercase">
+          Endereço
+        </dt>
+        <dd className="text-bone/85 mt-1.5 text-[0.72rem] leading-snug">
+          {event.venue.street}
+        </dd>
+      </div>
+    </dl>
+  );
+}
 
 /**
  * Avisa a planilha, sem nunca atrapalhar a venda.
@@ -46,6 +105,35 @@ async function avisarPlanilha(
   } catch {
     return false;
   }
+}
+
+/**
+ * O pé do ingresso: o código de barras e o número do pedido.
+ *
+ * Antes de existir pedido ele mostra a edição da festa — o ingresso já está
+ * impresso, só não foi emitido para ninguém ainda. Quando o código sai, o
+ * desenho das barras muda junto: o papel em branco vira o *seu* ingresso, e
+ * essa troca acontece na mesma tela em que o PIX aparece.
+ */
+function RodapeCodigo({ codigo }: { codigo: string | null }) {
+  return (
+    /*
+      A lavagem clara é o que faz o pé virar canhoto: sem ela o rodapé é a mesma
+      chapa preta do corpo, e as mordidas do picote — que são pretas — ficam
+      invisíveis. Com meio tom de diferença elas voltam a morder alguma coisa.
+    */
+    <div className="bg-bone/[0.03] flex items-end justify-between gap-4 px-6 pt-6 pb-6">
+      <div className="text-left">
+        <p className="font-heading text-ash text-[0.55rem] font-bold tracking-[0.28em] uppercase">
+          {codigo ? "Código do pedido" : "Edição"}
+        </p>
+        <p className="font-mono text-bone mt-1.5 text-sm tracking-[0.25em]">
+          {codigo ?? event.edition}
+        </p>
+      </div>
+      <Barcode valor={codigo ?? `${event.name}${event.edition}`} />
+    </div>
+  );
 }
 
 /**
@@ -172,20 +260,14 @@ export function TicketSection({ vagas = null }: { vagas?: Vagas | null }) {
               {event.dateLabel} · {event.timeLabel} · {brl(event.ticket.price)}
             </p>
 
-            {/* picote entre o cabeçalho e o corpo */}
-            <div
-              className="absolute inset-x-4 bottom-0 h-px translate-y-1/2"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(to right, currentColor 0 5px, transparent 5px 11px)",
-              }}
-            />
-            <span className="bg-ink absolute bottom-0 left-0 h-4 w-4 -translate-x-1/2 translate-y-1/2 rounded-full" />
-            <span className="bg-ink absolute right-0 bottom-0 h-4 w-4 translate-x-1/2 translate-y-1/2 rounded-full" />
           </div>
 
+          {/* o canhoto se separa aqui */}
+          <Picote cor="text-ink" />
+          <DadosImpressos />
+
           {/* corpo: o formulário */}
-          <div className="px-6 pt-8 pb-7">
+          <div className="px-6 pt-7 pb-7">
             {lotado ? (
               /*
                 Com a casa cheia o formulário sai da frente: deixar alguém pagar
@@ -259,7 +341,13 @@ export function TicketSection({ vagas = null }: { vagas?: Vagas | null }) {
                   onChange={(e) => update("ingressos", Number(e.target.value))}
                 />
 
-                <div className="border-bone/15 text-bone flex items-center justify-between border-t pt-5">
+                {/*
+                  Tracejado, e não linha cheia: linha cheia aqui virava só mais
+                  uma pauta de campo logo abaixo da última: o mesmo desenho para
+                  duas coisas diferentes. O picote diz que daqui para baixo é
+                  outra parte do ingresso.
+                */}
+                <div className="border-bone/25 text-bone flex items-center justify-between border-t border-dashed pt-5">
                   <span className="font-heading text-ash text-xs font-bold tracking-[0.2em] uppercase">
                     Total
                   </span>
@@ -338,6 +426,10 @@ export function TicketSection({ vagas = null }: { vagas?: Vagas | null }) {
               </div>
             )}
           </div>
+
+          {/* o pé do ingresso, destacável como o canhoto de cima */}
+          <Picote cor="text-bone/25" />
+          <RodapeCodigo codigo={txid} />
         </div>
       </div>
     </section>
