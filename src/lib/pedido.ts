@@ -81,6 +81,21 @@ export function linkComprovante(dados: {
   return linkWhatsApp(dados.numero, recado);
 }
 
+/**
+ * O link de quem chegou depois que a venda fechou.
+ *
+ * É a saída para os dois casos que sobram quando a festa já começou: quem pagou
+ * e não conseguiu avisar, e quem quer entrar de última hora. Nenhum dos dois o
+ * site resolve sozinho — mas nenhum dos dois pode terminar numa página sem
+ * telefone nenhum.
+ */
+export function linkAtrasado(numero: string, festa: string): string {
+  return linkWhatsApp(
+    numero,
+    `Oi! Cheguei no site da ${festa} depois que a venda fechou. Consigo resolver por aqui?`,
+  );
+}
+
 /** O link de quem chegou com a casa cheia e quer entrar na espera. */
 export function linkEspera(numero: string, festa: string): string {
   return linkWhatsApp(

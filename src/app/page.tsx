@@ -4,7 +4,8 @@ import { Opening } from "@/components/Opening";
 import { OpeningBeam } from "@/components/OpeningBeam";
 import { TicketSection } from "@/components/TicketSection";
 import { lerVagas, type Vagas } from "@/lib/vagas";
-import { event } from "@/config/event";
+import { vendaEncerrada } from "@/lib/venda";
+import { event, eventDate } from "@/config/event";
 
 /**
  * De quanto em quanto tempo a contagem de vagas é buscada de novo.
@@ -44,6 +45,15 @@ async function vagasConfirmadas(): Promise<Vagas | null> {
 export default async function Home() {
   const vagas = await vagasConfirmadas();
 
+  /*
+    A venda fecha sozinha quando a festa começa. A conta é feita aqui, no
+    servidor, e não no navegador: relógio de visitante se adianta, se atrasa e
+    se mexe na mão. O `revalidate` acima faz a página se refazer de minuto em
+    minuto, então o fechamento chega com no máximo um minuto de atraso — o que
+    para uma festa que dura a noite inteira não é atraso nenhum.
+  */
+  const encerrada = vendaEncerrada(new Date(), eventDate);
+
   return (
     <>
       {/*
@@ -60,7 +70,7 @@ export default async function Home() {
       <Opening />
       <InfoSection />
       <CountdownSection />
-      <TicketSection vagas={vagas} />
+      <TicketSection vagas={vagas} encerrada={encerrada} />
     </>
   );
 }

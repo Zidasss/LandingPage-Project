@@ -8,6 +8,7 @@ import { TicketWall } from "@/components/TicketWall";
 import { brl, makeTxid, maskPhone } from "@/lib/format";
 import {
   MAX_INGRESSOS,
+  linkAtrasado,
   linkComprovante,
   linkEspera,
   validarPedido,
@@ -144,8 +145,14 @@ function RodapeCodigo({ codigo }: { codigo: string | null }) {
  * é o próprio formulário: o cabeçalho vermelho carrega a identidade da festa e
  * o corpo escuro segura os campos, para o texto ficar legível sobre a parede.
  */
-export function TicketSection({ vagas = null }: { vagas?: Vagas | null }) {
-  const recado = recadoDeVagas(vagas);
+export function TicketSection({
+  vagas = null,
+  encerrada = false,
+}: {
+  vagas?: Vagas | null;
+  encerrada?: boolean;
+}) {
+  const recado = encerrada ? null : recadoDeVagas(vagas);
   const lotado = recado?.tom === "lotado";
 
   const [convidado, setConvidado] = useState<Convidado>({
@@ -240,7 +247,12 @@ export function TicketSection({ vagas = null }: { vagas?: Vagas | null }) {
           <div className="bg-blood text-ink relative px-6 pt-5 pb-7">
             <div className="flex items-start justify-between gap-3">
               <p className="font-heading text-[0.6rem] font-bold tracking-[0.35em] uppercase opacity-80">
-                ▶ {lotado ? "casa cheia" : "garanta seu lugar"}
+                ▶{" "}
+                {encerrada
+                  ? "a festa já foi"
+                  : lotado
+                    ? "casa cheia"
+                    : "garanta seu lugar"}
               </p>
               {/*
                 O selo só existe quando há o que dizer: prova de que a festa está
@@ -268,7 +280,37 @@ export function TicketSection({ vagas = null }: { vagas?: Vagas | null }) {
 
           {/* corpo: o formulário */}
           <div className="px-6 pt-7 pb-7">
-            {lotado ? (
+            {encerrada ? (
+              /*
+                Passada a hora da festa, o formulário some. Ele não tem como
+                saber que a festa acabou, e continuaria cobrando por um ingresso
+                que não existe mais — quem pagasse só descobriria depois.
+
+                Some o formulário, fica o telefone: quem pagou e não conseguiu
+                avisar, e quem quer entrar na última hora, ainda precisam de
+                alguém do outro lado.
+              */
+              <div className="flex flex-col gap-6 text-left">
+                <div>
+                  <p className="font-heading text-blood text-sm font-bold tracking-[0.2em] uppercase">
+                    A venda encerrou
+                  </p>
+                  <p className="text-bone/70 mt-3 text-sm leading-relaxed">
+                    A {event.name} foi em {event.dateLabel}, às{" "}
+                    {event.timeLabel}. Se você pagou e não chegou a mandar o
+                    comprovante, fale com a organização — dá para resolver.
+                  </p>
+                </div>
+                <a
+                  href={linkAtrasado(event.organizacao.whatsapp, event.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-heading border-blood text-blood hover:bg-blood hover:text-ink block w-full border px-6 py-4 text-center text-xs font-bold tracking-[0.25em] uppercase transition-colors"
+                >
+                  falar com a organização
+                </a>
+              </div>
+            ) : lotado ? (
               /*
                 Com a casa cheia o formulário sai da frente: deixar alguém pagar
                 por um lugar que não existe é pior do que dizer não. Mas a porta

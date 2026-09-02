@@ -115,12 +115,6 @@ export const event = {
 
   /** Endereço divulgado no topo do cartaz. */
   site: "@volvoween.com",
-
-  contact: {
-    /** WhatsApp em formato internacional, só dígitos. TODO: preencher. */
-    whatsapp: "",
-    instagram: "",
-  },
 } as const;
 
 /** Data da festa como objeto Date (usada pela contagem regressiva). */
