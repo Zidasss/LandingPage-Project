@@ -67,6 +67,22 @@ export function Opening() {
     return { derretido: Math.max(1 - forma, espalha), espalha };
   }, []);
 
+  /*
+    Recarregar volta para a abóbora.
+
+    O navegador guarda a posição da rolagem e devolve a página onde ela estava —
+    o que numa página comum é gentileza e aqui é defeito: a abertura é uma cena
+    que se atravessa do começo, e voltar no meio dela entrega a porta já aberta,
+    sem porta nenhuma tendo se aberto.
+
+    O endereço com âncora é a exceção: quem chega em `#ingresso` pediu para
+    chegar ali, e mandá-lo para o topo seria desfazer o que ele pediu.
+  */
+  useEffect(() => {
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    if (!window.location.hash) window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     const alvo = secao.current;
     if (!alvo) return;
