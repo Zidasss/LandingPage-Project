@@ -80,8 +80,8 @@ paga às onze da noite do 25 pagou dentro do prazo.
 
 ### O cardápio
 
-A seção "O que rola" sai inteira do campo `cardapio` no `event.ts`. Cada grupo
-é um título e uma lista de itens:
+A lista do cartão **"Incluso"** sai inteira do campo `cardapio` no `event.ts`.
+Cada grupo é um título e uma lista de itens:
 
 ```ts
 {
@@ -91,7 +91,11 @@ A seção "O que rola" sai inteira do campo `cardapio` no `event.ts`. Cada grupo
 ```
 
 Acrescentar, tirar ou renomear grupo é só mexer nessa lista — nenhum componente
-precisa ser tocado, e o layout se reorganiza sozinho.
+precisa ser tocado, e o layout se reorganiza sozinho (três colunas no
+computador, empilhado no celular).
+
+Os itens são curtos de propósito: detalhe demais no site vira promessa a cumprir
+na porta. A litragem do chope saiu por isso — o que importa é que tem chope.
 
 O grupo **"Do caldeirão"** tem uma marca a mais, `aDefinir: true`, que é o que
 faz aparecer o aviso "▶ segredo até a porta". Ele existe porque os nomes das

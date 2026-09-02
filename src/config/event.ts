@@ -126,11 +126,16 @@ export const event = {
   /**
    * O que está incluso no ingresso, agrupado como se lê num bar.
    *
-   * É o que responde "o que eu levo por esse valor", e por isso tem seção
-   * própria em vez de virar uma linha no cartão do preço.
+   * Fica dentro do cartão "Incluso", e não numa seção própria: seis grupos
+   * curtos não sustentam uma parada inteira na rolagem, e o lugar onde a
+   * pergunta "o que eu levo por esse valor" nasce é ao lado do preço.
    *
    * **Para editar:** mexa só aqui. Cada grupo é um título e uma lista de itens;
    * acrescentar, tirar ou renomear não exige tocar em componente nenhum.
+   *
+   * Os itens são curtos de propósito. Detalhe demais no site vira promessa a
+   * cumprir na porta: a litragem do chope saiu daqui por isso — o que importa
+   * é que tem chope, não quantos litros a chopeira comporta.
    *
    * `aDefinir` marca o grupo cujos nomes ainda não foram acertados com o local.
    * Ele é escrito como mistério de propósito — "duas criações da casa" soa
@@ -140,7 +145,7 @@ export const event = {
   cardapio: [
     {
       titulo: "Chope",
-      itens: ["Chopeira de 30 ou 50 litros, aberta a noite toda"],
+      itens: ["Chopeira aberta a noite toda"],
     },
     {
       titulo: "Destilados",
