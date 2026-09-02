@@ -158,10 +158,7 @@ export const event = {
     {
       titulo: "Do caldeirão",
       aDefinir: true,
-      itens: [
-        "Duas criações temáticas da casa",
-        "Os nomes a gente só conta na porta",
-      ],
+      itens: ["Duas criações temáticas feitas por nós — você vai gostar!"],
     },
     {
       titulo: "Sem álcool",

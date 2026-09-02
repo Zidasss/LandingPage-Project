@@ -104,45 +104,38 @@ export function InfoSection() {
               label="Incluso"
               highlight="Comida e bebida à vontade"
               /*
-                Texto e cardápio vão os dois no rodapé, lado a lado, e não um
-                embaixo do outro.
+                O cardápio vai no rodapé do cartão, e não no corpo, por um
+                motivo de medida: o corpo é limitado a 34 caracteres de largura,
+                que é o certo para texto corrido e o errado para uma grade de
+                três colunas — espremida ali, cada item quebrava em cinco linhas
+                de duas palavras.
 
-                Empilhados, o parágrafo ficava preso na medida de leitura (34
-                caracteres) e sobravam dois terços de linha vazios à direita
-                dele, antes da lista começar. Lado a lado, o recado ocupa a
-                primeira coluna e o cardápio as outras duas: a mesma informação,
-                sem buraco no meio.
-
-                A lista também não cabe no corpo do cartão — ali a medida de
-                leitura a espremeria, e cada item quebraria em cinco linhas de
-                duas palavras.
+                Já foram os dois lado a lado, quando o texto tinha quatro
+                linhas: empilhados, sobravam dois terços de linha vazios à
+                direita dele. Com uma frase só o problema deixou de existir —
+                ela lê como legenda do destaque, e a lista fica com a largura
+                inteira de novo.
               */
               footer={
-                <div className="grid gap-x-10 gap-y-8 lg:grid-cols-3">
-                  <p className="text-ink/75 max-w-[52ch] text-[0.95rem] leading-relaxed">
-                    Tudo dentro do valor do ingresso. A crise chegou na gente
-                    também, então não espere champanhe francesa — mas fome e
-                    sede ninguém vai passar.
-                  </p>
-
-                  <dl className="grid gap-x-10 gap-y-5 sm:grid-cols-2 lg:col-span-2">
-                    {event.cardapio.map((grupo) => (
-                      <div key={grupo.titulo}>
-                        <dt className="font-heading text-ink text-[0.6rem] font-bold tracking-[0.28em] uppercase">
-                          {grupo.titulo}
-                          {"aDefinir" in grupo && grupo.aDefinir ? (
-                            <span className="text-ink/50"> · segredo</span>
-                          ) : null}
-                        </dt>
-                        <dd className="text-ink/75 mt-1.5 text-[0.9rem] leading-relaxed">
-                          {grupo.itens.join(" · ")}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
+                <dl className="grid gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {event.cardapio.map((grupo) => (
+                    <div key={grupo.titulo}>
+                      <dt className="font-heading text-ink text-[0.6rem] font-bold tracking-[0.28em] uppercase">
+                        {grupo.titulo}
+                        {"aDefinir" in grupo && grupo.aDefinir ? (
+                          <span className="text-ink/50"> · segredo</span>
+                        ) : null}
+                      </dt>
+                      <dd className="text-ink/75 mt-1.5 text-[0.9rem] leading-relaxed">
+                        {grupo.itens.join(" · ")}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
               }
-            />
+            >
+              <p>Tudo dentro do valor do ingresso.</p>
+            </InfoCard>
           </Reveal>
         </div>
       </div>
