@@ -127,6 +127,20 @@ export const event = {
 /** Data da festa como objeto Date (usada pela contagem regressiva). */
 export const eventDate = new Date(event.startsAt);
 
+/**
+ * A data curta, como "16/10". É a que vai no cartaz, onde espaço é o que falta.
+ *
+ * Derivada de `startsAt`, e não escrita à parte: com duas fontes, um dia alguém
+ * muda a data e esquece uma delas, e o cartaz passa a anunciar um dia e a
+ * contagem regressiva outro. O fuso é declarado porque o horário é de Brasília
+ * e, em UTC, uma festa à noite já cai no dia seguinte.
+ */
+export const shortDateLabel = eventDate.toLocaleDateString("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  timeZone: "America/Sao_Paulo",
+});
+
 /** O fim do prazo de pagamento, como objeto Date. */
 export const deadlineDate = new Date(event.ticket.deadline);
 

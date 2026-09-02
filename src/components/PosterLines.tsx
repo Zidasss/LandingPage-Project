@@ -1,6 +1,5 @@
 import { PosterWord } from "@/components/PosterWord";
-import { brl } from "@/lib/format";
-import { event } from "@/config/event";
+import { event, shortDateLabel } from "@/config/event";
 
 /**
  * O texto do cartaz, deitado no plano do feixe.
@@ -20,17 +19,15 @@ import { event } from "@/config/event";
  * em 100 deixava justamente as maiores sobrando espaço dos dois lados. Medido, o
  * texto ocupava de 40% a 72% da largura do feixe.
  *
- * "Halloween" continua curta de propósito: é a chamada que anuncia o nome, e se
- * ela crescer junto some a hierarquia — o cartaz vira sete linhas do mesmo peso.
+ * A data fica curta de propósito: "16/10" tem cinco caracteres, e esticá-la até
+ * a largura do feixe a deixaria maior que o nome da festa. Aqui é a linha que
+ * anuncia, não a que domina.
  */
 const LINHAS = [
-  { texto: "Halloween", familia: "heading", largura: 62 },
-  { texto: event.dateLabel, familia: "heading", largura: 90 },
-  { texto: event.name, familia: "display", largura: 95 },
-  { texto: `a partir das ${event.timeLabel}`, familia: "heading", largura: 100 },
-  { texto: event.venue.name, familia: "heading", largura: 104 },
-  { texto: brl(event.ticket.price), familia: "display", largura: 88 },
-  { texto: "fantasia obrigatória", familia: "heading", largura: 118 },
+  { texto: shortDateLabel, familia: "heading", largura: 66 },
+  { texto: event.name, familia: "display", largura: 91 },
+  { texto: `a partir das ${event.timeLabel}`, familia: "heading", largura: 97 },
+  { texto: "fantasia obrigatória", familia: "heading", largura: 104 },
 ] as const;
 
 export function PosterLines() {
