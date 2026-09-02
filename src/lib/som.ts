@@ -127,6 +127,9 @@ function montar(): boolean {
   if (!Contexto) return false;
 
   ctx = new Contexto();
+  // O contexto avisa quando sai do bloqueio; sem isto o botão continuaria
+  // mostrando "travado" mesmo depois de o som já estar saindo.
+  ctx.addEventListener("statechange", avisar);
   mestre = ctx.createGain();
   mestre.gain.value = VOLUME;
   mestre.connect(ctx.destination);
@@ -686,7 +689,9 @@ export function assinar(ouvinte: () => void): () => void {
 /** Liga o som. Só funciona dentro de um gesto da pessoa — regra do navegador. */
 export function ligar() {
   if (!montar() || !ctx) return;
-  void ctx.resume();
+  // O `avisar` depois do resume fecha o caso em que o navegador libera sem
+  // disparar `statechange` a tempo de o botão perceber.
+  void ctx.resume().then(avisar, avisar);
   ligado = true;
   // A porta é baixada já: ela pode ser precisa a qualquer rolagem, e esperar o
   // download no momento do gesto atrasaria o som para depois da animação.
@@ -733,15 +738,21 @@ export function queriaSom(): boolean {
 }
 
 /**
- * Se o navegador ainda está segurando o áudio.
+ * Em que pé está o som, do ponto de vista de quem olha a tela.
  *
- * Existe porque **não dá para tocar som sozinho**: Chrome, Safari e Firefox
- * bloqueiam áudio até um gesto de verdade — clique, toque, tecla. Rolar não
- * conta. O site pode nascer com o som ligado, mas ele só sai quando a pessoa
- * encostar em alguma coisa. No celular, o primeiro toque para rolar já basta.
+ * São três estados, e não dois, porque "ligado" e "tocando" não são a mesma
+ * coisa: Chrome, Safari e Firefox bloqueiam áudio até um gesto de verdade —
+ * clique, toque, tecla —, e rolar não conta. Entre abrir o site e encostar em
+ * alguma coisa, o som está ligado e mudo ao mesmo tempo.
+ *
+ * O botão precisa saber disso. Mostrar "som" enquanto nada sai é mentir para
+ * quem está justamente procurando o motivo de não ouvir nada.
  */
-export function travadoPeloNavegador(): boolean {
-  return ligado && ctx?.state === "suspended";
+export type EstadoSom = "mudo" | "travado" | "tocando";
+
+export function estadoDoSom(): EstadoSom {
+  if (!ligado) return "mudo";
+  return ctx?.state === "running" ? "tocando" : "travado";
 }
 
 /**
