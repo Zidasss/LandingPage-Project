@@ -196,7 +196,7 @@ caixa de seleção.
 ```bash
 npm install        # uma vez
 npm run dev        # servidor em http://localhost:3000
-npm test           # 48 testes; roda em ~1 segundo
+npm test           # 55 testes; roda em ~1 segundo
 npm run lint
 npm run build      # o que a Vercel faz; se passar aqui, passa lá
 ```

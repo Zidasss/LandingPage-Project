@@ -148,6 +148,9 @@ export function Opening() {
       if (largura) alvo.style.setProperty("--macaneta-x", `${largura / 2 - 14}px`);
     };
 
+    /** Último degrau de borrão escrito na abóbora (veja abaixo). */
+    let borraoAtual = -1;
+
     const desenhar = () => {
       frame = 0;
       const p = progresso(alvo);
@@ -160,9 +163,29 @@ export function Opening() {
           `translate(calc(-50% + var(--macaneta-x) * ${rec.toFixed(3)}), ` +
           `calc(-50% + var(--macaneta-dy) * ${rec.toFixed(3)})) ` +
           `scale(${lerp(1, 0.115, rec).toFixed(3)})`;
-        abobora.current.style.filter =
-          `blur(${(rec * 12).toFixed(1)}px) saturate(${(1 - rec * 0.6).toFixed(2)}) ` +
-          `hue-rotate(${(-rec * 30).toFixed(0)}deg) brightness(${(1 - rec * 0.3).toFixed(2)})`;
+
+        /*
+          O borrão anda em degraus, e não a cada quadro.
+
+          Transform e opacidade a placa de vídeo resolve sozinha; `filter` não —
+          um desfoque de doze pixels sobre uma imagem de 560 por 700 é redesenhado
+          por inteiro toda vez que o valor muda, e mudando a cada quadro isso é
+          um redesenho por quadro no trecho mais movimentado da página.
+
+          Em degraus de 1/24 do percurso a conta cai para vinte e quatro
+          redesenhos no recuo inteiro. Não se vê o degrau porque nada mais pára:
+          a abóbora continua andando e encolhendo em movimento contínuo por cima,
+          e é o movimento que o olho segue.
+        */
+        const passoBorrao = Math.round(rec * 24) / 24;
+        if (passoBorrao !== borraoAtual) {
+          borraoAtual = passoBorrao;
+          abobora.current.style.filter =
+            `blur(${(passoBorrao * 12).toFixed(1)}px) ` +
+            `saturate(${(1 - passoBorrao * 0.6).toFixed(2)}) ` +
+            `hue-rotate(${(-passoBorrao * 30).toFixed(0)}deg) ` +
+            `brightness(${(1 - passoBorrao * 0.3).toFixed(2)})`;
+        }
       }
 
       // --- abertura: a folha gira (mesma conta que a luz lê) ---

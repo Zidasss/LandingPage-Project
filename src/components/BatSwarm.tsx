@@ -64,12 +64,24 @@ const BANDO = Array.from({ length: QUANTIDADE }, (_, i) => {
   };
 });
 
+/**
+ * Quando o último morcego já pousou, em milissegundos contados do disparo.
+ *
+ * Sai do próprio bando em vez de ser um número escrito à mão: mexer no atraso
+ * ou na duração de voo lá em cima passaria a apagar o bando cedo demais, e o
+ * bicho sumiria no ar no meio da travessia.
+ */
+const FIM_DO_BANDO =
+  Math.max(...BANDO.map((m) => m.atraso + m.duracao)) + 200;
+
 export function BatSwarm() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
+
+    let saida: ReturnType<typeof setTimeout> | undefined;
 
     // Só começa quando a seção entra na tela — o bando existe para ser visto
     // chegando, e não para ter chegado antes de alguém olhar.
@@ -78,11 +90,30 @@ export function BatSwarm() {
         if (!entrada.isIntersecting) return;
         node.dataset.chegando = "1";
         observador.disconnect();
+
+        /*
+          Depois de pousar, o bando sai do documento.
+
+          A animação termina em opacidade zero, e invisível parecia suficiente —
+          não é. Cada morcego continua sendo uma camada que o navegador compõe a
+          cada quadro, e são dezenas delas paradas em cima da cena pelo resto da
+          visita, num trecho onde ainda se rola bastante. `display: none` tira
+          todas de uma vez.
+
+          O prazo é o do morcego mais lento: o maior atraso somado à maior
+          duração, com folga. Ele voa uma vez só, então não há volta a esperar.
+        */
+        saida = setTimeout(() => {
+          node.dataset.chegou = "1";
+        }, FIM_DO_BANDO);
       },
       { threshold: 0.35 },
     );
     observador.observe(node);
-    return () => observador.disconnect();
+    return () => {
+      observador.disconnect();
+      clearTimeout(saida);
+    };
   }, []);
 
   return (
@@ -125,18 +156,35 @@ export function BatSwarm() {
         }
 
         /*
-          No celular o bando é menos denso.
+          No celular o bando fica em um terço.
 
-          Cada morcego é uma camada composta, e cento e dez camadas animadas ao
-          mesmo tempo é o tipo de conta que passa num computador e cobra caro num
-          telefone. Escondendo um a cada três, o bando perde um terço das camadas
-          e mantém o volume: o que dá a sensação de nuvem é a dispersão, não a
-          contagem exata.
+          Cada morcego é uma camada que o navegador compõe a cada quadro, e é a
+          contagem de camadas que pesa, não o tamanho delas. Medido: com o bando
+          inteiro a travessia da seção da contagem roda a 21,6ms de mediana e
+          quatro quadros ruins; sem bando nenhum, 16,7ms e nenhum. Ele era o
+          custo da seção inteira, sozinho.
+
+          Um terço porque o que dá sensação de nuvem é a dispersão, não a
+          contagem — e trinta e sete bichos espalhados por uma tela de celular
+          continuam sendo nuvem.
+
+          O corte é em grupos de seis, e não "um sim, um não", por causa de quem
+          vem de onde: os pares entram pela esquerda e os ímpares pela direita,
+          então qualquer regra de período par deixaria o bando inteiro entrando
+          por um lado só. Em seis sobram os dois primeiros — um de cada lado.
         */
         @media (max-width: 639px) {
-          .morcego:nth-child(3n) {
+          .morcego:nth-child(6n),
+          .morcego:nth-child(6n - 1),
+          .morcego:nth-child(6n - 2),
+          .morcego:nth-child(6n - 3) {
             display: none;
           }
+        }
+
+        /* Pousou: sai do documento, e com ele todas as camadas. */
+        .bando[data-chegou] {
+          display: none;
         }
 
         .bando[data-chegando] .morcego {

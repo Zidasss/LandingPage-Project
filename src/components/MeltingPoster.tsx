@@ -21,8 +21,17 @@ const LIMIAR_INICIAL = -8;
 const LIMIAR_FINAL = -26;
 /** Quanto do percurso separa a primeira linha a se formar da última. */
 const ATRASO_TOTAL = 0.34;
-/** Quantos filtros existem no documento — teto de linhas atendidas. */
-const FILTROS = 8;
+/**
+ * Quantos filtros existem no documento — teto de linhas atendidas.
+ *
+ * Quatro, que é quantas linhas o cartaz tem. Eram oito, e as quatro sobrando
+ * eram cadeias completas de `feTurbulence` montadas no documento sem nunca
+ * serem referidas por linha nenhuma: `i % FILTROS` com quatro linhas só chega
+ * até o índice três. Se o cartaz ganhar linhas, aumente junto — o `%` faz as
+ * linhas repetirem filtro, e duas linhas com o mesmo filtro derretem com o
+ * mesmo desenho, que é justamente o que a variedade de sementes evita.
+ */
+const FILTROS = 4;
 
 /**
  * O cartaz se **forma derretendo**, conforme a página rola — tudo guiado só pelo
