@@ -19,7 +19,15 @@ export function ouPadrao(valor: string | undefined, padrao: string): string {
 }
 export const event = {
   name: "Volvoween",
-  tagline: "A noite em que a fita não rebobina",
+  /**
+   * A frase que abre a descrição do site — o texto que aparece no resultado do
+   * Google e nos previews de link.
+   *
+   * O trabalho dela é fazer um estranho clicar, então vale mais uma regra de
+   * verdade da festa do que trocadilho: quem lê já sabe que precisa se fantasiar
+   * antes de abrir o site.
+   */
+  tagline: "Fantasia obrigatória",
   edition: "2026",
 
   /** Data/hora oficial em horário de Brasília (UTC-03:00). */

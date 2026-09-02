@@ -61,10 +61,10 @@ const endereco =
 export const metadata: Metadata = {
   metadataBase: new URL(endereco),
   title: `${event.name} — ${event.dateLabel}`,
-  description: `${event.tagline}. Festa de Halloween em ${event.dateLabel}, ${event.timeLabel}. Confirme sua presença pelo PIX.`,
+  description: `${event.tagline}. Festa de Halloween em ${event.venue.city} — ${event.dateLabel}, ${event.timeLabel}, na ${event.venue.name}. Confirme sua presença pelo PIX.`,
   openGraph: {
     title: `${event.name} — ${event.dateLabel}`,
-    description: `${event.dateLabel}, ${event.timeLabel} · ${event.venue.name}. Fantasia obrigatória.`,
+    description: `${event.dateLabel}, ${event.timeLabel} · ${event.venue.name}. ${event.tagline}.`,
     type: "website",
     locale: "pt_BR",
     siteName: event.name,
