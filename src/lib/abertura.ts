@@ -50,6 +50,7 @@ export const CARTAZ = [0.42, 0.55] as const;
 /** A luz toma a tela e o cartaz escorre para os lados. */
 export const ALARGA = [0.55, 1] as const;
 
+
 /**
  * A curva de todo movimento da abertura: sai devagar, ganha corpo no meio e
  * assenta no fim.

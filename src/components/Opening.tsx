@@ -83,21 +83,9 @@ export function Opening() {
 
     let frame = 0;
 
-    /*
-      O som acompanha a folha, e não o scroll.
-
-      Os dois gestos são bordas, não estados: só valem no quadro em que a folha
-      cruza o limite, senão cada quadro de rolagem soltaria um rangido por cima
-      do outro. `aberta` guarda de que lado a folha estava no quadro anterior.
-
-      Fechar exige ter aberto antes. Sem isso, uma página aberta já rolada para
-      baixo bateria a porta assim que alguém subisse um pixel.
-
-      Cada gesto soa uma vez por visita — quem controla isso é o próprio módulo
-      de som. Rolar para cima e para baixo dez vezes não toca a porta dez vezes.
-    */
+    /** Abaixo disto a folha está encostada no batente. */
     const LIMIAR = 0.03;
-    /** Passado isto a folha já está no fim do curso. */
+    /** Passado isto ela já está no fim do curso, e não anda mais. */
     const ABERTA = 0.97;
     let aberta = false;
 
@@ -108,6 +96,10 @@ export function Opening() {
       junto com ela: a posição no áudio é a posição da porta. Não há cronômetro
       aqui, e não deve haver — som de porta tem que durar o que a porta durar, e
       quem decide isso é o dedo de quem rola.
+
+      Toda passagem soa, e não só a primeira: a animação se refaz a cada
+      rolagem, e uma porta que se move em silêncio na segunda vez parece
+      quebrada. Quem cuida de as batidas não se empilharem é o módulo de som.
 
       Fechar exige ter aberto antes. Sem isso, uma página aberta já rolada para
       baixo bateria a porta assim que alguém subisse um pixel.

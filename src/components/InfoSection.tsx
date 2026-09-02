@@ -6,6 +6,22 @@ export function InfoSection() {
   return (
     <section id="info" className="text-ink relative z-40 px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-5xl">
+        {/*
+          O lema, no vermelho vazio.
+
+          Fica aqui, e não dentro da abertura, por um motivo prático: lá ele
+          caía em cima do cartaz que ainda está derretendo, e os dois textos se
+          embolavam num borrão ilegível. Este é o trecho em que a luz já tomou a
+          tela e não há mais nada nela — o único lugar da página onde a frase
+          tem o espaço que ela pede.
+        */}
+        <Reveal className="mb-24 sm:mb-32">
+          <p className="font-drip text-ink mx-auto max-w-3xl text-center text-[9vw] leading-[1.05] lowercase sm:text-[4.4vw]">
+            seja quem você quiser
+            <span className="lema-remate mt-2 block">menos você</span>
+          </p>
+        </Reveal>
+
         <Reveal>
           <p className="font-heading text-ink/70 text-[0.62rem] font-bold tracking-[0.3em] uppercase">
             você atravessou a porta
@@ -57,6 +73,19 @@ export function InfoSection() {
           </Reveal>
         </div>
       </div>
+
+      <style>{`
+        /*
+          "menos você" é o soco da frase, então escorre um pouco mais que o
+          resto: maior, e pingando um tico além. A fonte já é escorrida — o que
+          se acrescenta aqui é só a diferença entre as duas metades, que é o que
+          faz a segunda soar como remate e não como continuação.
+        */
+        .lema-remate {
+          font-size: 1.25em;
+          transform: translateY(-0.06em);
+        }
+      `}</style>
     </section>
   );
 }

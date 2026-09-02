@@ -35,12 +35,13 @@ const ARQUIVO_PORTA = "/porta.mp3";
  * o fechamento no fim, com a batida em 4,35s (pico em −7 dBFS, contra os −25 do
  * rangido). Os números abaixo recortam cada gesto.
  *
- * O ganho é diferente nos dois porque a dinâmica é diferente: o rangido de
- * abertura é baixo e precisa subir para ser ouvido sob a música; o fechamento
- * carrega a batida, que já é alta e estouraria se subisse junto.
+ * Os ganhos são baixos e diferentes entre si. Baixos porque a porta soa a cada
+ * passagem pela abertura, e o que se ouve muitas vezes precisa incomodar pouco.
+ * Diferentes porque a dinâmica é diferente: o fechamento carrega a batida, que
+ * já é o ponto mais alto da gravação e não precisa de ajuda.
  */
-const ABRINDO = { de: 0.3, ate: 2.25, ganho: 1.8 };
-const FECHANDO = { de: 3.75, ate: 5.5, ganho: 1 };
+const ABRINDO = { de: 0.3, ate: 2.25, ganho: 0.85 };
+const FECHANDO = { de: 3.75, ate: 5.5, ganho: 0.5 };
 
 /**
  * A emenda entre uma volta e a seguinte.
@@ -96,9 +97,20 @@ let vozMusica: GainNode | null = null;
 let ligado = false;
 const ouvintes = new Set<() => void>();
 
-/** Cada gesto da porta soa uma vez por visita — ver `abriuPorta`. */
-let soouAbrindo = false;
-let soouFechando = false;
+/**
+ * Se a folha já chegou ao fim do curso nesta passagem.
+ *
+ * Não é um limite de uma vez por visita: a porta soa **toda vez** que a
+ * animação acontece. Som que toca só na primeira passagem faz a segunda parecer
+ * quebrada — a porta se move e não sai nada.
+ *
+ * O que isto evita é outra coisa: continuar granulando rangido depois de a
+ * folha ter encostado no fim, quando ela já não anda mais.
+ */
+let noFimDoCurso = false;
+
+/** Quando a batida soou pela última vez, no relógio do áudio. */
+let ultimaBatida = -99;
 
 function avisar() {
   for (const o of ouvintes) o();
@@ -495,7 +507,7 @@ export function abrindoPorta(abertura: number) {
   const passo = Math.abs(abertura - anterior);
   aberturaAnterior = abertura;
 
-  if (!ligado || soouAbrindo || !ctx) return;
+  if (!ligado || noFimDoCurso || !ctx) return;
 
   if (!comecouRangido) {
     comecouRangido = true;
@@ -535,9 +547,9 @@ export function abrindoPorta(abertura: number) {
   andado = quantos >= 8 ? 0 : andado - quantos * GRAO;
 }
 
-/** A folha chegou ao fim do curso: o rangido não volta mais nesta visita. */
+/** A folha encostou no fim do curso: não há mais movimento para granular. */
 export function abriuDeVez() {
-  soouAbrindo = true;
+  noFimDoCurso = true;
 }
 
 /**
@@ -548,20 +560,24 @@ export function abriuDeVez() {
  * por visita.
  */
 export function fechouPorta() {
-  /*
-    Voltar sem ter chegado ao fim do curso não gasta o rangido.
+  // A folha voltou ao começo: a próxima abertura range de novo, do zero.
+  noFimDoCurso = false;
+  comecouRangido = false;
+  andado = 0;
 
-    Encostar na porta e subir de volta — para reler uma linha, porque o dedo
-    escorregou — não pode consumir o efeito da visita inteira: a pessoa perderia
-    a abertura de verdade, que é a que ela veio ver. Só a folha completando o
-    curso encerra o assunto.
+  if (!ligado || !ctx) return;
+
+  /*
+    Uma batida não entra por cima da outra.
+    
+    Sacudir a rolagem em cima do limiar dispararia o fechamento a cada vaivém,
+    e várias batidas somadas estouram — além de soar como pau em portão, não
+    como porta. O intervalo é um pouco menor que o próprio trecho de
+    fechamento: barra a metralhadora sem nunca engolir uma passagem de verdade,
+    que leva bem mais que isso para ir e voltar.
   */
-  if (!soouAbrindo) {
-    comecouRangido = false;
-    andado = 0;
-  }
-  if (!ligado || soouFechando) return;
-  soouFechando = true;
+  if (ctx.currentTime - ultimaBatida < FECHANDO.ate - FECHANDO.de) return;
+  ultimaBatida = ctx.currentTime;
   abafar(FECHANDO.ate - FECHANDO.de);
   if (!tocarTrecho(FECHANDO)) {
     rangidoSintetico(true);
