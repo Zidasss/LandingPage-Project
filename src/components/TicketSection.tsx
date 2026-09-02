@@ -141,7 +141,13 @@ export function TicketSection({ vagas = null }: { vagas?: Vagas | null }) {
 
       {/* o ingresso de destaque: é o formulário */}
       <div className="relative mx-auto max-w-md">
-        <div className="border-blood/40 bg-ink/95 border shadow-[0_0_80px_rgba(255,26,18,0.25)] backdrop-blur-sm">
+        {/*
+          `overflow-hidden` aqui é o que faz os picotes serem picotes. Eles são
+          círculos centrados na borda: sem o corte, metade de cada um sobra para
+          fora e vira uma bola preta em cima da parede. Cortados, sobra a metade
+          de dentro — que é a mordida no papel.
+        */}
+        <div className="border-blood/40 bg-ink/95 overflow-hidden border shadow-[0_0_80px_rgba(255,26,18,0.25)] backdrop-blur-sm">
           {/* cabeçalho: a identidade do ingresso */}
           <div className="bg-blood text-ink relative px-6 pt-5 pb-7">
             <div className="flex items-start justify-between gap-3">
@@ -174,8 +180,8 @@ export function TicketSection({ vagas = null }: { vagas?: Vagas | null }) {
                   "repeating-linear-gradient(to right, currentColor 0 5px, transparent 5px 11px)",
               }}
             />
-            <span className="bg-ink absolute bottom-0 left-0 h-5 w-5 -translate-x-1/2 translate-y-1/2 rounded-full" />
-            <span className="bg-ink absolute right-0 bottom-0 h-5 w-5 translate-x-1/2 translate-y-1/2 rounded-full" />
+            <span className="bg-ink absolute bottom-0 left-0 h-4 w-4 -translate-x-1/2 translate-y-1/2 rounded-full" />
+            <span className="bg-ink absolute right-0 bottom-0 h-4 w-4 translate-x-1/2 translate-y-1/2 rounded-full" />
           </div>
 
           {/* corpo: o formulário */}
