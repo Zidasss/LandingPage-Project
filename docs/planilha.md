@@ -112,9 +112,16 @@ function doGet(e) {
 }
 ```
 
-> Depois de colar o `doGet`, **implante de novo** (Implantar → Gerenciar
-> implantações → lápis → Versão: Nova → Implantar). A URL continua a mesma; sem
-> essa etapa o script novo não entra no ar.
+> Salvar o script **não** publica nada. A implantação serve a versão que foi
+> congelada quando você a criou, e continua servindo essa mesma versão até você
+> mandar o contrário — é por isso que uma função recém-colada pode dar
+> "Função de script não encontrada".
+>
+> Para publicar: **Implantar → Gerenciar implantações → lápis → Versão: Nova →
+> Implantar**. Aí sim a URL continua a mesma. Se ainda assim o script antigo
+> responder, crie uma **Nova implantação**: ela sempre nasce com a versão atual,
+> e aí **a URL muda** — troque a `SHEETS_WEBHOOK_URL` na Vercel e dê Redeploy,
+> senão o site continua falando com a implantação velha.
 
 Troque `troque-esta-frase` por uma frase sua e **guarde**, que ela vai na Vercel.
 
@@ -178,6 +185,20 @@ pessoa vê a mensagem pedindo para mandar o comprovante com o código. Nesse cas
 o registro se recupera pelo comprovante — nenhuma venda se perde.
 
 Sem as variáveis configuradas, o site funciona igual e simplesmente não registra.
+
+Para saber se o script está de pé, abra no navegador a URL do `/exec` com a
+frase secreta no fim: `...\/exec?segredo=SUA-FRASE`. O que voltar diz onde está
+o problema:
+
+| Resposta | O que é |
+| --- | --- |
+| `{"confirmados":N}` | está tudo certo — o script vê a planilha e conta |
+| `{"erro":"nao autorizado"}` | a frase secreta não bate (ou você abriu sem ela) |
+| `Função de script não encontrada: doGet` | a implantação serve uma versão velha — veja o passo 2 |
+
+Se o script responde certo mas o selo não aparece no site, o que sobrou é a
+Vercel: a `SHEETS_WEBHOOK_URL` está apontando para a implantação de agora, e
+houve Redeploy depois de trocá-la?
 
 ## Mudando o preço
 
