@@ -11,7 +11,7 @@ export function InfoSection() {
             você atravessou a porta
           </p>
           <h2 className="font-drip text-ink mt-3 text-4xl uppercase sm:text-6xl">
-            As coordenadas
+            Anota aí
           </h2>
         </Reveal>
 

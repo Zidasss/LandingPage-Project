@@ -2,6 +2,7 @@ import { CountdownSection } from "@/components/CountdownSection";
 import { InfoSection } from "@/components/InfoSection";
 import { Opening } from "@/components/Opening";
 import { OpeningBeam } from "@/components/OpeningBeam";
+import { SoundToggle } from "@/components/SoundToggle";
 import { TicketSection } from "@/components/TicketSection";
 import { lerVagas, type Vagas } from "@/lib/vagas";
 import { faseDaVenda } from "@/lib/venda";
@@ -67,6 +68,7 @@ export default async function Home() {
         parecer a luz tomando a página, e não um bloco vermelho subindo por
         baixo.
       */}
+      <SoundToggle />
       <OpeningBeam />
       <Opening />
       <InfoSection />

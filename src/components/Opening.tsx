@@ -14,6 +14,7 @@ import {
   suavizar,
 } from "@/lib/abertura";
 import { DOOR_BOTTOM, DOOR_RATIO, DOOR_TOP } from "@/lib/beam";
+import { batida, rangido } from "@/lib/som";
 import { DoorCrowd } from "@/components/DoorCrowd";
 import { MeltingPoster } from "@/components/MeltingPoster";
 import { PosterLines } from "@/components/PosterLines";
@@ -81,6 +82,33 @@ export function Opening() {
     }
 
     let frame = 0;
+    let janelaBatida = 0;
+
+    /*
+      O som acompanha a folha, e não o scroll.
+
+      A porta range quando começa a girar e bate quando termina de fechar — os
+      dois disparos são bordas, não estados: só valem no quadro em que a folha
+      cruza o limite, senão cada quadro de rolagem soltaria um rangido por cima
+      do outro. `porNascer` guarda de que lado a folha estava no quadro anterior.
+
+      Fechar exige ter aberto antes. Sem isso, uma página aberta já rolada para
+      baixo bateria a porta assim que alguém subisse um pixel.
+    */
+    const LIMIAR = 0.03;
+    let aberta = false;
+
+    const soar = (o: number) => {
+      if (o > LIMIAR && !aberta) {
+        aberta = true;
+        rangido();
+      } else if (o <= LIMIAR && aberta) {
+        aberta = false;
+        rangido(true);
+        // A batida chega no fim do rangido, quando a folha encosta no batente.
+        janelaBatida = window.setTimeout(batida, 620);
+      }
+    };
 
     const desenhar = () => {
       frame = 0;
@@ -111,6 +139,7 @@ export function Opening() {
       // --- abertura: a folha gira (mesma conta que a luz lê) ---
       const o = aberturaDaFolha(p);
       const largura = 1 - o * 0.95;
+      soar(o);
 
       // --- maçaneta: aparece e depois viaja com a borda da folha ---
       if (macaneta.current) {
@@ -170,6 +199,7 @@ export function Opening() {
     window.addEventListener("resize", aoRolar, { passive: true });
     return () => {
       if (frame) cancelAnimationFrame(frame);
+      if (janelaBatida) clearTimeout(janelaBatida);
       window.removeEventListener("scroll", aoRolar);
       window.removeEventListener("resize", aoRolar);
     };
