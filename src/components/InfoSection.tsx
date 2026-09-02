@@ -77,8 +77,9 @@ export function InfoSection() {
           <Reveal delay={270}>
             <InfoCard label="Incluso" highlight="Comida e bebida à vontade">
               <p>
-                Tudo dentro do valor do ingresso. Não precisa levar nada nem
-                pagar mais nada na hora.
+                Bebida variada e comida a noite inteira, tudo dentro do valor do
+                ingresso. A crise chegou na gente também, então não espere
+                champanhe francesa — mas fome e sede ninguém vai passar.
               </p>
             </InfoCard>
           </Reveal>
