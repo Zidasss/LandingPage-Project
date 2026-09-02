@@ -126,7 +126,98 @@ function agendar() {
   }
 }
 
+/**
+ * O arquivo de música, se existir.
+ *
+ * É opcional de propósito: o site funciona sem ele, com o motivo sintetizado.
+ * Basta colocar um arquivo neste caminho para ele assumir o lugar — dá para
+ * fazer isso pelo GitHub, sem tocar em código.
+ */
+const ARQUIVO_MUSICA = "/musica.mp3";
+
+/** Quanto tempo as duas voltas se sobrepõem na emenda do loop. */
+const COSTURA = 2.2;
+
+let gravado: AudioBuffer | null = null;
+/** null = ainda não procurou; false = procurou e não achou. */
+let procurou: boolean | null = null;
+let voltaAtual: AudioBufferSourceNode | null = null;
+let costurando: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Busca o arquivo de música uma vez.
+ *
+ * Falhar aqui é normal, não é erro: enquanto ninguém subir o arquivo, o site
+ * usa o motivo sintetizado. Por isso nada é registrado no console — não há o
+ * que consertar.
+ */
+async function buscarMusica(): Promise<AudioBuffer | null> {
+  if (procurou !== null) return gravado;
+  procurou = false;
+  if (!ctx) return null;
+  try {
+    const r = await fetch(ARQUIVO_MUSICA);
+    if (!r.ok) return null;
+    gravado = await ctx.decodeAudioData(await r.arrayBuffer());
+    procurou = true;
+    return gravado;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Emenda o loop com uma sobreposição, em vez de cortar e recomeçar.
+ *
+ * `loop = true` do Web Audio é gapless, mas gapless não é liso: se o fim da
+ * gravação não casa com o começo, o ouvido escuta o salto a cada volta. Aqui a
+ * volta seguinte entra antes de a atual acabar e as duas se cruzam por alguns
+ * segundos — o ponto de emenda deixa de existir.
+ */
+function tocarVolta(buffer: AudioBuffer, quando: number) {
+  if (!ctx || !vozMusica) return;
+
+  const fonte = ctx.createBufferSource();
+  fonte.buffer = buffer;
+  const fade = ctx.createGain();
+  const fim = quando + buffer.duration;
+
+  fade.gain.setValueAtTime(0.0001, quando);
+  fade.gain.linearRampToValueAtTime(1, quando + COSTURA);
+  fade.gain.setValueAtTime(1, fim - COSTURA);
+  fade.gain.linearRampToValueAtTime(0.0001, fim);
+
+  fonte.connect(fade).connect(vozMusica);
+  fonte.start(quando);
+  fonte.stop(fim + 0.05);
+  voltaAtual = fonte;
+
+  // A próxima entra a uma costura do fim, para as duas se cruzarem.
+  const daquiAte = (fim - COSTURA - ctx.currentTime) * 1000;
+  costurando = setTimeout(
+    () => {
+      if (ligado && ctx) tocarVolta(buffer, ctx.currentTime);
+    },
+    Math.max(50, daquiAte),
+  );
+}
+
 function comecarMusica() {
+  if (!ctx || !vozMusica || relogio || voltaAtual) return;
+
+  /*
+    Tenta o arquivo primeiro; se não houver, cai no motivo sintetizado. A busca
+    é assíncrona e o `ligado` é conferido de novo quando ela volta: entre pedir
+    o arquivo e recebê-lo, a pessoa pode já ter desligado o som.
+  */
+  void buscarMusica().then((buffer) => {
+    if (!ligado || !ctx) return;
+    if (buffer) tocarVolta(buffer, ctx.currentTime + 0.05);
+    else comecarMotivo();
+  });
+}
+
+function comecarMotivo() {
   if (!ctx || !vozMusica || relogio) return;
 
   // O bordão: uma nota grave contínua, duas oitavas abaixo. É o que segura a
@@ -145,6 +236,18 @@ function comecarMusica() {
 }
 
 function pararMusica() {
+  if (costurando) {
+    clearTimeout(costurando);
+    costurando = null;
+  }
+  if (voltaAtual) {
+    try {
+      voltaAtual.stop();
+    } catch {
+      // já parada
+    }
+    voltaAtual = null;
+  }
   if (relogio) {
     clearInterval(relogio);
     relogio = null;
@@ -173,17 +276,52 @@ function abafar(segundos: number) {
 }
 
 /**
+ * Como o rangido soa. Os números que definem o caráter dele.
+ *
+ * A primeira versão tratava rangido como ruído passado num filtro estreito, e
+ * soava como chiado de vento — porque rangido **não é ruído**. É atrito com
+ * altura definida: a madeira gruda e solta dezenas de vezes por segundo, e cada
+ * solta é um pulso. Isso é uma onda dente de serra grave, não ruído branco.
+ */
+export type FeitioRangido = {
+  /** Altura em que a dobradiça começa a gemer, em Hz. */
+  de: number;
+  /** Onde ela termina. Subindo, a dobradiça aperta; descendo, alivia. */
+  ate: number;
+  /** Quanto a altura vagueia sozinha. É a irregularidade que soa madeira. */
+  vagar: number;
+  /** O corpo ressonante da porta, em Hz. Grave = porta pesada. */
+  corpo: number;
+  duracao: number;
+};
+
+export const ABRINDO: FeitioRangido = {
+  de: 62,
+  ate: 138,
+  vagar: 34,
+  corpo: 780,
+  duracao: 1.45,
+};
+
+export const FECHANDO: FeitioRangido = {
+  de: 120,
+  ate: 58,
+  vagar: 26,
+  corpo: 640,
+  duracao: 0.85,
+};
+
+/**
  * O rangido da dobradiça.
  *
- * Rangido é atrito que gruda e solta muitas vezes por segundo. O desenho aqui é
- * esse: ruído passando por um filtro estreito, com a frequência tremendo (o
- * gruda-e-solta) e subindo devagar (a dobradiça apertando conforme a folha
- * gira). Fechando, o movimento é o contrário e mais curto.
+ * Fechando o movimento é o contrário e mais curto: a folha desce de tom e
+ * termina no batente.
  */
 export function rangido(fechando = false) {
   if (!ligado || !ctx || !mestre) return;
-  abafar(fechando ? 0.85 : 1.45);
-  desenharRangido(ctx, mestre, ctx.currentTime, fechando);
+  const feitio = fechando ? FECHANDO : ABRINDO;
+  abafar(feitio.duracao);
+  desenharRangido(ctx, mestre, ctx.currentTime, feitio);
 }
 
 /**
@@ -191,55 +329,80 @@ export function rangido(fechando = false) {
  *
  * Recebe o contexto e o destino em vez de usar os do módulo para poder ser
  * renderizado fora do tempo real — é assim que dá para ouvir o resultado num
- * arquivo antes de publicar, em vez de julgar o som pelo código.
+ * arquivo antes de publicar, em vez de julgar o som pelo código. Foi assim que
+ * se descobriu que a primeira versão saía treze vezes mais baixa que a batida.
  */
 export function desenharRangido(
   ctx: BaseAudioContext,
   destino: AudioNode,
   t0: number,
-  fechando: boolean,
+  feitio: FeitioRangido,
 ) {
-  const dur = fechando ? 0.85 : 1.45;
+  const { de, ate, vagar, corpo, duracao: dur } = feitio;
 
-  const fonte = ctx.createBufferSource();
-  fonte.buffer = ruido(ctx, dur);
-
-  const filtro = ctx.createBiquadFilter();
-  filtro.type = "bandpass";
-  filtro.Q.value = 16;
-  filtro.frequency.setValueAtTime(fechando ? 820 : 340, t0);
-  filtro.frequency.exponentialRampToValueAtTime(
-    fechando ? 300 : 1150,
-    t0 + dur,
-  );
-
-  // O tremido. Dente de serra, não senoide: o atrito é irregular, e a senoide
-  // sairia com um vibrato limpo demais, de instrumento.
-  const tremor = ctx.createOscillator();
-  tremor.type = "sawtooth";
-  tremor.frequency.value = fechando ? 14 : 9.5;
-  const forca = ctx.createGain();
-  forca.gain.value = 240;
-  tremor.connect(forca);
-  forca.connect(filtro.frequency);
+  // O gemido: dente de serra grave. É a fonte com altura, e é ela que faz o
+  // som ler como madeira forçada em vez de vento.
+  const voz = ctx.createOscillator();
+  voz.type = "sawtooth";
+  voz.frequency.setValueAtTime(de, t0);
+  voz.frequency.exponentialRampToValueAtTime(ate, t0 + dur);
 
   /*
-    Ganho alto de propósito. Um passa-banda estreito devolve uma fatia pequena
-    da energia do ruído: medido, o rangido saía com pico 0.03 contra 0.53 da
-    batida — treze vezes mais baixo, ou seja, inaudível ao lado dela. O número
-    aqui é compensação de filtro, não volume.
+    O vaguear da altura.
+
+    Ruído gravíssimo somado à frequência: em vez de um vibrato certinho — que
+    soaria como instrumento — a altura caminha a esmo, que é como o atrito se
+    comporta de verdade. O passa-baixa em 7 Hz é o que transforma ruído em
+    caminhada lenta; sem ele isto viraria chiado de novo.
+  */
+  const erra = ctx.createBufferSource();
+  erra.buffer = ruido(ctx, dur);
+  const lento = ctx.createBiquadFilter();
+  lento.type = "lowpass";
+  lento.frequency.value = 7;
+  const quanto = ctx.createGain();
+  quanto.gain.value = vagar * 90;
+  erra.connect(lento).connect(quanto);
+  quanto.connect(voz.frequency);
+
+  // O corpo da porta: a madeira ressoando em volta do gemido. Q baixo de
+  // propósito — é uma caixa de madeira, não um apito.
+  const madeira = ctx.createBiquadFilter();
+  madeira.type = "bandpass";
+  madeira.Q.value = 4.5;
+  madeira.frequency.value = corpo;
+
+  // Uma pitada de aspereza seca por cima, que é o pó da dobradiça.
+  const aspereza = ctx.createBufferSource();
+  aspereza.buffer = ruido(ctx, dur);
+  const seco = ctx.createBiquadFilter();
+  seco.type = "bandpass";
+  seco.Q.value = 2;
+  seco.frequency.value = corpo * 2.2;
+  const pitada = ctx.createGain();
+  pitada.gain.value = 0.09;
+
+  /*
+    O envelope não é liso: o rangido entra, quase para no meio e volta. Porta
+    que range não range de forma constante — ela trava, cede, trava de novo, e
+    é essa hesitação que o ouvido reconhece.
   */
   const env = ctx.createGain();
   env.gain.setValueAtTime(0.0001, t0);
-  env.gain.exponentialRampToValueAtTime(4.5, t0 + 0.14);
-  env.gain.setValueAtTime(4.5, t0 + dur * 0.62);
+  env.gain.exponentialRampToValueAtTime(2.0, t0 + 0.1);
+  env.gain.exponentialRampToValueAtTime(0.56, t0 + dur * 0.42);
+  env.gain.exponentialRampToValueAtTime(1.76, t0 + dur * 0.68);
   env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
 
-  fonte.connect(filtro).connect(env).connect(destino);
-  fonte.start(t0);
-  tremor.start(t0);
-  fonte.stop(t0 + dur);
-  tremor.stop(t0 + dur);
+  voz.connect(madeira).connect(env).connect(destino);
+  aspereza.connect(seco).connect(pitada).connect(env);
+
+  voz.start(t0);
+  erra.start(t0);
+  aspereza.start(t0);
+  voz.stop(t0 + dur);
+  erra.stop(t0 + dur);
+  aspereza.stop(t0 + dur);
 }
 
 /**
