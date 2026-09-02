@@ -108,16 +108,41 @@ export function CountdownSection() {
         {/*
           O teto em vw evita que, num celular estreito, a largura da arte (que
           sai da altura) passe da tela e corte as pontas das asas.
+
+          A borda de baixo da arte é um corte seco — o preto da cena continua
+          embaixo, então ninguém vê onde o retângulo acaba. Mas *só* enquanto a
+          última linha do desenho for preta: o `morcego.png` vinha com uma gota
+          vermelha de 24 por 8 pixels sobrando bem na beirada de baixo, resto do
+          recorte da silhueta, e ela aparecia como um pontinho vermelho no vazio
+          logo abaixo do relógio. Foi apagada no próprio arquivo. Se a arte for
+          reexportada, confira o rodapé dela antes de trocar.
         */}
         <div
           className="relative mx-auto aspect-[4/5]"
           style={{ height: "var(--arte-h)" }}
         >
+          {/*
+            O `sizes` declara a largura da arte com folga de propósito.
+
+            A arte é medida pela altura (`--arte-h`), então a largura real é
+            `arte-h × 4/5` — hoje uns 62vh. Declarar o número justo faz o
+            navegador escolher a fonte mínima que cabe: numa tela de retina
+            isso dava 1200px para 1130px de tela, praticamente 1:1, sem folga
+            nenhuma para o downscale — e a silhueta perdia o fio. Quando a arte
+            cresceu de 66svh para 78svh, esse `sizes` ficou para trás e foi
+            exatamente essa folga que sumiu.
+
+            Com 80vh o navegador sobe um degrau no retina (1920px para 1130px
+            de tela) e não muda nada nas outras densidades. A arte é silhueta
+            chapada, então o degrau a mais custa pouco byte.
+
+            Um aviso para quem mexer em `--arte-h`: mude os dois juntos.
+          */}
           <Image
             src={event.bats.scene}
             alt="Morcego gigante recortado contra um céu vermelho"
             fill
-            sizes="(min-width: 640px) 66vh, 116vw"
+            sizes="(min-width: 640px) 80vh, 116vw"
             quality={95}
             className="object-cover object-top"
             priority={false}
@@ -130,15 +155,7 @@ export function CountdownSection() {
         <p className="chapeu font-heading text-bone/70 text-[0.62rem] font-bold tracking-[0.35em] uppercase">
           falta pouco
         </p>
-        {/*
-          O título é de cartaz, e não escorrido, por um motivo bem concreto: a
-          fonte que escorre solta gotas separadas abaixo da linha de base, e em
-          vermelho sobre o preto elas viravam pingos vermelhos soltos entre o
-          título e o relógio — pontinhos sem explicação, logo em cima do
-          horário. Escorrido continua o relógio, que é branco: gota branca no
-          preto lê como parte do número.
-        */}
-        <h2 className="titulo font-display text-blood mt-3 text-4xl tracking-tight uppercase sm:text-5xl">
+        <h2 className="titulo font-drip text-blood mt-3 text-4xl uppercase sm:text-5xl">
           A espera
         </h2>
         <div className="mt-7">
