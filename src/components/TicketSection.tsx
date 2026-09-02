@@ -92,7 +92,7 @@ function DadosImpressos({ mostrarPrazo }: { mostrarPrazo: boolean }) {
         tela que já diz que acabou, só repete a má notícia.
       */}
       {mostrarPrazo && (
-        <p className="font-heading border-bone/10 text-blood border-t px-5 py-3 text-center text-[0.58rem] font-bold tracking-[0.28em] uppercase">
+        <p className="font-heading bg-blood text-ink px-5 py-2.5 text-center text-[0.68rem] font-bold tracking-[0.22em] uppercase">
           Pague até {deadlineLabel}
         </p>
       )}
