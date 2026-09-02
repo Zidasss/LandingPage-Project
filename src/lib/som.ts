@@ -39,8 +39,37 @@ const ARQUIVO_PORTA = "/porta.mp3";
 const ABRINDO = { de: 0.3, ate: 2.25, ganho: 1.8 };
 const FECHANDO = { de: 3.75, ate: 5.5, ganho: 1 };
 
-/** Quanto tempo as duas voltas da música se sobrepõem na emenda. */
-const COSTURA = 2.5;
+/**
+ * A emenda entre uma volta e a seguinte.
+ *
+ * `SAIDA` e `ENTRADA_LOOP` são os fades; `SOBREPOR` é o quanto as duas voltas
+ * dividem o mesmo instante.
+ *
+ * A sobreposição é curta de propósito. Com um crossfade longo — que é o que
+ * havia aqui — o fim de uma volta e o começo da outra tocam juntos por segundos
+ * e o ouvido escuta **duas músicas ao mesmo tempo**, com duas melodias
+ * desencontradas. Numa cama de som isso passa; numa música com tema, não passa.
+ *
+ * Agora uma sai antes de a outra entrar, e a sobreposição só existe para não
+ * abrir um buraco de silêncio no meio: no instante em que se cruzam, as duas
+ * já estão perto de zero.
+ */
+const SAIDA = 3;
+const ENTRADA_LOOP = 3;
+const SOBREPOR = 0.3;
+
+/**
+ * O fade da primeira entrada da música, bem mais longo que o das emendas.
+ *
+ * Ela nasce enquanto a porta ainda está abrindo, e uma música que aparece de
+ * uma vez soa como um botão apertado. Assim ela cresce por baixo do rangido e
+ * já está inteira quando a folha termina o curso — quem ouve não percebe onde
+ * começou, só que a festa está lá dentro.
+ */
+const ENTRADA = 7;
+
+/** A partir de que ponto da abertura a música começa a nascer. */
+const MUSICA_EM = 0.55;
 
 /** Semitons a partir do lá 440. */
 function nota(semitons: number): number {
@@ -150,8 +179,19 @@ let musica: AudioBuffer | null = null;
 let bordasMusica: Bordas = { inicio: 0, fim: 0, ganho: 1 };
 let porta: AudioBuffer | null = null;
 let ganhoPorta = 1;
-let buscouMusica = false;
-let buscouPorta = false;
+/*
+  A busca em voo, e não um "já busquei".
+
+  Com um booleano acontecia uma corrida: `comecarMusica` é chamada em vários
+  quadros, e a segunda chamada via a busca marcada como feita enquanto o buffer
+  ainda estava vazio — caía no motivo de reserva, ligava o relógio dele, e
+  quando o arquivo terminava de decodificar o relógio já bloqueava a entrada da
+  música de verdade. O sintetizado ganhava a corrida e a música nunca tocava.
+
+  Guardando a promessa, quem chega depois espera a mesma busca terminar.
+*/
+let promessaMusica: Promise<void> | null = null;
+let promessaPorta: Promise<void> | null = null;
 
 /**
  * Busca um arquivo de áudio. Falhar aqui é normal, não é erro: sem o arquivo o
@@ -169,9 +209,12 @@ async function baixar(caminho: string): Promise<AudioBuffer | null> {
   }
 }
 
-async function buscarPorta(): Promise<void> {
-  if (buscouPorta) return;
-  buscouPorta = true;
+function buscarPorta(): Promise<void> {
+  promessaPorta ??= carregarPorta();
+  return promessaPorta;
+}
+
+async function carregarPorta(): Promise<void> {
   porta = await baixar(ARQUIVO_PORTA);
   if (porta) {
     // Normaliza pelo pico do arquivo inteiro, para os dois trechos manterem
@@ -186,9 +229,12 @@ async function buscarPorta(): Promise<void> {
   }
 }
 
-async function buscarMusica(): Promise<void> {
-  if (buscouMusica) return;
-  buscouMusica = true;
+function buscarMusica(): Promise<void> {
+  promessaMusica ??= carregarMusica();
+  return promessaMusica;
+}
+
+async function carregarMusica(): Promise<void> {
   musica = await baixar(ARQUIVO_MUSICA);
   if (musica) bordasMusica = medirBordas(musica);
 }
@@ -210,22 +256,23 @@ let proximoPasso = 0;
  * emenda deixa de existir. É o fade de entrada e de saída, com as pontas
  * sobrepostas.
  */
-function tocarVolta(buffer: AudioBuffer, quando: number) {
+function tocarVolta(buffer: AudioBuffer, quando: number, entrada = ENTRADA_LOOP) {
   if (!ctx || !vozMusica) return;
 
   // Só o trecho com som: o silêncio das pontas fica de fora, senão a emenda
   // cruzaria música com nada e abriria um buraco a cada volta.
   const trecho = Math.max(1, bordasMusica.fim - bordasMusica.inicio);
   const fim = quando + trecho;
-  const meia = Math.min(COSTURA, trecho / 3);
+  const desce = Math.min(SAIDA, trecho / 3);
 
   const fonte = ctx.createBufferSource();
   fonte.buffer = buffer;
 
+  const sobe = Math.min(entrada, trecho / 2);
   const fade = ctx.createGain();
   fade.gain.setValueAtTime(0.0001, quando);
-  fade.gain.linearRampToValueAtTime(bordasMusica.ganho, quando + meia);
-  fade.gain.setValueAtTime(bordasMusica.ganho, fim - meia);
+  fade.gain.linearRampToValueAtTime(bordasMusica.ganho, quando + sobe);
+  fade.gain.setValueAtTime(bordasMusica.ganho, fim - desce);
   fade.gain.linearRampToValueAtTime(0.0001, fim);
 
   fonte.connect(fade).connect(vozMusica);
@@ -233,7 +280,9 @@ function tocarVolta(buffer: AudioBuffer, quando: number) {
   fonte.stop(fim + 0.05);
   voltaAtual = fonte;
 
-  const daquiAte = (fim - meia - ctx.currentTime) * 1000;
+  // A próxima entra quase no fim da atual: no cruzamento as duas já estão
+  // quase mudas, então não se ouvem duas melodias, só a passagem.
+  const daquiAte = (fim - SOBREPOR - ctx.currentTime) * 1000;
   costurando = setTimeout(
     () => {
       if (ligado && ctx) tocarVolta(buffer, ctx.currentTime);
@@ -299,7 +348,7 @@ function comecarMusica() {
   void buscarMusica().then(() => {
     // A busca demora; nesse meio-tempo a pessoa pode ter desligado o som.
     if (!ligado || !ctx || voltaAtual || relogio) return;
-    if (musica) tocarVolta(musica, ctx.currentTime + 0.05);
+    if (musica) tocarVolta(musica, ctx.currentTime + 0.05, ENTRADA);
     else comecarMotivo();
   });
 }
@@ -364,25 +413,136 @@ function tocarTrecho(t: { de: number; ate: number; ganho: number }): boolean {
 }
 
 /**
- * A porta se abrindo.
+ * Quanto a folha precisa andar para soltar mais um pedaço de rangido.
  *
- * Soa **uma vez por visita**. Quem rola para cima e para baixo repetidas vezes
- * não quer ouvir a mesma porta a cada passagem — vira metralhadora. Para ouvir
- * de novo, recarregar a página.
- *
- * É aqui que a música nasce: a porta abriu, então há uma festa lá dentro.
+ * É o passo do scrub. Menor, os pedaços se sobrepõem e o rangido vira
+ * contínuo; maior, ele fica granulado. Este valor dá continuidade numa rolagem
+ * normal sem inundar de nós de áudio numa rolagem violenta.
  */
-export function abriuPorta() {
-  if (!ligado || soouAbrindo) {
-    // Mesmo em silêncio a porta conta como aberta, para a música entrar quando
-    // a pessoa ligar o som depois de já ter passado por ela.
-    portaAberta = true;
-    return;
+const GRAO = 0.016;
+
+/** Duração de cada pedaço, com folga para as pontas se cruzarem. */
+const DUR_GRAO = 0.17;
+
+/** Quanto a folha andou desde o último pedaço tocado. */
+let andado = 0;
+let aberturaAnterior = 0;
+let comecouRangido = false;
+
+/**
+ * Um pedacinho do rangido, tirado do ponto da gravação que corresponde ao
+ * ponto em que a folha está.
+ *
+ * É o coração do scrub: a posição no áudio **é** a posição da porta. Andou um
+ * tico, sai o tico de som daquele lugar; andou muito, saem vários seguidos e
+ * viram um rangido contínuo; parou, não sai nada.
+ *
+ * A rampa nas pontas não é enfeite: cortar a onda no meio estala, e um estalo
+ * a cada dezesseis milésimos de abertura seria pior que não ter som nenhum.
+ */
+function grao(abertura: number, atraso = 0) {
+  if (!ctx || !mestre || !porta) return;
+
+  const trecho = ABRINDO.ate - ABRINDO.de - DUR_GRAO;
+  const onde = ABRINDO.de + Math.min(1, Math.max(0, abertura)) * trecho;
+  const t0 = ctx.currentTime + atraso;
+  const alvo = ganhoPorta * ABRINDO.ganho;
+
+  const fonte = ctx.createBufferSource();
+  fonte.buffer = porta;
+
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0.0001, t0);
+  env.gain.linearRampToValueAtTime(alvo, t0 + 0.03);
+  env.gain.setValueAtTime(alvo, t0 + DUR_GRAO - 0.05);
+  env.gain.linearRampToValueAtTime(0.0001, t0 + DUR_GRAO);
+
+  fonte.connect(env).connect(mestre);
+  fonte.start(t0, onde, DUR_GRAO);
+  fonte.stop(t0 + DUR_GRAO + 0.02);
+}
+
+/**
+ * A porta se abrindo — o rangido percorrido junto com a folha.
+ *
+ * Antes isto era um disparo de dois segundos, e estava errado por duas vezes.
+ * Primeiro porque a folha abre no ritmo do dedo de quem rola: rolando devagar o
+ * som acabava com a porta no meio do caminho. Depois, porque mesmo prendendo o
+ * volume à velocidade, o áudio seguia correndo sozinho — dez toques de rolagem
+ * davam dez pedaços de lugares diferentes da gravação, e não o mesmo rangido
+ * sendo percorrido.
+ *
+ * Agora a posição no áudio é a posição da porta. Rolou um tico, a folha desliza
+ * um tico e sai o tico de rangido daquele ponto. Rolou muito, os pedaços se
+ * emendam num rangido contínuo. Parou, cala.
+ *
+ * Vale uma vez por visita: quem rola para cima e para baixo dez vezes não quer
+ * ouvir a mesma porta dez vezes. Para ouvir de novo, recarregar.
+ */
+export function abrindoPorta(abertura: number) {
+  // Mesmo em silêncio a porta conta como aberta, para a música entrar se a
+  // pessoa ligar o som depois de já ter passado por ela.
+  portaAberta = true;
+
+  const anterior = aberturaAnterior;
+  const passo = Math.abs(abertura - anterior);
+  aberturaAnterior = abertura;
+
+  if (!ligado || soouAbrindo || !ctx) return;
+
+  if (!comecouRangido) {
+    comecouRangido = true;
+    abafar(2.6);
+    // Sem arquivo não há o que percorrer: o sintetizado é um disparo só, e sai
+    // aqui, no começo do movimento.
+    if (!porta) rangidoSintetico(false);
   }
+
+  // A música nasce perto do fim do curso, não no começo: ela é o que se ouve
+  // lá dentro, e o fade longo faz ela crescer por baixo do rangido.
+  if (abertura >= MUSICA_EM) comecarMusica();
+
+  if (!porta) return;
+  andado += passo;
+
+  /*
+    Um pedaço por GRAO percorrido, e não um por quadro.
+
+    Rolar com o dedo dá passos pequenos e um pedaço de cada vez; rolar de uma
+    vez só — rodinha de mouse, barra de rolagem arrastada — dá um salto grande,
+    e um salto grande tem que soltar vários pedaços seguidos, senão a porta
+    atravessa o curso inteiro com um toquinho de som. Eles saem escalonados no
+    tempo e se emendam num rangido contínuo.
+
+    O teto de oito existe para uma rolagem violenta não criar dezenas de nós de
+    áudio de uma vez: passado isso, o ouvido já não distingue mesmo.
+  */
+  const quantos = Math.min(8, Math.floor(andado / GRAO));
+  for (let i = 1; i <= quantos; i++) {
+    // Cada pedaço sai do ponto por onde a folha passou, e não todos do ponto
+    // final: num salto grande é o caminho percorrido que se ouve, não só o
+    // destino. Eles saem escalonados no tempo e se emendam num rangido só.
+    const onde = anterior + (abertura - anterior) * (i / quantos);
+    grao(onde, (i - 1) * 0.05);
+  }
+  /*
+    A sobra volta a acumular, exceto quando o teto foi atingido: aí ela seria
+    uma enxurrada atrasada de pedaços tocando depois de a porta já ter parado.
+  */
+  andado = quantos >= 8 ? 0 : andado - quantos * GRAO;
+}
+
+/**
+ * A folha chegou ao fim do curso: o rangido não volta mais nesta visita.
+ *
+ * A música também nasce aqui, e não só no gatilho do meio da abertura. Numa
+ * rolagem rápida a folha pula de fechada a aberta entre dois quadros, sem
+ * nenhum quadro cair na faixa que dispara a música — e ela nunca tocaria.
+ * Medido: com um salto de rolagem, a música não entrava.
+ */
+export function abriuDeVez() {
   soouAbrindo = true;
   portaAberta = true;
-  abafar(ABRINDO.ate - ABRINDO.de);
-  if (!tocarTrecho(ABRINDO)) rangidoSintetico(false);
   comecarMusica();
 }
 
@@ -394,6 +554,18 @@ export function abriuPorta() {
  * por visita.
  */
 export function fechouPorta() {
+  /*
+    Voltar sem ter chegado ao fim do curso não gasta o rangido.
+
+    Encostar na porta e subir de volta — para reler uma linha, porque o dedo
+    escorregou — não pode consumir o efeito da visita inteira: a pessoa perderia
+    a abertura de verdade, que é a que ela veio ver. Só a folha completando o
+    curso encerra o assunto.
+  */
+  if (!soouAbrindo) {
+    comecouRangido = false;
+    andado = 0;
+  }
   if (!ligado || soouFechando) return;
   soouFechando = true;
   abafar(FECHANDO.ate - FECHANDO.de);

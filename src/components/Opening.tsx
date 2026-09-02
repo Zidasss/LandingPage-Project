@@ -14,7 +14,7 @@ import {
   suavizar,
 } from "@/lib/abertura";
 import { DOOR_BOTTOM, DOOR_RATIO, DOOR_TOP } from "@/lib/beam";
-import { abriuPorta, fechouPorta } from "@/lib/som";
+import { abriuDeVez, abrindoPorta, fechouPorta } from "@/lib/som";
 import { DoorCrowd } from "@/components/DoorCrowd";
 import { MeltingPoster } from "@/components/MeltingPoster";
 import { PosterLines } from "@/components/PosterLines";
@@ -97,13 +97,28 @@ export function Opening() {
       de som. Rolar para cima e para baixo dez vezes não toca a porta dez vezes.
     */
     const LIMIAR = 0.03;
+    /** Passado isto a folha já está no fim do curso. */
+    const ABERTA = 0.97;
     let aberta = false;
 
+    /*
+      O som acompanha a folha, quadro a quadro.
+
+      A abertura é passada crua para o módulo de som, que percorre a gravação
+      junto com ela: a posição no áudio é a posição da porta. Não há cronômetro
+      aqui, e não deve haver — som de porta tem que durar o que a porta durar, e
+      quem decide isso é o dedo de quem rola.
+
+      Fechar exige ter aberto antes. Sem isso, uma página aberta já rolada para
+      baixo bateria a porta assim que alguém subisse um pixel.
+    */
     const soar = (o: number) => {
-      if (o > LIMIAR && !aberta) {
+      if (o > LIMIAR && o < ABERTA) {
         aberta = true;
-        abriuPorta();
-      } else if (o <= LIMIAR && aberta) {
+        abrindoPorta(o);
+      } else if (o >= ABERTA) {
+        abriuDeVez();
+      } else if (aberta) {
         aberta = false;
         fechouPorta();
       }
