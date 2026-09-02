@@ -162,14 +162,17 @@ O site mostra um selo no ingresso com base na coluna **PAGO** — e só nela. Um
 pedido sem pagamento não ocupa lugar nenhum, porque a maior parte deles nunca
 vira dinheiro.
 
-Ele fala pouco, de propósito:
+Ele fala pouco, de propósito, e **nunca diz quantas pessoas já confirmaram** —
+isso é conta da organização. Só fala de vaga que sobra:
 
 | Situação | O que aparece |
 | --- | --- |
-| Menos de 10 confirmados | **nada** — "3 de 80" é propaganda de festa vazia |
-| 10 ou mais, com folga | `24 de 80 confirmados` |
-| 15 vagas ou menos | `7 últimas vagas` |
+| Com folga | **nada** — "127 vagas restantes" é propaganda de festa vazia |
+| No último quinto da lotação | `20 últimas vagas` |
 | Lotado | `Lotado`, e o formulário dá lugar à lista de espera |
+
+O limiar acompanha o tamanho da festa (um quinto da lotação, no mínimo 12), para
+que "está acabando" seja verdade tanto numa festa de 30 quanto numa de 130.
 
 O número é buscado no máximo uma vez por minuto e fica guardado entre uma
 busca e outra — a visita nunca espera pela planilha. Se ela estiver fora do ar,

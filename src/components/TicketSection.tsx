@@ -16,7 +16,8 @@ import {
   type ErrosPedido,
 } from "@/lib/pedido";
 import { recadoDeVagas, type Vagas } from "@/lib/vagas";
-import { event } from "@/config/event";
+import { vendaEncerrada, type FaseDaVenda } from "@/lib/venda";
+import { deadlineLabel, event } from "@/config/event";
 
 type Convidado = {
   nome: string;
@@ -60,26 +61,42 @@ function Picote({ cor }: { cor: string }) {
  * parecer ingresso, e não formulário: sem isto o picote separava o canhoto
  * vermelho de uma caixa de campos qualquer.
  */
-function DadosImpressos() {
+function DadosImpressos({ mostrarPrazo }: { mostrarPrazo: boolean }) {
   return (
-    <dl className="divide-bone/10 border-bone/10 text-left grid grid-cols-2 divide-x border-b">
-      <div className="px-5 py-4">
-        <dt className="font-heading text-ash text-[0.55rem] font-bold tracking-[0.28em] uppercase">
-          Local
-        </dt>
-        <dd className="text-bone/85 mt-1.5 text-[0.72rem] leading-snug">
-          {event.venue.name}
-        </dd>
-      </div>
-      <div className="px-5 py-4">
-        <dt className="font-heading text-ash text-[0.55rem] font-bold tracking-[0.28em] uppercase">
-          Endereço
-        </dt>
-        <dd className="text-bone/85 mt-1.5 text-[0.72rem] leading-snug">
-          {event.venue.street}
-        </dd>
-      </div>
-    </dl>
+    <div className="border-bone/10 border-b">
+      <dl className="divide-bone/10 grid grid-cols-2 divide-x text-left">
+        <div className="px-5 py-4">
+          <dt className="font-heading text-ash text-[0.55rem] font-bold tracking-[0.28em] uppercase">
+            Local
+          </dt>
+          <dd className="text-bone/85 mt-1.5 text-[0.72rem] leading-snug">
+            {event.venue.name}
+          </dd>
+        </div>
+        <div className="px-5 py-4">
+          <dt className="font-heading text-ash text-[0.55rem] font-bold tracking-[0.28em] uppercase">
+            Endereço
+          </dt>
+          <dd className="text-bone/85 mt-1.5 text-[0.72rem] leading-snug">
+            {event.venue.street}
+          </dd>
+        </div>
+      </dl>
+
+      {/*
+        A linha de validade do ingresso. Fica logo abaixo do endereço, e não
+        perto do botão, porque é informação do papel e não do formulário: vale
+        antes de a pessoa decidir preencher qualquer coisa.
+
+        Some quando o prazo passa — prazo vencido em vermelho, ao lado de uma
+        tela que já diz que acabou, só repete a má notícia.
+      */}
+      {mostrarPrazo && (
+        <p className="font-heading border-bone/10 text-blood border-t px-5 py-3 text-center text-[0.58rem] font-bold tracking-[0.28em] uppercase">
+          Pague até {deadlineLabel}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -147,11 +164,12 @@ function RodapeCodigo({ codigo }: { codigo: string | null }) {
  */
 export function TicketSection({
   vagas = null,
-  encerrada = false,
+  fase = "aberta",
 }: {
   vagas?: Vagas | null;
-  encerrada?: boolean;
+  fase?: FaseDaVenda;
 }) {
+  const encerrada = vendaEncerrada(fase);
   const recado = encerrada ? null : recadoDeVagas(vagas);
   const lotado = recado?.tom === "lotado";
 
@@ -248,16 +266,19 @@ export function TicketSection({
             <div className="flex items-start justify-between gap-3">
               <p className="font-heading text-[0.6rem] font-bold tracking-[0.35em] uppercase opacity-80">
                 ▶{" "}
-                {encerrada
+                {fase === "festa-passou"
                   ? "a festa já foi"
-                  : lotado
-                    ? "casa cheia"
-                    : "garanta seu lugar"}
+                  : fase === "prazo-encerrado"
+                    ? "fora do prazo"
+                    : lotado
+                      ? "casa cheia"
+                      : "garanta seu lugar"}
               </p>
               {/*
-                O selo só existe quando há o que dizer: prova de que a festa está
-                enchendo, ou aviso de que está no fim. No começo da venda ele não
-                aparece — "3 de 80" é propaganda de festa vazia.
+                O selo só existe quando há o que dizer, e só fala de vaga que
+                sobra — nunca de quantos já confirmaram. Enquanto houver folga
+                ele não aparece: "127 vagas restantes" é propaganda de festa
+                vazia com outras palavras.
               */}
               {recado && (
                 <span className="font-heading bg-ink/85 text-bone shrink-0 px-2 py-1 text-[0.55rem] font-bold tracking-[0.2em] uppercase">
@@ -276,7 +297,7 @@ export function TicketSection({
 
           {/* o canhoto se separa aqui */}
           <Picote cor="text-ink" />
-          <DadosImpressos />
+          <DadosImpressos mostrarPrazo={!encerrada} />
 
           {/* corpo: o formulário */}
           <div className="px-6 pt-7 pb-7">
@@ -293,12 +314,30 @@ export function TicketSection({
               <div className="flex flex-col gap-6 text-left">
                 <div>
                   <p className="font-heading text-blood text-sm font-bold tracking-[0.2em] uppercase">
-                    A venda encerrou
+                    {fase === "festa-passou"
+                      ? "A festa acabou"
+                      : "O prazo encerrou"}
                   </p>
+                  {/*
+                    As duas situações não são a mesma, e dizer a errada é pior
+                    do que não dizer nada: quem chega no dia 26 de setembro não
+                    perdeu a festa — ela ainda vai acontecer —, perdeu o prazo, e
+                    ainda tem o que conversar com a organização.
+                  */}
                   <p className="text-bone/70 mt-3 text-sm leading-relaxed">
-                    A {event.name} foi em {event.dateLabel}, às{" "}
-                    {event.timeLabel}. Se você pagou e não chegou a mandar o
-                    comprovante, fale com a organização — dá para resolver.
+                    {fase === "festa-passou" ? (
+                      <>
+                        A {event.name} foi em {event.dateLabel}, às{" "}
+                        {event.timeLabel}. Se você pagou e não chegou a mandar o
+                        comprovante, fale com a organização — dá para resolver.
+                      </>
+                    ) : (
+                      <>
+                        Os pagamentos iam até {deadlineLabel} e a lista já foi
+                        fechada para a organização se planejar. Se você ainda
+                        quer ir, fale com a gente: às vezes sobra lugar.
+                      </>
+                    )}
                   </p>
                 </div>
                 <a

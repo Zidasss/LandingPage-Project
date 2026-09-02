@@ -40,24 +40,37 @@ export function lerVagas(bruto: unknown, capacidade: number): Vagas | null {
   };
 }
 
-/** A partir daqui a festa está acabando, e vale dizer. */
-const POUCAS = 15;
-/** Abaixo disto não há o que comemorar — melhor ficar calado. */
-const PROVA_SOCIAL = 10;
+/** A partir de quantas vagas restantes o selo abre a boca. */
+const POUCAS = 30;
+
+/**
+ * O ponto em que "está acabando" passa a ser verdade.
+ *
+ * São 30 vagas, escolhidas a dedo para esta festa. A metade da lotação é um
+ * teto: numa festa pequena, avisar a 30 vagas de uma casa de 40 seria avisar
+ * desde o primeiro dia — o aviso perde o sentido e vira o anúncio de vazio que
+ * o silêncio existe para evitar.
+ */
+function poucas(capacidade: number): number {
+  return Math.min(POUCAS, Math.floor(capacidade / 2));
+}
 
 export type Recado =
   | { tom: "lotado"; texto: string }
   | { tom: "ultimas"; texto: string }
-  | { tom: "enchendo"; texto: string }
   | null;
 
 /**
  * O que dizer — e, principalmente, quando calar.
  *
- * Um contador que fala sempre trabalha contra a festa: "3 de 80 confirmados",
- * no começo da venda, anuncia que ninguém vem. Por isso ele só abre a boca
- * quando tem o que dizer — para provar que a festa está enchendo, ou para
- * avisar que está no fim. Entre uma coisa e outra, silêncio.
+ * O selo fala de vaga que sobra, nunca de gente que já confirmou: quantos
+ * vieram é conta da organização, e anunciar "12 de 130" no meio da venda conta
+ * para todo mundo o quanto ainda está vazio.
+ *
+ * Mas dizer as restantes cedo demais tem o mesmo defeito ao contrário: "127
+ * vagas restantes" no primeiro dia também anuncia festa vazia, só que com
+ * outras palavras. Por isso o selo fica calado até a conta virar urgência de
+ * verdade, e só então abre a boca.
  */
 export function recadoDeVagas(vagas: Vagas | null): Recado {
   if (!vagas) return null;
@@ -66,16 +79,9 @@ export function recadoDeVagas(vagas: Vagas | null): Recado {
     return { tom: "lotado", texto: "Lotado" };
   }
 
-  if (vagas.restantes <= POUCAS) {
+  if (vagas.restantes <= poucas(vagas.capacidade)) {
     const plural = vagas.restantes === 1 ? "última vaga" : "últimas vagas";
     return { tom: "ultimas", texto: `${vagas.restantes} ${plural}` };
-  }
-
-  if (vagas.confirmados >= PROVA_SOCIAL) {
-    return {
-      tom: "enchendo",
-      texto: `${vagas.confirmados} de ${vagas.capacidade} confirmados`,
-    };
   }
 
   return null;

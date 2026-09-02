@@ -31,11 +31,11 @@ export const event = {
   edition: "2026",
 
   /** Data/hora oficial em horário de Brasília (UTC-03:00). */
-  startsAt: "2026-10-16T16:00:00-03:00",
+  startsAt: "2026-10-16T19:00:00-03:00",
   /** Rótulo humano usado nos textos. */
   dateLabel: "16 de outubro",
   weekdayLabel: "sexta-feira",
-  timeLabel: "16h",
+  timeLabel: "19h",
 
   venue: {
     name: "Associação Volvo",
@@ -49,10 +49,17 @@ export const event = {
   },
 
   ticket: {
-    /** Valor por pessoa, em reais. Placeholder — confirmar. */
-    price: 80,
-    /** Quantidade máxima de convidados. TODO: confirmar. */
-    capacity: 80,
+    /** Valor por pessoa, em reais. */
+    price: 85,
+    /** Quantidade máxima de convidados. */
+    capacity: 130,
+    /**
+     * Até quando dá para pagar. Depois disto o formulário sai do ar sozinho.
+     *
+     * O horário é o último segundo do dia, em Brasília: o prazo é "até o dia
+     * 25", e quem paga às onze da noite do 25 pagou dentro do prazo.
+     */
+    deadline: "2026-09-25T23:59:59-03:00",
   },
 
   /**
@@ -119,6 +126,27 @@ export const event = {
 
 /** Data da festa como objeto Date (usada pela contagem regressiva). */
 export const eventDate = new Date(event.startsAt);
+
+/** O fim do prazo de pagamento, como objeto Date. */
+export const deadlineDate = new Date(event.ticket.deadline);
+
+/**
+ * O prazo escrito por extenso, como "25 de setembro".
+ *
+ * Derivado da própria data, e não digitado à parte: com dois campos, um dia
+ * alguém muda a data e esquece o texto, e o site passa a prometer um prazo e
+ * cobrar outro. É o mesmo risco que `startsAt` e `dateLabel` já correm.
+ *
+ * O fuso é declarado na marra. Sem ele o rótulo sai do fuso de quem renderiza:
+ * o prazo termina às 23:59 de Brasília, que em UTC já é o dia seguinte — o
+ * servidor escreveria "26 de setembro" e o navegador de quem está no Brasil
+ * escreveria "25". Duas datas diferentes para o mesmo prazo.
+ */
+export const deadlineLabel = deadlineDate.toLocaleDateString("pt-BR", {
+  day: "numeric",
+  month: "long",
+  timeZone: "America/Sao_Paulo",
+});
 
 /** Endereço completo em uma linha, do jeito que se lê em voz alta. */
 export const fullAddress = `${event.venue.street} — ${event.venue.district}, ${event.venue.city}/${event.venue.state}, ${event.venue.zip}`;

@@ -19,16 +19,23 @@ achar que o site quebrou quando ele está funcionando.
 
 **A contagem regressiva vira "A festa começou"** na hora marcada. Automático.
 
-**A venda fecha quando a festa começa.** Passada a hora, o formulário some e no
-lugar dele aparece um botão de WhatsApp. Isso existe porque, sem ele, o site
-continuaria cobrando R$ 80 por um ingresso de uma festa que já aconteceu, e a
-pessoa só descobriria depois de pagar. Se você quiser continuar vendendo depois
-do horário, é só mudar a data em `src/config/event.ts`.
+**A venda fecha sozinha no fim do prazo de pagamento** (`ticket.deadline`), e de
+qualquer jeito quando a festa começa — a festa é o teto, mesmo que o prazo esteja
+configurado errado. Passado o corte, o formulário some e no lugar dele aparece um
+botão de WhatsApp.
+
+As duas situações dizem coisas diferentes, de propósito. Quem chega no dia
+seguinte ao prazo **não perdeu a festa** — ela ainda vai acontecer —, então o
+site diz que o prazo encerrou e manda falar com você. Só depois da festa é que
+ele diz que a festa acabou. Para esticar o prazo, mude `ticket.deadline`.
+
+O aviso **"Pague até 25 de setembro"** aparece no ingresso enquanto a venda está
+aberta, e some junto com o formulário.
 
 **O selo de vagas aparece e some sozinho**, lendo a coluna PAGO da planilha. As
-regras estão em [planilha.md](planilha.md#as-vagas-no-site). Ele fala pouco de
-propósito: abaixo de 10 confirmados não diz nada, porque "3 de 80" é propaganda
-de festa vazia.
+regras estão em [planilha.md](planilha.md#as-vagas-no-site). Ele nunca conta
+quantas pessoas já confirmaram — só quantas vagas sobram — e fica calado até
+sobrar pouco, porque "127 vagas restantes" também é propaganda de festa vazia.
 
 E uma coisa que o site **não** faz: confirmar pagamento. Com chave PIX comum não
 há como ele saber que o dinheiro entrou. Quem confirma é quem olha o extrato e
@@ -46,6 +53,7 @@ site inteiro — cartaz, ingresso, PIX, contagem, textos.
 | Preço | `ticket.price` | Número puro, sem `R$`. O valor da planilha é recalculado a partir daqui, no servidor |
 | Quantas pessoas cabem | `ticket.capacity` | É o teto do selo de vagas e do "Lotado" |
 | Data e hora | `startsAt` | **Mude `dateLabel` e `timeLabel` junto** — veja abaixo |
+| Prazo de pagamento | `ticket.deadline` | Só este campo. O texto "Pague até…" é gerado a partir dele |
 | Local | `venue.*` | O `mapsUrl` é link do Google Maps; troque se mudar o endereço |
 | WhatsApp | variável `NEXT_PUBLIC_WHATSAPP` na Vercel | Só dígitos, com país e DDD |
 | Chave PIX | variável `NEXT_PUBLIC_PIX_KEY` na Vercel | Depois de mudar, **gere um PIX de teste e pague R$ 0,01 para você mesmo** |
@@ -55,14 +63,19 @@ site inteiro — cartaz, ingresso, PIX, contagem, textos.
 A data aparece em dois formatos, e eles não conversam entre si:
 
 ```ts
-startsAt: "2026-10-16T16:00:00-03:00",  // o relógio: contagem e fechamento da venda
+startsAt: "2026-10-16T19:00:00-03:00",  // o relógio: contagem e fechamento da venda
 dateLabel: "16 de outubro",             // o texto que a pessoa lê
-timeLabel: "16h",                       // idem
+timeLabel: "19h",                       // idem
 ```
 
 `startsAt` é o que a máquina usa; os outros dois são o que o olho lê. Mudar só
 um deixa o site dizendo uma coisa e contando outra. O `-03:00` no fim é o fuso
 de Brasília — mantenha.
+
+O prazo de pagamento **não** tem esse problema: só existe `ticket.deadline`, e o
+texto "Pague até 25 de setembro" é gerado a partir dele. Mudou a data, mudou o
+texto. O `23:59:59` no fim é de propósito — o prazo é *até* o dia 25, então quem
+paga às onze da noite do 25 pagou dentro do prazo.
 
 ### O que NÃO mudar sem pensar
 
@@ -114,10 +127,13 @@ Nenhuma venda se perde.
 
 ### O selo de vagas não aparece
 
-Provavelmente está certo: abaixo de 10 confirmados ele fica calado de propósito.
-Para testar, marque temporariamente `10` na coluna Ingressos de uma linha paga,
-espere um minuto e recarregue **duas vezes** (a primeira serve o cache velho e
-dispara a busca; a segunda mostra).
+Provavelmente está certo: enquanto houver folga ele fica calado de propósito.
+Com 130 lugares, ele só abre a boca quando sobrarem **26 vagas ou menos**.
+
+Para testar sem esperar a festa encher, marque temporariamente `110` na coluna
+Ingressos de uma linha paga, espere um minuto e recarregue **duas vezes** (a
+primeira serve o cache velho e dispara a busca; a segunda mostra). Depois
+devolva o valor real.
 
 ### O site apareceu sem estilo, todo branco
 
@@ -140,8 +156,9 @@ caixa de seleção.
       o selo de vagas não aparece e os pedidos vão para um endereço aposentado.
 - [ ] Apagar as linhas de teste da planilha e a aba `Página1` vazia
 - [ ] Arquivar a implantação antiga do Apps Script, para ninguém tropeçar nela
-- [ ] Confirmar `ticket.price` e `ticket.capacity` (estão marcados como
-      provisórios no `event.ts` desde o começo)
+- [ ] Conferir se a Associação Volvo comporta mesmo as 130 pessoas (a
+      `ticket.capacity` foi ajustada de 80 para 130 na intenção de "tentar
+      meter até 130" — se o local não permitir, o número precisa voltar)
 
 ---
 
