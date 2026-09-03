@@ -55,6 +55,27 @@ body {
   color: var(--color-ink);
 }
 
+/*
+ * A mãozinha de volta nos botões.
+ *
+ * O reset do Tailwind v4 passou a deixar botão com `cursor: default`, seguindo
+ * o que o HTML diz. Só que aqui todo botão é botão de verdade — gerar pix, já
+ * fiz o pix, copiar o código, ligar o som — e sem a mãozinha o "gerar pix"
+ * simplesmente não parecia clicável.
+ *
+ * A regra é geral, e não uma classe no botão do PIX, porque o problema é do
+ * reset: qualquer botão novo nasceria com o mesmo defeito.
+ */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+summary {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 /**
  * Tipografia de cartaz: condensada, apertada e sem espaço sobrando.
  * O tracking negativo é o que faz a palavra virar bloco.
