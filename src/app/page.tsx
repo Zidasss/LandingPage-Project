@@ -1,4 +1,5 @@
 import { CountdownSection } from "@/components/CountdownSection";
+import { FireSection } from "@/components/FireSection";
 import { InfoSection } from "@/components/InfoSection";
 import { Opening } from "@/components/Opening";
 import { OpeningBeam } from "@/components/OpeningBeam";
@@ -74,6 +75,12 @@ export default async function Home() {
       <InfoSection />
       <CountdownSection />
       <TicketSection vagas={vagas} fase={fase} />
+      {/*
+        A despedida vem depois do ingresso, e não antes: quem chega aqui já
+        passou pelo formulário, então a cena não disputa atenção com a compra.
+        E a página ganha um fim — antes ela simplesmente acabava no formulário.
+      */}
+      <FireSection />
     </>
   );
 }

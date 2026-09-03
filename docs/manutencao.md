@@ -106,6 +106,39 @@ troque os itens e apague a linha `aDefinir: true`** — o aviso some junto.
 O mesmo vale para a comida: se o `finger food` ganhar descrição, é só trocar os
 itens do grupo "Para comer".
 
+### A casa pegando fogo
+
+A última cena da página são **duas artes empilhadas**: a casa limpa e a casa
+em chamas. O que se anima é a máscara que revela a de cima, de baixo para cima,
+conforme a rolagem — não há quadros de animação.
+
+Na pasta `public/` moram quatro arquivos:
+
+| Arquivo | Para que serve |
+| --- | --- |
+| `casa.png`, `casa-fogo.png` | as fontes, com fundo transparente. O site **não** usa estes |
+| `casa.webp`, `casa-fogo.webp` | o que o site serve: o mesmo desenho achatado sobre o vermelho |
+
+O achatamento não é capricho: com o fundo transparente as duas juntas pesavam
+793KB, e sobre o vermelho pesam 251KB. Num traço denso assim, o canal alfa é o
+que mais custa a comprimir.
+
+**Para trocar a arte**, substitua os `.png` e gere os `.webp` de novo:
+
+```python
+from PIL import Image
+v = Image.new("RGBA", (1080, 1350), (255, 26, 18, 255))   # o vermelho do site
+for f in ("casa", "casa-fogo"):
+    im = Image.open(f"public/{f}.png").convert("RGBA")
+    Image.alpha_composite(v, im).convert("RGB").save(
+        f"public/{f}.webp", "WEBP", quality=72, method=6)
+```
+
+As duas artes **não precisam ser o mesmo desenho** — as atuais não são, foram
+geradas separadas. Basta que concordem no lugar da casa, do telhado e do chão:
+a frente da máscara é borrada, e a diferença de traço na faixa que está passando
+lê como tremida de calor. O que não pode é mudar o enquadramento.
+
 ### O que NÃO mudar sem pensar
 
 - `pix.receiverName` e `pix.receiverCity` precisam bater com o cadastro do banco,
