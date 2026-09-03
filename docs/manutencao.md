@@ -115,7 +115,7 @@ itens do grupo "Para comer".
 ### A casa pegando fogo
 
 A última cena da página. A **casa nunca muda** — é sempre a `casa.png`, a de
-traço melhor. Por cima dela vão **vinte e três chamas, cada uma num arquivo
+traço melhor. Por cima dela vão **dezoito chamas, cada uma num arquivo
 próprio**, e cada uma acende na sua hora conforme a rolagem: as do chão
 primeiro, as do torreão por último. O texto "Até lá" só chega quando a casa já
 está tomada.
@@ -127,7 +127,7 @@ Na pasta `public/`:
 | `casa.png`, `casa-fogo.png` | as fontes, com fundo transparente. O site **não** usa estes |
 | `casa.webp` | o que aparece: a casa limpa, achatada sobre o vermelho |
 | `casa-brilho.webp` | o fogo borrado e pequeno (320px). Serve duas vezes: aquece a madeira (troca o vermelho por âmbar) e faz o clarão |
-| `chamas/00.webp` … `22.webp` | uma chama em cada, na ordem em que pegam fogo |
+| `chamas/00.webp` … `17.webp` | uma chama em cada, na ordem em que pegam fogo |
 
 Três coisas o script abaixo resolve, e vale saber por quê:
 
@@ -170,7 +170,11 @@ gr = fogo.resize((int(L * ESCALA), int(A * ESCALA)), Image.LANCZOS)
 enc = Image.new("RGBA", (L, A), (0, 0, 0, 0)); enc.paste(gr, (-DX, -DY))
 a = np.array(enc).astype(np.float32)
 R, G, B, Al = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
-alfa = (Al / 255) * np.clip((R - B - 55) / 25, 0, 1) * np.clip((R - 115) / 40, 0, 1)
+# O CANAL VERDE é o que separa chama de madeira iluminada: chama é amarela
+# (verde alto), madeira acesa pelo fogo é laranja-marrom (verde baixo). Pelo
+# calor do pixel as duas passavam juntas, e vinham blocos de parede grudados
+# nas chamas dos primeiros andares.
+alfa = (Al / 255) * np.clip((G - 104) / 22, 0, 1) * np.clip((R - B - 30) / 30, 0, 1)
 alfa[alfa < 0.08] = 0
 chamas = Image.fromarray(np.dstack([R, G, B, alfa * 255]).astype(np.uint8), "RGBA")
 
@@ -200,7 +204,7 @@ for y in range(H):
 
 os.makedirs("public/chamas", exist_ok=True)
 rgba = np.array(chamas); FOLGA = 14; saida = []
-grandes = sorted([c for c in caixas if c["n"] >= 400], key=lambda c: -c["y1"])
+grandes = sorted([c for c in caixas if c["n"] >= 350], key=lambda c: -c["y1"])
 for k, c in enumerate(grandes):
     x0, y0 = max(0, c["x0"] - FOLGA), max(0, c["y0"] - FOLGA)
     x1, y1 = min(W, c["x1"] + 1 + FOLGA), min(H, c["y1"] + 1 + FOLGA)

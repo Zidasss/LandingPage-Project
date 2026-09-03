@@ -14,8 +14,15 @@ import { event } from "@/config/event";
  * ## O fogo é uma chama de cada vez
  *
  * A casa **nunca muda**: é sempre a `casa.png`, a de traço melhor. Por cima
- * dela vão vinte e três chamas, cada uma num arquivo próprio, recortadas da
- * arte em chamas e separadas por mancha conexa.
+ * dela vão dezoito chamas, cada uma num arquivo próprio, recortadas da arte em
+ * chamas e separadas por mancha conexa.
+ *
+ * O recorte olha o **canal verde**, e não o calor do pixel. Pelo calor vinham
+ * junto pedaços da parede: no desenho em chamas a madeira dos primeiros
+ * andares está iluminada pelo fogo e é tão quente quanto ele. Só que chama é
+ * amarela (verde alto) e madeira acesa é laranja-marrom (verde baixo) — medido,
+ * as duas populações se separam limpas em G≈110. Foi o que tirou os blocos de
+ * parede que vinham grudados nas chamas de baixo.
  *
  * Já foram uma imagem só, revelada por uma máscara que subia. Ficou mecânico:
  * o que se via era uma linha reta de fogo atravessando a casa de baixo para
@@ -42,7 +49,7 @@ import { event } from "@/config/event";
  * 3. **brilho** — o borrão somado à luz, que é o clarão. Vem de um arquivo já
  *    borrado e pequeno: borrão é justamente o que não precisa de resolução, e
  *    em CSS ele custaria caro por quadro.
- * 4. **chamas** — os vinte e três recortes, acendendo com a rolagem.
+ * 4. **chamas** — os dezoito recortes, acendendo com a rolagem.
  * 5. **fagulhas** — pontos que sobem e apagam, depois que o fogo pegou.
  * 6. **texto** — que só chega quando a casa já está tomada, e chega quente.
  */
@@ -57,29 +64,24 @@ import { event } from "@/config/event";
  * altura da base de cada uma.
  */
 const CHAMAS = [
-  { src: "/chamas/00.webp", e: 9.815, t: 80.882, l: 4.537, a: 15.098, inicio: 0.0 },
-  { src: "/chamas/01.webp", e: 79.907, t: 89.314, l: 8.056, a: 6.667, inicio: 0.0 },
-  { src: "/chamas/02.webp", e: 51.296, t: 85.98, l: 9.074, a: 7.647, inicio: 0.026 },
-  { src: "/chamas/03.webp", e: 44.167, t: 85.882, l: 9.074, a: 6.569, inicio: 0.04 },
-  { src: "/chamas/04.webp", e: 69.537, t: 81.176, l: 8.981, a: 8.824, inicio: 0.067 },
-  { src: "/chamas/05.webp", e: 62.778, t: 66.961, l: 8.519, a: 22.353, inicio: 0.075 },
-  { src: "/chamas/06.webp", e: 55.185, t: 83.235, l: 4.815, a: 6.078, inicio: 0.075 },
-  { src: "/chamas/07.webp", e: 46.852, t: 82.745, l: 8.426, a: 5.588, inicio: 0.086 },
-  { src: "/chamas/08.webp", e: 48.333, t: 80.98, l: 8.426, a: 5.882, inicio: 0.102 },
-  { src: "/chamas/09.webp", e: 53.241, t: 65.392, l: 10.0, a: 19.216, inicio: 0.127 },
-  { src: "/chamas/10.webp", e: 66.574, t: 77.941, l: 10.926, a: 5.588, inicio: 0.139 },
-  { src: "/chamas/11.webp", e: 41.389, t: 46.176, l: 14.722, a: 35.588, inicio: 0.159 },
-  { src: "/chamas/12.webp", e: 48.148, t: 67.353, l: 3.889, a: 13.922, inicio: 0.165 },
-  { src: "/chamas/13.webp", e: 63.796, t: 65.784, l: 11.852, a: 14.706, inicio: 0.173 },
-  { src: "/chamas/14.webp", e: 35.0, t: 62.843, l: 8.148, a: 15.196, inicio: 0.201 },
-  { src: "/chamas/15.webp", e: 53.889, t: 41.176, l: 11.481, a: 26.961, inicio: 0.312 },
-  { src: "/chamas/16.webp", e: 29.537, t: 47.647, l: 14.352, a: 19.902, inicio: 0.318 },
-  { src: "/chamas/17.webp", e: 66.481, t: 56.275, l: 3.981, a: 8.725, inicio: 0.347 },
-  { src: "/chamas/18.webp", e: 67.13, t: 50.686, l: 9.167, a: 13.922, inicio: 0.351 },
-  { src: "/chamas/19.webp", e: 45.741, t: 36.176, l: 5.648, a: 9.118, inicio: 0.568 },
-  { src: "/chamas/20.webp", e: 34.444, t: 31.765, l: 7.5, a: 13.235, inicio: 0.571 },
-  { src: "/chamas/21.webp", e: 43.889, t: 23.235, l: 5.093, a: 7.157, inicio: 0.735 },
-  { src: "/chamas/22.webp", e: 37.13, t: 22.647, l: 5.093, a: 7.255, inicio: 0.74 },
+  { src: "/chamas/00.webp", e: 10.37, t: 82.353, l: 3.704, a: 12.549, inicio: 0.0 },
+  { src: "/chamas/01.webp", e: 45.185, t: 86.176, l: 7.5, a: 4.706, inicio: 0.046 },
+  { src: "/chamas/02.webp", e: 47.037, t: 82.941, l: 7.963, a: 5.0, inicio: 0.079 },
+  { src: "/chamas/03.webp", e: 48.519, t: 81.176, l: 7.87, a: 5.49, inicio: 0.093 },
+  { src: "/chamas/04.webp", e: 69.815, t: 81.471, l: 6.759, a: 5.196, inicio: 0.093 },
+  { src: "/chamas/05.webp", e: 30.0, t: 55.294, l: 7.685, a: 23.333, inicio: 0.184 },
+  { src: "/chamas/06.webp", e: 67.13, t: 67.843, l: 7.593, a: 10.49, inicio: 0.188 },
+  { src: "/chamas/07.webp", e: 55.37, t: 68.431, l: 6.204, a: 9.706, inicio: 0.19 },
+  { src: "/chamas/08.webp", e: 35.463, t: 63.824, l: 6.111, a: 13.725, inicio: 0.197 },
+  { src: "/chamas/09.webp", e: 44.074, t: 63.431, l: 6.204, a: 14.02, inicio: 0.198 },
+  { src: "/chamas/10.webp", e: 67.963, t: 51.275, l: 7.778, a: 13.137, inicio: 0.346 },
+  { src: "/chamas/11.webp", e: 56.296, t: 50.882, l: 8.333, a: 12.157, inicio: 0.361 },
+  { src: "/chamas/12.webp", e: 34.352, t: 52.157, l: 7.315, a: 10.784, inicio: 0.362 },
+  { src: "/chamas/13.webp", e: 44.907, t: 50.686, l: 7.222, a: 11.961, inicio: 0.366 },
+  { src: "/chamas/14.webp", e: 57.13, t: 42.647, l: 6.852, a: 9.608, inicio: 0.483 },
+  { src: "/chamas/15.webp", e: 34.815, t: 31.961, l: 6.944, a: 11.863, inicio: 0.579 },
+  { src: "/chamas/16.webp", e: 44.074, t: 25.294, l: 4.352, a: 4.902, inicio: 0.733 },
+  { src: "/chamas/17.webp", e: 37.407, t: 23.627, l: 4.63, a: 5.98, inicio: 0.74 },
 ] as const;
 
 /** Quanto de rolagem cada chama leva para acender por inteiro. */
@@ -89,7 +91,7 @@ const TEXTO_EM = 0.76;
 /**
  * Em quantos degraus a cena anda.
  *
- * Cada degrau reescreve o estilo das vinte e três chamas, então vale arredondar
+ * Cada degrau reescreve o estilo das dezoito chamas, então vale arredondar
  * — mas fogo acendendo não tem linha reta em que o degrau apareça, e sessenta
  * já é mais fino do que o olho separa.
  */
@@ -311,7 +313,7 @@ export function FireSection() {
             camada só, a lambida apagaria o acender a cada quadro.
 
             A lambida é de cada chama, com duração e fase próprias — não uma
-            tremida geral por cima de todas. Em bloco, vinte e três chamas
+            tremida geral por cima de todas. Em bloco, dezoito chamas
             subindo e descendo no mesmo compasso lê como uma imagem pulsando,
             que é o oposto de fogo. Cada uma no seu tempo, a casa inteira
             mexe sem nunca repetir o mesmo quadro.
@@ -463,7 +465,7 @@ export function FireSection() {
         */
         .calor-madeira {
           mix-blend-mode: hue;
-          opacity: calc(var(--acesa) * 0.9);
+          opacity: calc(var(--acesa) * 1);
         }
 
         .brilho-fogo {
@@ -475,12 +477,12 @@ export function FireSection() {
 
         @keyframes fogo-respira {
           0%, 100% {
-            opacity: calc(var(--acesa) * 0.62);
+            opacity: calc(var(--acesa) * 0.78);
             transform: scale(1);
           }
           50% {
-            opacity: calc(var(--acesa) * 0.95);
-            transform: scale(1.035);
+            opacity: calc(var(--acesa) * 1);
+            transform: scale(1.04);
           }
         }
 
