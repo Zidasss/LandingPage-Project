@@ -746,7 +746,14 @@ export function desligar() {
 }
 
 export function alternar() {
-  if (ligado) desligar();
+  /*
+    "Travado" é ligado-mas-o-navegador-ainda-não-liberou, e o botão nesse estado
+    diz **tocar**. Tratá-lo como ligado fazia o toque desligar o som em vez de
+    destravá-lo: a pessoa apertava o botão que pedia um toque, e o site ficava
+    mudo. Agora só desliga quem está de fato tocando; nos outros dois casos o
+    toque é o gesto que faltava.
+  */
+  if (ligado && ctx?.state === "running") desligar();
   else ligar();
 }
 

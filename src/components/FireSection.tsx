@@ -215,12 +215,20 @@ export function FireSection() {
       ref={secao}
       id="ate-la"
       aria-labelledby="ate-la-titulo"
-      className="cena-fogo bg-blood relative z-40 h-[210svh]"
+      className="cena-fogo bg-blood relative z-40 h-[210svh] overflow-clip"
     >
-      <div
-        ref={palco}
-        className="palco-fogo sticky top-0 h-svh overflow-hidden"
-      >
+      {/*
+        `clip`, e não `hidden`: `overflow: hidden` transforma a seção num
+        contêiner de rolagem, e aí o palco de dentro passa a grudar nela em vez
+        de na tela — ou seja, para de grudar. `clip` recorta sem criar contêiner.
+        É o mesmo aprendizado que já estava no `body`, no globals.css.
+
+        O recorte mudou de lugar (era do palco, virou da seção) porque a arte
+        agora passa por baixo do palco: no iOS a barra do Safari encolhe e a
+        tela fica maior que `svh`, e sobrava uma faixa de vermelho embaixo do
+        desenho. Descendo a arte sete telas-por-cento, não há vão possível.
+      */}
+      <div ref={palco} className="palco-fogo sticky top-0 h-svh">
         {/*
           A arte aparece inteira, na proporção em que foi desenhada, e quem
           preenche a tela é o vermelho da seção — que é o mesmo vermelho do
@@ -236,10 +244,10 @@ export function FireSection() {
         */}
         {/* eslint-disable @next/next/no-img-element */}
         <div
-          className="arte-casa absolute bottom-0 left-1/2 -translate-x-1/2"
+          className="arte-casa absolute bottom-[-7svh] left-1/2 -translate-x-1/2"
           style={
             {
-              "--arte-h": "min(76svh, 130vw)",
+              "--arte-h": "min(83svh, 138vw)",
               height: "var(--arte-h)",
               // a proporção do desenho (1080x1020) — a largura sai da altura
               width: "calc(var(--arte-h) * 1.0588)",
@@ -294,36 +302,51 @@ export function FireSection() {
           </div>
 
           {/*
-            As chamas, repartidas em três grupos que tremem em compassos
-            diferentes. A tremida vive no grupo, e não em cada chama: são vinte
-            e três camadas, e vinte e três animações seria pagar caro por uma
-            variação que ninguém consegue separar. Em três, o fogo já não pulsa
-            em bloco.
+            As chamas. Cada uma tem duas camadas, e por um motivo:
+
+            - o **invólucro** é o que acende, e quem escreve nele é a rolagem;
+            - a **imagem** é o que lamba, e quem escreve nela é uma animação.
+
+            Separados porque animação de CSS ganha de estilo em linha: numa
+            camada só, a lambida apagaria o acender a cada quadro.
+
+            A lambida é de cada chama, com duração e fase próprias — não uma
+            tremida geral por cima de todas. Em bloco, vinte e três chamas
+            subindo e descendo no mesmo compasso lê como uma imagem pulsando,
+            que é o oposto de fogo. Cada uma no seu tempo, a casa inteira
+            mexe sem nunca repetir o mesmo quadro.
+
+            Esticar aqui é seguro: o recorte é só chama, então o que estica é
+            fogo. (Já foi a arte inteira, e junto ia o batente da janela — dava
+            a impressão de ter algo dançando lá dentro.)
           */}
-          {[0, 1, 2].map((grupo) => (
-            <div
-              key={grupo}
+          {CHAMAS.map((c, i) => (
+            <span
+              key={c.src}
               aria-hidden
-              className={`grupo-chama grupo-chama-${grupo} absolute inset-0`}
+              className="chama absolute"
+              data-inicio={c.inicio}
+              style={{
+                left: `${c.e}%`,
+                top: `${c.t}%`,
+                width: `${c.l}%`,
+                height: `${c.a}%`,
+              }}
             >
-              {CHAMAS.filter((_, i) => i % 3 === grupo).map((c) => (
-                <img
-                  key={c.src}
-                  src={c.src}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  className="chama absolute"
-                  data-inicio={c.inicio}
-                  style={{
-                    left: `${c.e}%`,
-                    top: `${c.t}%`,
-                    width: `${c.l}%`,
-                    height: `${c.a}%`,
-                  }}
-                />
-              ))}
-            </div>
+              <img
+                src={c.src}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="labareda h-full w-full"
+                style={{
+                  // tempos quebrados e fora de fase: nenhuma chama acompanha a
+                  // vizinha, e o conjunto nunca fecha num pulso só
+                  animationDuration: `${(1.15 + (i % 7) * 0.17).toFixed(2)}s`,
+                  animationDelay: `${(-(i * 0.41) % 1.9).toFixed(2)}s`,
+                }}
+              />
+            </span>
           ))}
         </div>
         {/* eslint-enable @next/next/no-img-element */}
@@ -475,21 +498,34 @@ export function FireSection() {
           coração, que é o que denuncia animação.
         */
         .chama {
+          display: block;
           opacity: 0;
           transform-origin: 50% 100%;
           will-change: opacity, transform;
         }
 
-        .grupo-chama-0 { animation: chama-treme 2.3s ease-in-out infinite; }
-        .grupo-chama-1 { animation: chama-treme 3.1s ease-in-out infinite 0.4s; }
-        .grupo-chama-2 { animation: chama-treme 2.7s ease-in-out infinite 0.9s; }
+        .labareda {
+          display: block;
+          transform-origin: 50% 100%;
+          animation-name: labareda;
+          animation-timing-function: ease-in-out;
+          animation-iteration-count: infinite;
+          will-change: transform, opacity;
+        }
 
-        @keyframes chama-treme {
-          0%   { opacity: 0.9; }
-          23%  { opacity: 1; }
-          46%  { opacity: 0.93; }
-          61%  { opacity: 0.99; }
-          100% { opacity: 0.9; }
+        /*
+          A chama sobe pela ponta e afina, que é como fogo se mexe: a base fica
+          presa na janela (o transform-origin embaixo) e o alto é que vai e
+          volta. O estreitamento junto com a subida evita o efeito de borracha —
+          esticar só na vertical faz a chama parecer que engorda.
+        */
+        @keyframes labareda {
+          0%   { transform: scaleY(1) scaleX(1); opacity: 0.9; }
+          22%  { transform: scaleY(1.1) scaleX(0.94); opacity: 1; }
+          45%  { transform: scaleY(0.96) scaleX(1.05); opacity: 0.92; }
+          68%  { transform: scaleY(1.07) scaleX(0.96); opacity: 1; }
+          85%  { transform: scaleY(0.99) scaleX(1.02); opacity: 0.94; }
+          100% { transform: scaleY(1) scaleX(1); opacity: 0.9; }
         }
 
         /* --- as fagulhas --- */
@@ -553,7 +589,7 @@ export function FireSection() {
 
         @media (prefers-reduced-motion: reduce) {
           .brilho-fogo,
-          .grupo-chama,
+          .labareda,
           .fagulhas span {
             animation: none;
           }

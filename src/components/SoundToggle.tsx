@@ -49,18 +49,26 @@ export function SoundToggle() {
     if (!queriaSom()) return;
     ligar();
 
-    // Chamar `ligar` de novo é inofensivo: ele só retoma o que já existe. O que
-    // importa é que desta vez a chamada acontece dentro de um gesto.
+    /*
+      Chamar `ligar` de novo é inofensivo: ele só retoma o que já existe. O que
+      importa é que desta vez a chamada acontece dentro de um gesto.
+
+      Os ouvintes **não** são de uma vez só. Eram, e isso deixava o som travado
+      para sempre quando o primeiro toque não servia — no iOS um toque que vira
+      rolagem às vezes não conta como gesto, e a única tentativa ia embora com
+      ele. Agora eles ficam até o áudio realmente estar tocando, e só então
+      saem.
+    */
     const destravar = () => {
       if (queriaSom()) ligar();
-      remover();
+      if (estadoDoSom() === "tocando") remover();
     };
-    const eventos = ["pointerdown", "keydown", "touchstart"] as const;
+    const eventos = ["pointerdown", "touchstart", "keydown", "click"] as const;
     const remover = () => {
       for (const ev of eventos) window.removeEventListener(ev, destravar);
     };
     for (const ev of eventos) {
-      window.addEventListener(ev, destravar, { once: true, passive: true });
+      window.addEventListener(ev, destravar, { passive: true });
     }
     return remover;
   }, []);
