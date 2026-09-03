@@ -252,6 +252,24 @@ export function TicketSection({
         }}
       />
 
+      {/*
+        O rodapé da seção apaga no preto puro.
+
+        A parede de ingressos continua 6% visível até o fim da seção, e essa
+        textura terminava numa linha reta bem na emenda com a cena da casa —
+        dois pretos ligeiramente diferentes encostados, que é o que se via como
+        um corte grosseiro. Apagando a parede antes da borda, a seção acaba na
+        mesma cor com que a próxima começa, e não há mais onde ver a emenda.
+      */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[24vh]"
+        style={{
+          background:
+            "linear-gradient(to top, var(--color-ink) 0%, var(--color-ink) 22%, transparent 100%)",
+        }}
+      />
+
       {/* o ingresso de destaque: é o formulário */}
       <div className="relative mx-auto max-w-md">
         {/*

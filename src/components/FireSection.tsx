@@ -113,12 +113,17 @@ export function FireSection() {
         de seção depois da tela, e é ele que o dedo percorre com a cena parada.
       */
       const curso = caixa.height - window.innerHeight;
-      const passo = Math.round(entre0e1(curso > 0 ? -caixa.top / curso : 1) * DEGRAUS);
+      const passo = Math.round(
+        entre0e1(curso > 0 ? -caixa.top / curso : 1) * DEGRAUS,
+      );
       if (passo === ultimo) return;
       ultimo = passo;
 
       const f = passo / DEGRAUS;
-      cena.style.setProperty("--corte", `${(100 + SUAVE - f * (100 + SUAVE * 2)).toFixed(2)}%`);
+      cena.style.setProperty(
+        "--corte",
+        `${(100 + SUAVE - f * (100 + SUAVE * 2)).toFixed(2)}%`,
+      );
       // O brilho entra junto com o fogo, e não antes: clarão sem chama é vulto.
       cena.style.setProperty("--acesa", f.toFixed(3));
       // As fagulhas só existem depois que a casa já está pegando de verdade.
@@ -156,13 +161,23 @@ export function FireSection() {
       aria-labelledby="ate-la-titulo"
       className="cena-fogo bg-blood relative z-40 h-[190svh]"
     >
-      <div ref={palco} className="palco-fogo sticky top-0 h-svh overflow-hidden">
+      <div
+        ref={palco}
+        className="palco-fogo sticky top-0 h-svh overflow-hidden"
+      >
         {/*
-          A arte cobre a tela inteira em vez de caber inteira nela. Ela é
-          retrato (4:5) e a tela quase nunca é: cabendo, sobrava vermelho vazio
-          dos dois lados no computador e a casa ficava pequena no meio. Cobrindo,
-          o corte cai nas pontas — árvores no celular, céu no computador —, que é
-          moldura, e a casa ocupa a cena.
+          A arte aparece inteira, na proporção em que foi desenhada, e quem
+          preenche a tela é o vermelho da seção — que é o mesmo vermelho do
+          fundo dela, então não há onde ver a emenda.
+
+          Já foi cortada para cobrir a tela, e ficou pior: a casa vinha na cara
+          de quem olha e o traço, ampliado, perdia o fio. O desenho tem um
+          enquadramento — árvores nas beiradas, casa ao centro, céu em cima — e
+          cortar isso é jogar fora a composição.
+
+          As laterais se dissolvem no vermelho (veja `.arte-casa` no estilo):
+          sem isso as árvores das pontas terminavam numa borda reta no meio da
+          tela, que é justamente o que denuncia "tem uma imagem colada aqui".
         */}
         {/*
           `<img>` cru, e não `next/image`: os arquivos já são `.webp` no
@@ -171,44 +186,73 @@ export function FireSection() {
           do topo do arquivo.
         */}
         {/* eslint-disable @next/next/no-img-element */}
-        <img
-          src="/casa.webp"
-          alt="Casarão mal-assombrado entre árvores secas"
-          width={1080}
-          height={1350}
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 h-full w-full object-cover object-[50%_72%]"
-        />
-
-        {/* o clarão do fogo na madeira: as chamas borradas, somadas à luz */}
-        <div aria-hidden className="brilho-fogo absolute inset-0">
+        <div
+          className="arte-casa absolute bottom-0 left-1/2 -translate-x-1/2"
+          style={
+            {
+              "--arte-h": "min(94svh, 152vw)",
+              height: "var(--arte-h)",
+              // a proporção do desenho, 4:5 — a largura sai da altura
+              width: "calc(var(--arte-h) * 0.8)",
+            } as React.CSSProperties
+          }
+        >
+          {/*
+            A caixa tem exatamente a largura do desenho — altura mandada, largura
+            saindo da proporção dele. Ela precisa ser justa porque é nela que a
+            máscara das laterais se apoia: numa caixa do tamanho da tela, o
+            esmaecido cairia na borda da tela e as árvores continuariam
+            terminando em linha reta no meio do vermelho.
+          */}
           <img
-            src="/casa-chamas.webp"
-            alt=""
+            src="/casa.webp"
+            alt="Casarão mal-assombrado entre árvores secas"
             width={1080}
             height={1350}
             loading="lazy"
             decoding="async"
-            className="absolute inset-0 h-full w-full object-cover object-[50%_72%]"
+            className="block h-full w-full"
           />
-        </div>
 
-        {/* as chamas em si */}
-        <div aria-hidden className="chamas absolute inset-0">
-          <img
-            src="/casa-chamas.webp"
-            alt=""
-            width={1080}
-            height={1350}
-            loading="lazy"
-            decoding="async"
-            className="absolute inset-0 h-full w-full object-cover object-[50%_72%]"
-          />
+          {/*
+            O clarão do fogo na madeira. A imagem já vem borrada e pequena
+            (320px, 11KB): borrão é justamente o que não precisa de resolução, e
+            assado no arquivo ele sai de graça — em CSS, `filter: blur()` sobre
+            uma camada do tamanho da arte é das coisas mais caras que existem
+            para o navegador desenhar.
+          */}
+          <div aria-hidden className="brilho-fogo absolute inset-0">
+            <img
+              src="/casa-brilho.webp"
+              alt=""
+              width={320}
+              height={400}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full"
+            />
+          </div>
+
+          {/* as chamas em si */}
+          <div aria-hidden className="chamas absolute inset-0">
+            <img
+              src="/casa-chamas.webp"
+              alt=""
+              width={1080}
+              height={1350}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full"
+            />
+          </div>
         </div>
+        {/* eslint-enable @next/next/no-img-element */}
 
         {/* as fagulhas que sobem da casa */}
-        <div aria-hidden className="fagulhas pointer-events-none absolute inset-0">
+        <div
+          aria-hidden
+          className="fagulhas pointer-events-none absolute inset-0"
+        >
           {FAGULHAS.map((g, i) => (
             <span
               key={i}
@@ -233,9 +277,10 @@ export function FireSection() {
           e a linha aparecia justamente no meio da rolagem, onde o olho está.
           A faixa faz o preto virar fumaça e a fumaça virar céu.
         */}
-        <div aria-hidden className="emenda-fogo pointer-events-none absolute inset-x-0 top-0" />
-
-        {/* eslint-enable @next/next/no-img-element */}
+        <div
+          aria-hidden
+          className="emenda-fogo pointer-events-none absolute inset-x-0 top-0"
+        />
 
         <div className="relative z-10 px-6 pt-[6svh] text-center">
           <p className="font-heading text-bone/60 text-[0.62rem] font-bold tracking-[0.35em] uppercase">
@@ -263,6 +308,57 @@ export function FireSection() {
         }
 
         /*
+          As laterais e o topo da arte se dissolvem no vermelho da seção.
+
+          O desenho é um retângulo, e retângulo tem borda: sem isto as árvores
+          das pontas e o céu do alto terminavam numa linha reta no meio da tela,
+          que é exatamente o que faz uma cena parecer figura colada. Esmaecendo,
+          a arte não acaba — ela some no fundo, que é da mesma cor.
+
+          Embaixo não há esmaecido: ali é o chão, e chão termina mesmo.
+        */
+        /*
+          As bordas do desenho somem sob o próprio vermelho da seção, pintado
+          por cima — e não recortadas por máscara.
+
+          Máscara aqui saía cara: ela é herdada pelos filhos, e os filhos já são
+          duas camadas mascaradas, uma delas borrada e misturada à luz. Cada
+          nível obriga o navegador a desenhar a subárvore inteira num buffer à
+          parte antes de compor. Como o fundo é uma cor chapada e conhecida,
+          pintar por cima dá exatamente o mesmo resultado e não custa nada.
+
+          O vermelho transparente é escrito com alfa zero na mesma cor, e não
+          com a palavra a palavra transparent: a palavra transparent é preto transparente, e a
+          interpolação até ele passa por tons escuros — apareceria uma sombra
+          suja no meio do esmaecido.
+
+          Embaixo não há esmaecido: ali é o chão, e chão termina mesmo.
+        */
+        .arte-casa::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background:
+            linear-gradient(
+              to right,
+              rgb(255 26 18) 0%,
+              rgb(255 26 18 / 0.55) 4%,
+              rgb(255 26 18 / 0) 11%,
+              rgb(255 26 18 / 0) 89%,
+              rgb(255 26 18 / 0.55) 96%,
+              rgb(255 26 18) 100%
+            ),
+            linear-gradient(
+              to bottom,
+              rgb(255 26 18) 0%,
+              rgb(255 26 18 / 0.62) 8%,
+              rgb(255 26 18 / 0.22) 15%,
+              rgb(255 26 18 / 0) 24%
+            );
+        }
+
+        /*
           A mesma máscara nas duas camadas de fogo: o clarão não pode aparecer
           onde a chama ainda não chegou, senão a madeira acende sozinha.
         */
@@ -287,7 +383,7 @@ export function FireSection() {
           repinta a cada quadro, e aqui quem se mexe é só a opacidade.
         */
         .brilho-fogo {
-          filter: blur(2.2vmin) saturate(1.5);
+          filter: saturate(1.4);
           mix-blend-mode: plus-lighter;
           opacity: calc(var(--acesa) * 0.75);
           animation: fogo-respira 3.7s ease-in-out infinite;
@@ -353,13 +449,14 @@ export function FireSection() {
         /* --- a emenda com o preto do ingresso --- */
 
         .emenda-fogo {
-          height: 46svh;
+          height: 44svh;
           background: linear-gradient(
             to bottom,
             var(--color-ink) 0%,
-            color-mix(in srgb, var(--color-ink) 82%, transparent) 16%,
-            color-mix(in srgb, var(--color-ink) 46%, transparent) 42%,
-            color-mix(in srgb, var(--color-ink) 16%, transparent) 72%,
+            color-mix(in srgb, var(--color-ink) 86%, transparent) 14%,
+            color-mix(in srgb, var(--color-ink) 60%, transparent) 32%,
+            color-mix(in srgb, var(--color-ink) 34%, transparent) 52%,
+            color-mix(in srgb, var(--color-ink) 14%, transparent) 74%,
             transparent 100%
           );
         }

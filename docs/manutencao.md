@@ -126,6 +126,7 @@ Na pasta `public/`:
 | `casa.png`, `casa-fogo.png` | as fontes, com fundo transparente. O site **não** usa estes |
 | `casa.webp` | o que aparece: a casa limpa, achatada sobre o vermelho |
 | `casa-chamas.webp` | só o fogo, recortado da arte em chamas, com o resto transparente |
+| `casa-brilho.webp` | o mesmo fogo já borrado e pequeno (320px), que é o clarão na madeira |
 
 O achatamento não é capricho: com fundo transparente as artes pesavam 793KB, e
 sobre o vermelho pesam menos da metade. Num traço denso assim, o canal alfa é o
@@ -149,8 +150,15 @@ a = np.array(Image.open("public/casa-fogo.png").convert("RGBA")).astype(np.float
 R, G, B, A = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
 alfa = (A / 255) * np.clip((R - B - 35) / 55, 0, 1) * np.clip((R - 85) / 85, 0, 1)
 alfa[alfa < 0.10] = 0                                   # corta o ruído fraco
-Image.fromarray(np.dstack([R, G, B, alfa * 255]).astype(np.uint8), "RGBA").save(
-    "public/casa-chamas.webp", "WEBP", quality=78, method=6)
+chamas = Image.fromarray(np.dstack([R, G, B, alfa * 255]).astype(np.uint8), "RGBA")
+chamas.save("public/casa-chamas.webp", "WEBP", quality=92, alpha_quality=100, method=6)
+
+# o clarão: o mesmo fogo borrado e pequeno — borrão não precisa de resolução,
+# e assado no arquivo ele sai de graça (em CSS, blur() custa caro por quadro)
+from PIL import ImageFilter
+brilho = chamas.filter(ImageFilter.GaussianBlur(26)).resize((320, 400), Image.LANCZOS)
+brilho.filter(ImageFilter.GaussianBlur(3)).save(
+    "public/casa-brilho.webp", "WEBP", quality=82, alpha_quality=90, method=6)
 ```
 
 As duas artes **não precisam ser o mesmo desenho** — as atuais não são, foram
