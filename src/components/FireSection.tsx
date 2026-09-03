@@ -11,35 +11,63 @@ import { event } from "@/config/event";
  * página, que antes simplesmente acabava. A abertura começa com uma porta
  * fechada; isto fecha o arco com a casa em chamas.
  *
- * O fogo sobe conforme a rolagem. Não são quadros de animação: são duas artes
- * empilhadas, a casa limpa embaixo e a casa em chamas por cima, e o que anda é
- * a máscara que revela a de cima, de baixo para cima, com a frente borrada.
+ * ## Por que não são duas fotos trocando de lugar
  *
- * As duas artes **não são o mesmo desenho** — foram geradas separadas, e cada
- * traço saiu diferente. Isso não estraga porque elas concordam no que importa
- * (a casa, o telhado, as janelas, o chão) e a frente da máscara é suave: a
- * diferença de traço na faixa de passagem lê como tremida de calor.
+ * A primeira versão empilhava as duas artes inteiras — a casa limpa embaixo, a
+ * casa em chamas por cima — e revelava a de cima de baixo para cima. Dava para
+ * ver a troca: as duas foram geradas separadas e cada traço saiu diferente, de
+ * modo que a frente da máscara arrastava um fantasma de linhas pela tela.
  *
- * Por isso mesmo a máscara **varre a arte inteira**, de fora a fora. A primeira
- * versão parava o fogo abaixo das teias, que é onde os dois desenhos mais
- * divergem — só que parar deixa uma emenda parada na tela para sempre, com as
- * duas teias sobrepostas. Varrendo até o fim, o estado final é a arte em chamas
- * pura, sem emenda nenhuma: a diferença só existe na faixa que está passando, e
- * o que está passando ninguém consegue examinar.
+ * Agora a casa **nunca muda**. O que existe por cima dela é só o fogo,
+ * recortado da arte em chamas pelo calor de cada pixel (`casa-chamas.webp`) e
+ * guardado com o resto transparente. A casa que se vê é sempre a `casa.png`,
+ * que é a de traço melhor. E, como o fogo virou uma camada própria, ele pode
+ * fazer o que uma imagem não faz: tremer, respirar, acender a madeira em volta
+ * e soltar fagulha.
+ *
+ * ## As camadas, de baixo para cima
+ *
+ * 1. **base** — a casa limpa, achatada sobre o vermelho do site.
+ * 2. **brilho** — as mesmas chamas, borradas e somadas à luz (`plus-lighter`).
+ *    É o que devolve o clarão na madeira que a arte em chamas tinha e o recorte
+ *    sozinho perdia. O borrão é fixo: quem pulsa é a opacidade, que é de graça.
+ * 3. **chamas** — o recorte, revelado de baixo para cima pela rolagem e tremendo
+ *    sozinho em dois compassos que não fecham entre si, para o fogo nunca
+ *    repetir o mesmo desenho.
+ * 4. **fagulhas** — pontos que sobem e apagam, só depois que o fogo pegou.
  */
 
 /** Altura da frente borrada do fogo, em porcentagem da altura da arte. */
-const SUAVE = 16;
+const SUAVE = 22;
 /**
  * Em quantos degraus a subida acontece.
  *
- * Mexer na máscara obriga o navegador a repintar a arte inteira — é o mesmo
- * custo do borrão da abóbora na abertura, e pela mesma razão anda em degraus
- * em vez de a cada quadro. Trinta é fino o bastante para o olho ler como
- * subida contínua, porque o fogo é uma forma irregular e borrada: não há linha
- * reta em que o degrau apareça.
+ * Mexer na máscara obriga o navegador a repintar a camada — é o mesmo custo do
+ * borrão da abóbora na abertura, e pela mesma razão anda em degraus em vez de a
+ * cada quadro. Quarenta é fino demais para o olho pegar o degrau, ainda mais
+ * numa forma irregular e borrada como fogo.
  */
-const DEGRAUS = 30;
+const DEGRAUS = 40;
+
+/**
+ * As fagulhas. Posições fixas, e não sorteadas: sorteio no render faria
+ * servidor e navegador desenharem coisas diferentes, e a hidratação acusaria.
+ *
+ * Ficam na faixa da casa (o miolo da arte), e cada uma sobe no seu tempo — é o
+ * descompasso que faz parecer brasa subindo, e não chuva ao contrário.
+ */
+const FAGULHAS = [
+  { x: 34, atraso: 0, dur: 5.2, desvio: -3, tam: 3 },
+  { x: 41, atraso: 1.7, dur: 6.4, desvio: 4, tam: 2 },
+  { x: 46, atraso: 3.1, dur: 5.8, desvio: -5, tam: 4 },
+  { x: 52, atraso: 0.8, dur: 7.1, desvio: 3, tam: 2 },
+  { x: 55, atraso: 4.3, dur: 5.5, desvio: -2, tam: 3 },
+  { x: 59, atraso: 2.2, dur: 6.8, desvio: 5, tam: 2 },
+  { x: 63, atraso: 5.6, dur: 6.1, desvio: -4, tam: 3 },
+  { x: 48, atraso: 6.4, dur: 7.6, desvio: 2, tam: 2 },
+  { x: 38, atraso: 3.9, dur: 6.9, desvio: 6, tam: 2 },
+  { x: 67, atraso: 1.2, dur: 5.9, desvio: -3, tam: 3 },
+] as const;
 
 /** Prende um número entre 0 e 1. */
 function entre0e1(v: number): number {
@@ -48,15 +76,16 @@ function entre0e1(v: number): number {
 
 export function FireSection() {
   const secao = useRef<HTMLElement>(null);
-  const fogo = useRef<HTMLDivElement>(null);
+  const palco = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const alvo = secao.current;
-    const camada = fogo.current;
-    if (!alvo || !camada) return;
+    const cena = palco.current;
+    if (!alvo || !cena) return;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      camada.style.setProperty("--corte", `${-SUAVE}%`);
+      cena.style.setProperty("--corte", `${-SUAVE}%`);
+      cena.dataset.pegou = "1";
       return;
     }
 
@@ -74,15 +103,14 @@ export function FireSection() {
       const caixa = alvo.getBoundingClientRect();
 
       /*
-        O fogo anda enquanto a cena está presa no topo, e não enquanto ela
-        entra pela borda de baixo.
+        O fogo anda enquanto a cena está presa no topo, e não enquanto ela entra
+        pela borda de baixo.
 
-        A primeira versão media a entrada da seção na tela, e com isso a casa
-        já chegava em brasa: como a seção tinha uma tela de altura e é a última
-        da página, quando ela terminava de entrar não sobrava rolagem nenhuma —
-        o fogo subia todo antes de alguém poder olhar. Agora a seção é mais
-        alta que a tela e o palco gruda: o percurso é o que sobra de seção
-        depois da tela, e é ele que o dedo percorre com a cena parada.
+        A primeira versão media a entrada da seção na tela, e com isso a casa já
+        chegava em brasa: como a seção tinha uma tela de altura e é a última da
+        página, quando ela terminava de entrar não sobrava rolagem nenhuma. Agora
+        a seção é mais alta que a tela e o palco gruda: o percurso é o que sobra
+        de seção depois da tela, e é ele que o dedo percorre com a cena parada.
       */
       const curso = caixa.height - window.innerHeight;
       const passo = Math.round(entre0e1(curso > 0 ? -caixa.top / curso : 1) * DEGRAUS);
@@ -90,8 +118,12 @@ export function FireSection() {
       ultimo = passo;
 
       const f = passo / DEGRAUS;
-      const corte = 100 + SUAVE - f * (100 + SUAVE * 2);
-      camada.style.setProperty("--corte", `${corte.toFixed(2)}%`);
+      cena.style.setProperty("--corte", `${(100 + SUAVE - f * (100 + SUAVE * 2)).toFixed(2)}%`);
+      // O brilho entra junto com o fogo, e não antes: clarão sem chama é vulto.
+      cena.style.setProperty("--acesa", f.toFixed(3));
+      // As fagulhas só existem depois que a casa já está pegando de verdade.
+      if (f > 0.45) cena.dataset.pegou = "1";
+      else delete cena.dataset.pegou;
     };
 
     const aoRolar = () => {
@@ -122,93 +154,101 @@ export function FireSection() {
       ref={secao}
       id="ate-la"
       aria-labelledby="ate-la-titulo"
-      className="cena-fogo bg-blood text-ink relative z-40 h-[175svh]"
+      className="cena-fogo bg-blood relative z-40 h-[190svh]"
     >
-      {/* O palco gruda no topo: a cena fica parada enquanto o fogo sobe. */}
-      <div className="sticky top-0 h-svh overflow-hidden">
+      <div ref={palco} className="palco-fogo sticky top-0 h-svh overflow-hidden">
         {/*
-          A arte é medida pela altura, como a do morcego: ela é retrato (4:5) e
-          o que precisa caber é a casa inteira, do chão às teias. O teto em vw
-          impede que, num celular estreito, a largura calculada a partir da
-          altura estoure a tela e corte as árvores das pontas.
+          A arte cobre a tela inteira em vez de caber inteira nela. Ela é
+          retrato (4:5) e a tela quase nunca é: cabendo, sobrava vermelho vazio
+          dos dois lados no computador e a casa ficava pequena no meio. Cobrindo,
+          o corte cai nas pontas — árvores no celular, céu no computador —, que é
+          moldura, e a casa ocupa a cena.
         */}
-        <div
-          className="absolute inset-x-0 bottom-0"
-          style={{ "--arte-h": "min(86svh, 125vw)" } as React.CSSProperties}
-        >
-          <div
-            className="relative mx-auto aspect-[4/5]"
-            style={{ height: "var(--arte-h)" }}
-          >
-            {/*
-              As artes são `.webp` com o vermelho já embutido, servidas cruas,
-              e não os `.png` transparentes pelo `next/image`. É uma diferença
-              de 793KB para 251KB nas duas juntas, e o motivo é o canal alfa:
-              num desenho de traço denso como este ele carrega quase toda a
-              informação e é o que mais custa a comprimir. Achatadas sobre o
-              vermelho exato do site (`--color-blood`), as bordas da caixa
-              somem no fundo da seção e o resultado na tela é idêntico —
-              inclusive na faixa de passagem da máscara, onde as duas se
-              misturam sobre o mesmo vermelho.
+        {/*
+          `<img>` cru, e não `next/image`: os arquivos já são `.webp` no
+          tamanho certo, e passá-los pelo otimizador só os reencodaria de
+          `.webp` para `.webp` sem ganho — a conta de bytes está no comentário
+          do topo do arquivo.
+        */}
+        {/* eslint-disable @next/next/no-img-element */}
+        <img
+          src="/casa.webp"
+          alt="Casarão mal-assombrado entre árvores secas"
+          width={1080}
+          height={1350}
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_72%]"
+        />
 
-              Os `.png` originais continuam no repositório: são a fonte, e é
-              deles que sai um `.webp` novo se a arte mudar.
-            */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/casa.webp"
-              alt="Casarão mal-assombrado entre árvores secas"
-              width={1080}
-              height={1350}
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 h-full w-full object-contain object-bottom"
+        {/* o clarão do fogo na madeira: as chamas borradas, somadas à luz */}
+        <div aria-hidden className="brilho-fogo absolute inset-0">
+          <img
+            src="/casa-chamas.webp"
+            alt=""
+            width={1080}
+            height={1350}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover object-[50%_72%]"
+          />
+        </div>
+
+        {/* as chamas em si */}
+        <div aria-hidden className="chamas absolute inset-0">
+          <img
+            src="/casa-chamas.webp"
+            alt=""
+            width={1080}
+            height={1350}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover object-[50%_72%]"
+          />
+        </div>
+
+        {/* as fagulhas que sobem da casa */}
+        <div aria-hidden className="fagulhas pointer-events-none absolute inset-0">
+          {FAGULHAS.map((g, i) => (
+            <span
+              key={i}
+              style={
+                {
+                  left: `${g.x}%`,
+                  width: `${g.tam}px`,
+                  height: `${g.tam}px`,
+                  animationDelay: `${g.atraso}s`,
+                  animationDuration: `${g.dur}s`,
+                  "--desvio": `${g.desvio}vw`,
+                } as React.CSSProperties
+              }
             />
-
-            {/*
-              A camada do fogo, revelada de baixo para cima pela máscara. O
-              `--corte` é onde está a frente do fogo; abaixo dele a arte em
-              chamas aparece inteira, e na faixa de `SUAVE` logo acima ela vai
-              sumindo.
-            */}
-            <div ref={fogo} className="camada-fogo absolute inset-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/casa-fogo.webp"
-                alt=""
-                aria-hidden
-                width={1080}
-                height={1350}
-                loading="lazy"
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-contain object-bottom"
-              />
-            </div>
-          </div>
+          ))}
         </div>
 
         {/*
-          O texto ocupa o vazio do céu entre as teias, que é onde o cartaz
-          original tinha os dizeres. Fica acima da arte na pilha.
+          A emenda com a seção do ingresso, que é preta.
 
-          A altura é em svh, e diferente por tamanho de tela, porque a arte não
-          se ancora no mesmo lugar nas duas: no celular ela é limitada pela
-          largura e sobra muito céu em cima; no computador ela é limitada pela
-          altura e o céu é uma faixa estreita. Um valor só deixava o texto
-          boiando longe do desenho de um lado ou colado nele do outro.
+          Sem ela o preto virava vermelho numa linha reta atravessando a tela —
+          e a linha aparecia justamente no meio da rolagem, onde o olho está.
+          A faixa faz o preto virar fumaça e a fumaça virar céu.
         */}
-        <div className="relative z-10 px-6 pt-[19svh] text-center sm:pt-[7svh]">
-          <p className="font-heading text-ink/70 text-[0.62rem] font-bold tracking-[0.35em] uppercase">
+        <div aria-hidden className="emenda-fogo pointer-events-none absolute inset-x-0 top-0" />
+
+        {/* eslint-enable @next/next/no-img-element */}
+
+        <div className="relative z-10 px-6 pt-[6svh] text-center">
+          <p className="font-heading text-bone/60 text-[0.62rem] font-bold tracking-[0.35em] uppercase">
             é isso
           </p>
           <h2
             id="ate-la-titulo"
-            className="font-drip text-ink mt-3 text-5xl uppercase sm:text-7xl"
+            className="font-drip text-bone mt-3 text-5xl uppercase sm:text-7xl"
           >
             Até lá
           </h2>
-          <p className="font-heading text-ink mt-5 text-[0.68rem] font-bold tracking-[0.26em] uppercase sm:text-xs">
-            {event.dateLabel} · {event.timeLabel}
+          <p className="font-heading text-bone/85 mt-5 text-[0.68rem] font-bold tracking-[0.26em] uppercase sm:text-xs">
+            {event.dateLabel} · {event.timeLabel} às {event.endTimeLabel}
             <br className="sm:hidden" />
             <span className="hidden sm:inline"> · </span>
             {event.venue.name}
@@ -217,8 +257,17 @@ export function FireSection() {
       </div>
 
       <style>{`
-        .camada-fogo {
+        .palco-fogo {
           --corte: ${100 + SUAVE}%;
+          --acesa: 0;
+        }
+
+        /*
+          A mesma máscara nas duas camadas de fogo: o clarão não pode aparecer
+          onde a chama ainda não chegou, senão a madeira acende sozinha.
+        */
+        .chamas,
+        .brilho-fogo {
           -webkit-mask-image: linear-gradient(
             to bottom,
             transparent var(--corte),
@@ -229,6 +278,99 @@ export function FireSection() {
             transparent var(--corte),
             #000 calc(var(--corte) + ${SUAVE}%)
           );
+        }
+
+        /*
+          O clarão: as chamas borradas e somadas à luz do que está embaixo.
+          plus-lighter só clareia, então ele acende a madeira sem lavar o
+          preto do traço. O borrão é estático de propósito — filtro animado
+          repinta a cada quadro, e aqui quem se mexe é só a opacidade.
+        */
+        .brilho-fogo {
+          filter: blur(2.2vmin) saturate(1.5);
+          mix-blend-mode: plus-lighter;
+          opacity: calc(var(--acesa) * 0.75);
+          animation: fogo-respira 3.7s ease-in-out infinite;
+        }
+
+        /*
+          A tremida das chamas: opacidade e altura em compassos diferentes e
+          primos entre si. Fechando junto, o fogo pulsaria como um coração — o
+          que denuncia animação. Em 1,9s e 2,6s eles quase nunca se encontram, e
+          o desenho do fogo nunca se repete igual.
+
+          As duas são propriedades que a placa de vídeo resolve sozinha: nada
+          aqui obriga o navegador a redesenhar a arte.
+        */
+        .chamas {
+          transform-origin: 50% 100%;
+          animation:
+            chama-treme 1.9s ease-in-out infinite,
+            chama-lambe 2.6s ease-in-out infinite;
+          will-change: opacity, transform;
+        }
+
+        @keyframes chama-treme {
+          0%, 100% { opacity: 0.86; }
+          40%      { opacity: 1; }
+          70%      { opacity: 0.93; }
+        }
+
+        @keyframes chama-lambe {
+          0%, 100% { transform: scaleY(1); }
+          50%      { transform: scaleY(1.035); }
+        }
+
+        @keyframes fogo-respira {
+          0%, 100% { opacity: calc(var(--acesa) * 0.6); }
+          50%      { opacity: calc(var(--acesa) * 0.95); }
+        }
+
+        /* --- as fagulhas --- */
+
+        .fagulhas span {
+          position: absolute;
+          bottom: 18%;
+          border-radius: 50%;
+          background: var(--color-ember);
+          box-shadow: 0 0 6px var(--color-pumpkin);
+          opacity: 0;
+        }
+
+        .palco-fogo[data-pegou] .fagulhas span {
+          animation-name: fagulha-sobe;
+          animation-timing-function: ease-out;
+          animation-iteration-count: infinite;
+        }
+
+        @keyframes fagulha-sobe {
+          0%   { transform: translate3d(0, 0, 0) scale(0.6); opacity: 0; }
+          12%  { opacity: 0.9; }
+          70%  { opacity: 0.55; }
+          100% { transform: translate3d(var(--desvio), -46svh, 0) scale(1); opacity: 0; }
+        }
+
+        /* --- a emenda com o preto do ingresso --- */
+
+        .emenda-fogo {
+          height: 46svh;
+          background: linear-gradient(
+            to bottom,
+            var(--color-ink) 0%,
+            color-mix(in srgb, var(--color-ink) 82%, transparent) 16%,
+            color-mix(in srgb, var(--color-ink) 46%, transparent) 42%,
+            color-mix(in srgb, var(--color-ink) 16%, transparent) 72%,
+            transparent 100%
+          );
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .chamas,
+          .brilho-fogo,
+          .fagulhas span {
+            animation: none;
+          }
+          .brilho-fogo { opacity: calc(var(--acesa) * 0.75); }
         }
       `}</style>
     </section>

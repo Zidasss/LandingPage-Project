@@ -36,6 +36,15 @@ export const event = {
   dateLabel: "16 de outubro",
   weekdayLabel: "sexta-feira",
   timeLabel: "19h",
+  /**
+   * A hora de fechar, que já é do dia seguinte.
+   *
+   * Só existe como rótulo, de propósito: nenhuma conta do site depende dela.
+   * A venda fecha quando a festa **começa** (`startsAt`), não quando acaba —
+   * quem chega às três da manhã não vai comprar ingresso pelo PIX. Virar isto
+   * numa data de verdade seria criar um segundo relógio para não usar.
+   */
+  endTimeLabel: "4h da manhã",
 
   venue: {
     name: "Associação Volvo",

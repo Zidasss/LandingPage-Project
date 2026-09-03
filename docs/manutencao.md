@@ -66,12 +66,18 @@ A data aparece em dois formatos, e eles não conversam entre si:
 ```ts
 startsAt: "2026-10-16T19:00:00-03:00",  // o relógio: contagem e fechamento da venda
 dateLabel: "16 de outubro",             // o texto que a pessoa lê
+weekdayLabel: "sexta-feira",            // idem
 timeLabel: "19h",                       // idem
+endTimeLabel: "4h da manhã",            // idem — e já é do dia seguinte
 ```
 
-`startsAt` é o que a máquina usa; os outros dois são o que o olho lê. Mudar só
-um deixa o site dizendo uma coisa e contando outra. O `-03:00` no fim é o fuso
-de Brasília — mantenha.
+`startsAt` é o que a máquina usa; os outros são o que o olho lê. Mudar só um
+deixa o site dizendo uma coisa e contando outra — **confira o dia da semana**,
+que é o mais fácil de esquecer. O `-03:00` no fim é o fuso de Brasília —
+mantenha.
+
+O `endTimeLabel` é só rótulo: nenhuma conta depende dele. A venda fecha quando
+a festa **começa**, não quando acaba.
 
 O prazo de pagamento **não** tem esse problema: só existe `ticket.deadline`, e o
 texto "Pague até 25 de setembro" é gerado a partir dele. Mudou a data, mudou o
@@ -108,36 +114,49 @@ itens do grupo "Para comer".
 
 ### A casa pegando fogo
 
-A última cena da página são **duas artes empilhadas**: a casa limpa e a casa
-em chamas. O que se anima é a máscara que revela a de cima, de baixo para cima,
-conforme a rolagem — não há quadros de animação.
+A última cena da página. A **casa nunca muda**: o que existe por cima dela é só
+o fogo, recortado da arte em chamas e guardado numa camada própria — é por isso
+que ele pode tremer, respirar, acender a madeira em volta e soltar fagulha, o
+que uma imagem parada não faz.
 
-Na pasta `public/` moram quatro arquivos:
+Na pasta `public/`:
 
 | Arquivo | Para que serve |
 | --- | --- |
 | `casa.png`, `casa-fogo.png` | as fontes, com fundo transparente. O site **não** usa estes |
-| `casa.webp`, `casa-fogo.webp` | o que o site serve: o mesmo desenho achatado sobre o vermelho |
+| `casa.webp` | o que aparece: a casa limpa, achatada sobre o vermelho |
+| `casa-chamas.webp` | só o fogo, recortado da arte em chamas, com o resto transparente |
 
-O achatamento não é capricho: com o fundo transparente as duas juntas pesavam
-793KB, e sobre o vermelho pesam 251KB. Num traço denso assim, o canal alfa é o
+O achatamento não é capricho: com fundo transparente as artes pesavam 793KB, e
+sobre o vermelho pesam menos da metade. Num traço denso assim, o canal alfa é o
 que mais custa a comprimir.
 
-**Para trocar a arte**, substitua os `.png` e gere os `.webp` de novo:
+**Para trocar a arte**, substitua os `.png` e gere os dois `.webp`:
 
 ```python
 from PIL import Image
-v = Image.new("RGBA", (1080, 1350), (255, 26, 18, 255))   # o vermelho do site
-for f in ("casa", "casa-fogo"):
-    im = Image.open(f"public/{f}.png").convert("RGBA")
-    Image.alpha_composite(v, im).convert("RGB").save(
-        f"public/{f}.webp", "WEBP", quality=72, method=6)
+import numpy as np
+
+vermelho = Image.new("RGBA", (1080, 1350), (255, 26, 18, 255))   # o vermelho do site
+
+# a casa limpa, achatada
+limpa = Image.open("public/casa.png").convert("RGBA")
+Image.alpha_composite(vermelho, limpa).convert("RGB").save(
+    "public/casa.webp", "WEBP", quality=72, method=6)
+
+# só o fogo: fica o que é quente e claro, o resto vira transparente
+a = np.array(Image.open("public/casa-fogo.png").convert("RGBA")).astype(np.float32)
+R, G, B, A = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
+alfa = (A / 255) * np.clip((R - B - 35) / 55, 0, 1) * np.clip((R - 85) / 85, 0, 1)
+alfa[alfa < 0.10] = 0                                   # corta o ruído fraco
+Image.fromarray(np.dstack([R, G, B, alfa * 255]).astype(np.uint8), "RGBA").save(
+    "public/casa-chamas.webp", "WEBP", quality=78, method=6)
 ```
 
 As duas artes **não precisam ser o mesmo desenho** — as atuais não são, foram
-geradas separadas. Basta que concordem no lugar da casa, do telhado e do chão:
-a frente da máscara é borrada, e a diferença de traço na faixa que está passando
-lê como tremida de calor. O que não pode é mudar o enquadramento.
+geradas separadas. Como só o fogo é aproveitado da segunda, basta que as chamas
+caiam mais ou menos onde estão as janelas da primeira. O que não pode é mudar o
+enquadramento.
 
 ### O que NÃO mudar sem pensar
 

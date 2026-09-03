@@ -35,8 +35,8 @@ export function InfoSection() {
               highlight={`${event.dateLabel}, ${event.timeLabel}`}
             >
               <p>
-                {event.weekdayLabel}, portões a partir das {event.timeLabel}.
-                Fantasia é o traje da casa.
+                {event.weekdayLabel}, das {event.timeLabel} às{" "}
+                {event.endTimeLabel}. Fantasia é o traje da casa.
               </p>
             </InfoCard>
           </Reveal>
