@@ -114,10 +114,11 @@ itens do grupo "Para comer".
 
 ### A casa pegando fogo
 
-A última cena da página. A **casa nunca muda**: o que existe por cima dela é só
-o fogo, recortado da arte em chamas e guardado numa camada própria — é por isso
-que ele pode tremer, respirar, acender a madeira em volta e soltar fagulha, o
-que uma imagem parada não faz.
+A última cena da página. A **casa nunca muda** — é sempre a `casa.png`, a de
+traço melhor. Por cima dela vão **vinte e três chamas, cada uma num arquivo
+próprio**, e cada uma acende na sua hora conforme a rolagem: as do chão
+primeiro, as do torreão por último. O texto "Até lá" só chega quando a casa já
+está tomada.
 
 Na pasta `public/`:
 
@@ -125,59 +126,106 @@ Na pasta `public/`:
 | --- | --- |
 | `casa.png`, `casa-fogo.png` | as fontes, com fundo transparente. O site **não** usa estes |
 | `casa.webp` | o que aparece: a casa limpa, achatada sobre o vermelho |
-| `casa-chamas.webp` | só o fogo, recortado da arte em chamas, com o resto transparente |
-| `casa-brilho.webp` | o mesmo fogo já borrado e pequeno (320px), que é o clarão na madeira |
+| `casa-brilho.webp` | o fogo borrado e pequeno (320px), que é o clarão na madeira |
+| `chamas/00.webp` … `22.webp` | uma chama em cada, na ordem em que pegam fogo |
 
-Os três recortados saem em 1080x1020: as teias das pontas de cima foram
-apagadas e o céu vazio aparado. Se trocar a arte, o `CORTE_TEIA` do trecho
-abaixo precisa ser conferido — ele é a linha, em pixels do arquivo original,
-acima da qual só existe teia.
+Três coisas o script abaixo resolve, e vale saber por quê:
 
-O achatamento não é capricho: com fundo transparente as artes pesavam 793KB, e
-sobre o vermelho pesam menos da metade. Num traço denso assim, o canal alfa é o
-que mais custa a comprimir.
+- **As teias das pontas de cima saem.** Em tela larga viravam duas manchas
+  escuras penduradas nos cantos.
+- **As duas artes são encaixadas.** Elas não são o mesmo desenho: a casa em
+  chamas saiu num tamanho e numa posição um pouco diferentes, e sem o encaixe
+  as chamas caem na parede em vez de na janela. Os números (`ESCALA`, `DX`,
+  `DY`) foram achados por busca — a combinação que menos discorda entre as duas
+  silhuetas. **Se trocar a arte, refaça a busca**, que está no fim desta seção.
+- **O fundo vermelho é achatado no arquivo.** Com fundo transparente as artes
+  pesavam 793KB; assim pesam bem menos. Num traço denso, o canal alfa é o que
+  mais custa a comprimir.
 
-**Para trocar a arte**, substitua os `.png` e gere os dois `.webp`:
+**Para trocar a arte**, substitua os `.png` e rode:
 
 ```python
-from PIL import Image
-import numpy as np
+from PIL import Image, ImageFilter
+import numpy as np, json, os
+from collections import deque
 
-# as teias das pontas de cima saem, e o céu vazio é aparado junto:
-# nas telas largas elas viravam duas manchas escuras penduradas nos cantos
-CORTE_TEIA, CORTE_TOPO = 508, 330
+CORTE_TEIA, CORTE_TOPO = 508, 330      # acima da 1ª linha só há teia; a 2ª apara o céu
+ESCALA, DX, DY = 0.96, -17, 14         # o encaixe da arte em chamas sobre a limpa
+VERM = (255, 26, 18)
 
-def sem_teias(caminho):
+def recorta(caminho):
     a = np.array(Image.open(caminho).convert("RGBA"))
     a[:CORTE_TEIA, :, 3] = 0
     return Image.fromarray(a, "RGBA").crop((0, CORTE_TOPO, 1080, 1350))
 
-vermelho = Image.new("RGBA", (1080, 1020), (255, 26, 18, 255))   # o vermelho do site
+casa, fogo = recorta("public/casa.png"), recorta("public/casa-fogo.png")
+L, A = casa.size
 
-# a casa limpa, achatada
-Image.alpha_composite(vermelho, sem_teias("public/casa.png")).convert("RGB").save(
+# a casa limpa, achatada no vermelho do site
+Image.alpha_composite(Image.new("RGBA", (L, A), (*VERM, 255)), casa).convert("RGB").save(
     "public/casa.webp", "WEBP", quality=72, method=6)
 
-# só o fogo: fica o que é quente e claro, o resto vira transparente
-a = np.array(sem_teias("public/casa-fogo.png")).astype(np.float32)
-R, G, B, A = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
-alfa = (A / 255) * np.clip((R - B - 55) / 25, 0, 1) * np.clip((R - 115) / 40, 0, 1)
-alfa[alfa < 0.08] = 0                                   # corta o ruído fraco
+# encaixa a arte em chamas e tira dela só o fogo (o que é quente e claro)
+gr = fogo.resize((int(L * ESCALA), int(A * ESCALA)), Image.LANCZOS)
+enc = Image.new("RGBA", (L, A), (0, 0, 0, 0)); enc.paste(gr, (-DX, -DY))
+a = np.array(enc).astype(np.float32)
+R, G, B, Al = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
+alfa = (Al / 255) * np.clip((R - B - 55) / 25, 0, 1) * np.clip((R - 115) / 40, 0, 1)
+alfa[alfa < 0.08] = 0
 chamas = Image.fromarray(np.dstack([R, G, B, alfa * 255]).astype(np.uint8), "RGBA")
-chamas.save("public/casa-chamas.webp", "WEBP", quality=92, alpha_quality=100, method=6)
 
 # o clarão: o mesmo fogo borrado e pequeno — borrão não precisa de resolução,
-# e assado no arquivo ele sai de graça (em CSS, blur() custa caro por quadro)
-from PIL import ImageFilter
-brilho = chamas.filter(ImageFilter.GaussianBlur(26)).resize((320, 302), Image.LANCZOS)
-brilho.filter(ImageFilter.GaussianBlur(3)).save(
-    "public/casa-brilho.webp", "WEBP", quality=82, alpha_quality=90, method=6)
+# e assado no arquivo sai de graça (em CSS, blur() custa caro por quadro)
+chamas.filter(ImageFilter.GaussianBlur(26)).resize((320, int(320 * A / L)), Image.LANCZOS) \
+      .filter(ImageFilter.GaussianBlur(3)) \
+      .save("public/casa-brilho.webp", "WEBP", quality=82, alpha_quality=90, method=6)
+
+# e cada chama vira um arquivo, separada por mancha conexa
+m = np.array(chamas.getchannel("A")) > 60
+H, W = m.shape; visto = np.zeros_like(m); comp = np.full(m.shape, -1, np.int32); caixas = []
+for y in range(H):
+    for x in range(W):
+        if visto[y, x] or not m[y, x]:
+            continue
+        i = len(caixas); q = deque([(y, x)]); visto[y, x] = 1; pts = []
+        while q:
+            cy, cx = q.popleft(); pts.append((cy, cx)); comp[cy, cx] = i
+            for dy, dx in ((1,0),(-1,0),(0,1),(0,-1)):
+                ny, nx = cy+dy, cx+dx
+                if 0 <= ny < H and 0 <= nx < W and not visto[ny, nx] and m[ny, nx]:
+                    visto[ny, nx] = 1; q.append((ny, nx))
+        ys = [p[0] for p in pts]; xs = [p[1] for p in pts]
+        caixas.append({"i": i, "n": len(pts), "x0": min(xs), "y0": min(ys),
+                       "x1": max(xs), "y1": max(ys)})
+
+os.makedirs("public/chamas", exist_ok=True)
+rgba = np.array(chamas); FOLGA = 14; saida = []
+grandes = sorted([c for c in caixas if c["n"] >= 400], key=lambda c: -c["y1"])
+for k, c in enumerate(grandes):
+    x0, y0 = max(0, c["x0"] - FOLGA), max(0, c["y0"] - FOLGA)
+    x1, y1 = min(W, c["x1"] + 1 + FOLGA), min(H, c["y1"] + 1 + FOLGA)
+    rec = rgba[y0:y1, x0:x1].copy()
+    dono = comp[y0:y1, x0:x1]
+    rec[(dono != c["i"]) & (dono != -1), 3] = 0      # sem pedaço da chama vizinha
+    Image.fromarray(rec, "RGBA").save(f"public/chamas/{k:02d}.webp", "WEBP",
+                                      quality=92, alpha_quality=100, method=6)
+    saida.append({"k": k, "e": 100*x0/W, "t": 100*y0/H,
+                  "l": 100*(x1-x0)/W, "a": 100*(y1-y0)/H, "base": 100*c["y1"]/H})
+
+# a ordem de acender sai da altura da base de cada chama
+lo = min(s["base"] for s in saida); hi = max(s["base"] for s in saida)
+for s in saida:
+    s["inicio"] = round((hi - s["base"]) / (hi - lo) * 0.74, 3)
+print(json.dumps(saida, indent=1))
 ```
 
-As duas artes **não precisam ser o mesmo desenho** — as atuais não são, foram
-geradas separadas. Como só o fogo é aproveitado da segunda, basta que as chamas
-caiam mais ou menos onde estão as janelas da primeira. O que não pode é mudar o
-enquadramento.
+O que ele imprime no fim é a lista `CHAMAS` de `src/components/FireSection.tsx`
+— copie de lá para cá, mantendo o formato.
+
+**Refazer o encaixe** (só se trocar a arte): rode uma busca comparando as duas
+silhuetas na região da casa, variando escala de 0,92 a 1,00 e deslocamento de
+-45 a +5 em x e -10 a +40 em y, e fique com a combinação de menor diferença
+média. Foi assim que saíram 0,96 / -17 / 14.
 
 ### O que NÃO mudar sem pensar
 
