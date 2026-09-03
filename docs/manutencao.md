@@ -128,6 +128,11 @@ Na pasta `public/`:
 | `casa-chamas.webp` | só o fogo, recortado da arte em chamas, com o resto transparente |
 | `casa-brilho.webp` | o mesmo fogo já borrado e pequeno (320px), que é o clarão na madeira |
 
+Os três recortados saem em 1080x1020: as teias das pontas de cima foram
+apagadas e o céu vazio aparado. Se trocar a arte, o `CORTE_TEIA` do trecho
+abaixo precisa ser conferido — ele é a linha, em pixels do arquivo original,
+acima da qual só existe teia.
+
 O achatamento não é capricho: com fundo transparente as artes pesavam 793KB, e
 sobre o vermelho pesam menos da metade. Num traço denso assim, o canal alfa é o
 que mais custa a comprimir.
@@ -138,25 +143,33 @@ que mais custa a comprimir.
 from PIL import Image
 import numpy as np
 
-vermelho = Image.new("RGBA", (1080, 1350), (255, 26, 18, 255))   # o vermelho do site
+# as teias das pontas de cima saem, e o céu vazio é aparado junto:
+# nas telas largas elas viravam duas manchas escuras penduradas nos cantos
+CORTE_TEIA, CORTE_TOPO = 508, 330
+
+def sem_teias(caminho):
+    a = np.array(Image.open(caminho).convert("RGBA"))
+    a[:CORTE_TEIA, :, 3] = 0
+    return Image.fromarray(a, "RGBA").crop((0, CORTE_TOPO, 1080, 1350))
+
+vermelho = Image.new("RGBA", (1080, 1020), (255, 26, 18, 255))   # o vermelho do site
 
 # a casa limpa, achatada
-limpa = Image.open("public/casa.png").convert("RGBA")
-Image.alpha_composite(vermelho, limpa).convert("RGB").save(
+Image.alpha_composite(vermelho, sem_teias("public/casa.png")).convert("RGB").save(
     "public/casa.webp", "WEBP", quality=72, method=6)
 
 # só o fogo: fica o que é quente e claro, o resto vira transparente
-a = np.array(Image.open("public/casa-fogo.png").convert("RGBA")).astype(np.float32)
+a = np.array(sem_teias("public/casa-fogo.png")).astype(np.float32)
 R, G, B, A = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
-alfa = (A / 255) * np.clip((R - B - 35) / 55, 0, 1) * np.clip((R - 85) / 85, 0, 1)
-alfa[alfa < 0.10] = 0                                   # corta o ruído fraco
+alfa = (A / 255) * np.clip((R - B - 55) / 25, 0, 1) * np.clip((R - 115) / 40, 0, 1)
+alfa[alfa < 0.08] = 0                                   # corta o ruído fraco
 chamas = Image.fromarray(np.dstack([R, G, B, alfa * 255]).astype(np.uint8), "RGBA")
 chamas.save("public/casa-chamas.webp", "WEBP", quality=92, alpha_quality=100, method=6)
 
 # o clarão: o mesmo fogo borrado e pequeno — borrão não precisa de resolução,
 # e assado no arquivo ele sai de graça (em CSS, blur() custa caro por quadro)
 from PIL import ImageFilter
-brilho = chamas.filter(ImageFilter.GaussianBlur(26)).resize((320, 400), Image.LANCZOS)
+brilho = chamas.filter(ImageFilter.GaussianBlur(26)).resize((320, 302), Image.LANCZOS)
 brilho.filter(ImageFilter.GaussianBlur(3)).save(
     "public/casa-brilho.webp", "WEBP", quality=82, alpha_quality=90, method=6)
 ```

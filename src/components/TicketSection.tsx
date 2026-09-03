@@ -224,7 +224,7 @@ export function TicketSection({
   return (
     <section
       id="ingresso"
-      className="bg-ink relative z-40 overflow-hidden px-6 pt-[34vh] pb-20 sm:pt-24 sm:pb-28"
+      className="bg-ink relative z-40 overflow-hidden px-6 pt-[34vh] pb-44 sm:pt-24 sm:pb-64"
     >
       {/* cenário: a parede de ingressos correndo */}
       <TicketWall />
@@ -263,7 +263,7 @@ export function TicketSection({
       */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-[24vh]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[34vh]"
         style={{
           background:
             "linear-gradient(to top, var(--color-ink) 0%, var(--color-ink) 22%, transparent 100%)",

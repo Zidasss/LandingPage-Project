@@ -32,8 +32,8 @@ import { event } from "@/config/event";
  *    É o que devolve o clarão na madeira que a arte em chamas tinha e o recorte
  *    sozinho perdia. O borrão é fixo: quem pulsa é a opacidade, que é de graça.
  * 3. **chamas** — o recorte, revelado de baixo para cima pela rolagem e tremendo
- *    sozinho em dois compassos que não fecham entre si, para o fogo nunca
- *    repetir o mesmo desenho.
+ *    sozinho. A tremida é só de brilho: a camada é um recorte do desenho, e
+ *    mexer nela de verdade arrastava o batente da janela junto.
  * 4. **fagulhas** — pontos que sobem e apagam, só depois que o fogo pegou.
  */
 
@@ -190,10 +190,10 @@ export function FireSection() {
           className="arte-casa absolute bottom-0 left-1/2 -translate-x-1/2"
           style={
             {
-              "--arte-h": "min(94svh, 152vw)",
+              "--arte-h": "min(78svh, 134vw)",
               height: "var(--arte-h)",
-              // a proporção do desenho, 4:5 — a largura sai da altura
-              width: "calc(var(--arte-h) * 0.8)",
+              // a proporção do desenho (1080x1020) — a largura sai da altura
+              width: "calc(var(--arte-h) * 1.0588)",
             } as React.CSSProperties
           }
         >
@@ -208,7 +208,7 @@ export function FireSection() {
             src="/casa.webp"
             alt="Casarão mal-assombrado entre árvores secas"
             width={1080}
-            height={1350}
+            height={1020}
             loading="lazy"
             decoding="async"
             className="block h-full w-full"
@@ -226,7 +226,7 @@ export function FireSection() {
               src="/casa-brilho.webp"
               alt=""
               width={320}
-              height={400}
+              height={302}
               loading="lazy"
               decoding="async"
               className="absolute inset-0 h-full w-full"
@@ -239,7 +239,7 @@ export function FireSection() {
               src="/casa-chamas.webp"
               alt=""
               width={1080}
-              height={1350}
+              height={1020}
               loading="lazy"
               decoding="async"
               className="absolute inset-0 h-full w-full"
@@ -343,10 +343,14 @@ export function FireSection() {
             linear-gradient(
               to right,
               rgb(255 26 18) 0%,
-              rgb(255 26 18 / 0.55) 4%,
-              rgb(255 26 18 / 0) 11%,
-              rgb(255 26 18 / 0) 89%,
-              rgb(255 26 18 / 0.55) 96%,
+              rgb(255 26 18 / 0.72) 3%,
+              rgb(255 26 18 / 0.32) 8%,
+              rgb(255 26 18 / 0.1) 13%,
+              rgb(255 26 18 / 0) 18%,
+              rgb(255 26 18 / 0) 82%,
+              rgb(255 26 18 / 0.1) 87%,
+              rgb(255 26 18 / 0.32) 92%,
+              rgb(255 26 18 / 0.72) 97%,
               rgb(255 26 18) 100%
             ),
             linear-gradient(
@@ -385,41 +389,50 @@ export function FireSection() {
         .brilho-fogo {
           filter: saturate(1.4);
           mix-blend-mode: plus-lighter;
+          transform-origin: 50% 88%;
           opacity: calc(var(--acesa) * 0.75);
           animation: fogo-respira 3.7s ease-in-out infinite;
         }
 
         /*
-          A tremida das chamas: opacidade e altura em compassos diferentes e
-          primos entre si. Fechando junto, o fogo pulsaria como um coração — o
-          que denuncia animação. Em 1,9s e 2,6s eles quase nunca se encontram, e
-          o desenho do fogo nunca se repete igual.
+          A tremida é só de luz. Nada de geometria.
 
-          As duas são propriedades que a placa de vídeo resolve sozinha: nada
-          aqui obriga o navegador a redesenhar a arte.
+          Antes a camada das chamas também esticava na vertical, e ficou ruim
+          por um motivo simples: a camada não é só chama, é um recorte do
+          desenho inteiro, então esticá-la mexia o batente da janela junto — dava
+          a impressão de ter alguma coisa dançando lá dentro. Fogo visto de longe
+          não muda de lugar, muda de brilho; então o que varia aqui é opacidade,
+          e só.
+
+          Os tempos são quebrados de propósito (2,3s nas chamas, 3,7s no clarão):
+          números redondos fecham juntos de tempos em tempos e o fogo passa a
+          pulsar como um coração, que é o que denuncia animação.
+
+          O clarão pode crescer um tico porque ele é um borrão sem borda — quem
+          olha lê como o fogo respirando, e não como desenho esticando.
         */
         .chamas {
-          transform-origin: 50% 100%;
-          animation:
-            chama-treme 1.9s ease-in-out infinite,
-            chama-lambe 2.6s ease-in-out infinite;
-          will-change: opacity, transform;
+          animation: chama-treme 2.3s ease-in-out infinite;
+          will-change: opacity;
         }
 
         @keyframes chama-treme {
-          0%, 100% { opacity: 0.86; }
-          40%      { opacity: 1; }
-          70%      { opacity: 0.93; }
-        }
-
-        @keyframes chama-lambe {
-          0%, 100% { transform: scaleY(1); }
-          50%      { transform: scaleY(1.035); }
+          0%   { opacity: 0.88; }
+          23%  { opacity: 1; }
+          46%  { opacity: 0.91; }
+          61%  { opacity: 0.99; }
+          100% { opacity: 0.88; }
         }
 
         @keyframes fogo-respira {
-          0%, 100% { opacity: calc(var(--acesa) * 0.6); }
-          50%      { opacity: calc(var(--acesa) * 0.95); }
+          0%, 100% {
+            opacity: calc(var(--acesa) * 0.62);
+            transform: scale(1);
+          }
+          50% {
+            opacity: calc(var(--acesa) * 0.95);
+            transform: scale(1.035);
+          }
         }
 
         /* --- as fagulhas --- */
@@ -449,7 +462,7 @@ export function FireSection() {
         /* --- a emenda com o preto do ingresso --- */
 
         .emenda-fogo {
-          height: 44svh;
+          height: 52svh;
           background: linear-gradient(
             to bottom,
             var(--color-ink) 0%,
