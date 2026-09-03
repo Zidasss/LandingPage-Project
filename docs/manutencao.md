@@ -126,7 +126,7 @@ Na pasta `public/`:
 | --- | --- |
 | `casa.png`, `casa-fogo.png` | as fontes, com fundo transparente. O site **não** usa estes |
 | `casa.webp` | o que aparece: a casa limpa, achatada sobre o vermelho |
-| `casa-brilho.webp` | o fogo borrado e pequeno (320px), que é o clarão na madeira |
+| `casa-brilho.webp` | o fogo borrado e pequeno (320px). Serve duas vezes: aquece a madeira (troca o vermelho por âmbar) e faz o clarão |
 | `chamas/00.webp` … `22.webp` | uma chama em cada, na ordem em que pegam fogo |
 
 Três coisas o script abaixo resolve, e vale saber por quê:

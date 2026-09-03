@@ -35,12 +35,16 @@ import { event } from "@/config/event";
  * ## As camadas, de baixo para cima
  *
  * 1. **base** — a casa limpa, achatada sobre o vermelho do site.
- * 2. **brilho** — as chamas borradas e somadas à luz, que é o clarão na
- *    madeira. Vem de um arquivo já borrado e pequeno: borrão é justamente o
- *    que não precisa de resolução, e em CSS ele custaria caro por quadro.
- * 3. **chamas** — os vinte e três recortes, acendendo com a rolagem.
- * 4. **fagulhas** — pontos que sobem e apagam, depois que o fogo pegou.
- * 5. **texto** — que só chega quando a casa já está tomada, e chega quente.
+ * 2. **calor** — o mesmo borrão em modo `hue`, que troca o matiz do que está
+ *    embaixo: o vermelho cru da madeira vira âmbar onde o fogo alcança, e o
+ *    preto do traço continua preto. Sem isto a chama ficava boiando sobre um
+ *    desenho vermelho, como adesivo colado.
+ * 3. **brilho** — o borrão somado à luz, que é o clarão. Vem de um arquivo já
+ *    borrado e pequeno: borrão é justamente o que não precisa de resolução, e
+ *    em CSS ele custaria caro por quadro.
+ * 4. **chamas** — os vinte e três recortes, acendendo com a rolagem.
+ * 5. **fagulhas** — pontos que sobem e apagam, depois que o fogo pegou.
+ * 6. **texto** — que só chega quando a casa já está tomada, e chega quente.
  */
 
 /**
@@ -235,7 +239,7 @@ export function FireSection() {
           className="arte-casa absolute bottom-0 left-1/2 -translate-x-1/2"
           style={
             {
-              "--arte-h": "min(84svh, 146vw)",
+              "--arte-h": "min(76svh, 130vw)",
               height: "var(--arte-h)",
               // a proporção do desenho (1080x1020) — a largura sai da altura
               width: "calc(var(--arte-h) * 1.0588)",
@@ -251,6 +255,30 @@ export function FireSection() {
             decoding="async"
             className="block h-full w-full"
           />
+
+          {/*
+            O fogo **acende a madeira**, e não só ilumina: no desenho limpo a
+            casa é preto sobre vermelho cru, e com a chama por cima o vermelho
+            brigava com ela — parecia adesivo colado. Esta camada é o mesmo
+            borrão do fogo em modo `hue`, que troca só o matiz do que está
+            embaixo: o vermelho da madeira vira âmbar e o preto do traço fica
+            preto, porque preto não tem matiz para trocar. É o que a arte em
+            chamas mostra, e o que faltava aqui.
+
+            Vem **antes** das chamas de propósito. Depois delas, aquecia as
+            próprias chamas junto e o fogo perdia o contraste com a madeira.
+          */}
+          <div aria-hidden className="calor-madeira absolute inset-0">
+            <img
+              src="/casa-brilho.webp"
+              alt=""
+              width={320}
+              height={302}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full"
+            />
+          </div>
 
           {/* o clarão do fogo na madeira */}
           <div aria-hidden className="brilho-fogo absolute inset-0">
@@ -376,6 +404,11 @@ export function FireSection() {
           interpolação até ele passa por tons escuros — apareceria uma sombra
           suja no meio do esmaecido.
 
+          Em cima também não: depois que as teias saíram, o alto do desenho
+          é vermelho chapado — não há borda para esconder ali. O esmaecido que
+          existia comia a copa das árvores das pontas, e era isso que dava a
+          impressão de imagem cortada.
+
           Embaixo não há esmaecido: ali é o chão, e chão termina mesmo.
         */
         .arte-casa::after {
@@ -397,13 +430,6 @@ export function FireSection() {
               rgb(255 26 18 / 0.32) 92%,
               rgb(255 26 18 / 0.72) 97%,
               rgb(255 26 18) 100%
-            ),
-            linear-gradient(
-              to bottom,
-              rgb(255 26 18) 0%,
-              rgb(255 26 18 / 0.62) 8%,
-              rgb(255 26 18 / 0.22) 15%,
-              rgb(255 26 18 / 0) 24%
             );
         }
 
@@ -412,6 +438,11 @@ export function FireSection() {
           plus-lighter só clareia, então ele acende a madeira sem lavar o preto
           do traço.
         */
+        .calor-madeira {
+          mix-blend-mode: hue;
+          opacity: calc(var(--acesa) * 0.9);
+        }
+
         .brilho-fogo {
           filter: saturate(1.4);
           mix-blend-mode: plus-lighter;
