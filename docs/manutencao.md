@@ -114,11 +114,18 @@ itens do grupo "Para comer".
 
 ### A casa pegando fogo
 
-A última cena da página. A **casa nunca muda** — é sempre a `casa.png`, a de
-traço melhor. Por cima dela vão **dezoito chamas, cada uma num arquivo
-próprio**, e cada uma acende na sua hora conforme a rolagem: as do chão
-primeiro, as do torreão por último. O texto "Até lá" só chega quando a casa já
-está tomada.
+A cena da **contagem regressiva** (`src/components/CountdownSection.tsx`, a
+seção `#contagem`) — a casa queima atrás do relógio, que é onde ela tem o que
+fazer: ali existe rolagem para o fogo pegar e a espera que ele ilustra.
+
+A **casa nunca muda** — é sempre a `casa.png`, a de traço melhor. Por cima dela
+vão **dezoito chamas, cada uma num arquivo próprio**, e cada uma acende na sua
+hora conforme a rolagem: as do chão primeiro, as do torreão por último.
+
+A última cena da página é outra: o **rescaldo** (`FireSection.tsx`, a seção
+`#ate-la`). Não tem casa nenhuma, só o vermelho, as brasas subindo e o "Até lá".
+Repetir a casa lá embaixo seria contar a mesma coisa duas vezes na mesma
+página, e a segunda vez é sempre a mais fraca.
 
 Na pasta `public/`:
 
@@ -161,9 +168,14 @@ def recorta(caminho):
 casa, fogo = recorta("public/casa.png"), recorta("public/casa-fogo.png")
 L, A = casa.size
 
-# a casa limpa, achatada no vermelho do site
-Image.alpha_composite(Image.new("RGBA", (L, A), (*VERM, 255)), casa).convert("RGB").save(
-    "public/casa.webp", "WEBP", quality=72, method=6)
+# A casa limpa, achatada no vermelho do site. A máscara de nitidez é de
+# propósito: o arquivo tem 1080 de largura e na tela ele aparece maior que
+# isso, então quem borra o traço é a ampliação do navegador. Afiar antes
+# compensa esse borrão — sem isso a tábua e o caixilho saíam moles ao lado do
+# fogo, que é nítido. Custa ~40KB e vale.
+Image.alpha_composite(Image.new("RGBA", (L, A), (*VERM, 255)), casa).convert("RGB") \
+     .filter(ImageFilter.UnsharpMask(radius=1.6, percent=150, threshold=2)) \
+     .save("public/casa.webp", "WEBP", quality=76, method=6)
 
 # encaixa a arte em chamas e tira dela só o fogo (o que é quente e claro)
 gr = fogo.resize((int(L * ESCALA), int(A * ESCALA)), Image.LANCZOS)
@@ -223,8 +235,8 @@ for s in saida:
 print(json.dumps(saida, indent=1))
 ```
 
-O que ele imprime no fim é a lista `CHAMAS` de `src/components/FireSection.tsx`
-— copie de lá para cá, mantendo o formato.
+O que ele imprime no fim é a lista `CHAMAS` de
+`src/components/CountdownSection.tsx` — copie de lá para cá, mantendo o formato.
 
 **Refazer o encaixe** (só se trocar a arte): rode uma busca comparando as duas
 silhuetas na região da casa, variando escala de 0,92 a 1,00 e deslocamento de

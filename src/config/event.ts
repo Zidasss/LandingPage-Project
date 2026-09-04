@@ -121,14 +121,6 @@ export const event = {
     foreground: { src: "/garras-tacas.png", w: 422, h: 513 },
   },
 
-  /** Cena da contagem regressiva. */
-  bats: {
-    /** Arte principal: o morcego grande. */
-    scene: "/morcego.png",
-    /** Sprites do bando, recortados da própria arte. */
-    sprites: ["/morcego-voo-a.png", "/morcego-voo-b.png"],
-  },
-
   /** Endereço divulgado no topo do cartaz. */
   site: "@volvoween.com",
 
