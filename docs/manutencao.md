@@ -127,14 +127,14 @@ A última cena da página é outra: o **rescaldo** (`FireSection.tsx`, a seção
 Repetir a casa lá embaixo seria contar a mesma coisa duas vezes na mesma
 página, e a segunda vez é sempre a mais fraca.
 
-Na pasta `public/`:
+Os arquivos, e onde cada um mora:
 
 | Arquivo | Para que serve |
 | --- | --- |
-| `casa.png`, `casa-fogo.png` | as fontes, com fundo transparente. O site **não** usa estes |
-| `casa.webp` | o que aparece: a casa limpa, achatada sobre o vermelho |
-| `casa-brilho.webp` | o fogo borrado e pequeno (320px). Serve duas vezes: aquece a madeira (troca o vermelho por âmbar) e faz o clarão |
-| `chamas/00.webp` … `17.webp` | uma chama em cada, na ordem em que pegam fogo |
+| `arte/casa.png`, `arte/casa-fogo.png` | as fontes, com fundo transparente. O site **não** usa estes — ficam fora de `public/` justamente por isso: o que está em `public/` vai para o ar a cada publicação e fica aberto para qualquer um baixar. Eram 3MB subindo à toa |
+| `public/casa.webp` | o que aparece: a casa limpa, achatada sobre o vermelho |
+| `public/casa-brilho.webp` | o fogo borrado e pequeno (320px). Serve duas vezes: aquece a madeira (troca o vermelho por âmbar) e faz o clarão |
+| `public/chamas/00.webp` … `17.webp` | uma chama em cada, na ordem em que pegam fogo |
 
 Três coisas o script abaixo resolve, e vale saber por quê:
 
@@ -165,7 +165,7 @@ def recorta(caminho):
     a[:CORTE_TEIA, :, 3] = 0
     return Image.fromarray(a, "RGBA").crop((0, CORTE_TOPO, 1080, 1350))
 
-casa, fogo = recorta("public/casa.png"), recorta("public/casa-fogo.png")
+casa, fogo = recorta("arte/casa.png"), recorta("arte/casa-fogo.png")
 L, A = casa.size
 
 # A casa limpa, achatada no vermelho do site. A máscara de nitidez é de

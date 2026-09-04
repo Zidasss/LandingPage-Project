@@ -224,10 +224,19 @@ export function TicketSection({
   return (
     <section
       id="ingresso"
-      className="bg-ink relative z-40 overflow-hidden px-6 pt-[34vh] pb-44 sm:pt-24 sm:pb-64"
+      className="bg-ink relative z-40 overflow-hidden px-6 pt-[34vh] pb-44 sm:pt-[24vh] sm:pb-64"
     >
       {/* cenário: a parede de ingressos correndo */}
       <TicketWall />
+
+      {/*
+        O respiro acima do cartão é medido em altura de tela, e não em pixels
+        fixos, porque o que ele controla é *quanta parede aparece antes do
+        ingresso* — e isso é uma proporção da tela, não uma distância. Com os
+        96px de antes, num monitor grande o cartão encostava no topo da seção e
+        a parede virava uma tarja fina; a cena precisa de parede à mostra para
+        o cartão ler como um ingresso no meio de muitos.
+      */}
 
       {/*
         No celular a parede não cabe atrás do cartão — ele toma a tela toda. Por

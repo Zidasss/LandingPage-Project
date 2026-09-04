@@ -152,10 +152,34 @@ export function CountdownSection() {
       else delete cena.dataset.pegou;
     };
 
+    const texto = cena.querySelector<HTMLElement>(".entrada");
+
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       pintar(1);
+      if (texto) texto.dataset.entrou = "1";
       return;
     }
+
+    /*
+      A chegada do texto é uma vez só, e não presa à rolagem como o fogo.
+
+      O fogo é um estado — a que altura da rolagem a casa está — e por isso ele
+      anda para a frente e para trás junto com o dedo. O texto é um
+      acontecimento: ele chega, e chegado está. Amarrá-lo à rolagem faria o
+      título piscar de volta ao nada quando alguém subisse dois dedos, que é
+      exatamente o tipo de coisa que denuncia o truque.
+
+      Por isso o observador se desliga assim que dispara.
+    */
+    const entrada = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        (e.target as HTMLElement).dataset.entrou = "1";
+        entrada.disconnect();
+      },
+      { threshold: 0.3 },
+    );
+    if (texto) entrada.observe(texto);
 
     let frame = 0;
     let ultimo = -1;
@@ -199,6 +223,7 @@ export function CountdownSection() {
     window.addEventListener("resize", aoRolar, { passive: true });
     return () => {
       vigia.disconnect();
+      entrada.disconnect();
       if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("scroll", aoRolar);
       window.removeEventListener("resize", aoRolar);
@@ -372,7 +397,7 @@ export function CountdownSection() {
           informação, e quem abre a página para saber quanto falta não deveria
           ter de esperar o incêndio terminar para ler.
         */}
-        <div className="relative z-10 px-6 pt-[7svh] text-center">
+        <div className="entrada relative z-10 px-6 pt-[7svh] text-center">
           <p className="chapeu font-heading text-bone/70 text-[0.62rem] font-bold tracking-[0.35em] uppercase">
             falta pouco
           </p>
@@ -400,6 +425,62 @@ export function CountdownSection() {
       <style>{`
         .palco-fogo {
           --acesa: 0;
+        }
+
+        /*
+          A chegada do texto, quando a cena entra na tela.
+
+          Os três sobem em fila — chapéu, título, relógio — porque chegar tudo
+          junto é um bloco aparecendo, e em fila é alguém escrevendo. O atraso
+          entre eles é curto de propósito: passando de uns 250ms a fila vira
+          espera, e ninguém espera por um cabeçalho.
+
+          O título chega na cor da brasa e esfria para osso, com o clarão em
+          volta sumindo junto. É a mesma gramática do fim da página, e prende o
+          texto ao incêndio que acontece logo abaixo dele — sem isso a fila
+          seria um fade genérico, que podia estar em qualquer site.
+
+          O raio do clarão é fixo e só a cor muda. Variar o raio obriga o
+          navegador a borrar o texto de novo a cada quadro, e isto roda bem na
+          hora em que a cena inteira está entrando.
+
+          Sem o dado no elemento nada aparece. É o mesmo trato que as chamas já
+          fazem (elas também nascem invisíveis): esta cena é desenhada pelo
+          navegador, não pelo servidor.
+        */
+        .entrada > * {
+          opacity: 0;
+        }
+
+        .entrada[data-entrou] > * {
+          animation: chega-do-fogo 720ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+        }
+        .entrada[data-entrou] > *:nth-child(2) { animation-delay: 100ms; }
+        .entrada[data-entrou] > *:nth-child(3) { animation-delay: 220ms; }
+
+        .entrada[data-entrou] .titulo {
+          animation: acende-titulo 900ms cubic-bezier(0.2, 0.75, 0.25, 1) 100ms
+            both;
+        }
+
+        @keyframes chega-do-fogo {
+          from { opacity: 0; transform: translateY(18px); }
+          to   { opacity: 1; transform: none; }
+        }
+
+        @keyframes acende-titulo {
+          from {
+            opacity: 0;
+            transform: translateY(18px);
+            color: var(--color-ember);
+            text-shadow: 0 0 24px rgb(255 145 66 / 0.9);
+          }
+          to {
+            opacity: 1;
+            transform: none;
+            color: var(--color-bone);
+            text-shadow: 0 0 24px rgb(255 145 66 / 0);
+          }
         }
 
         /* O relógio, claro sobre a cena. */
@@ -573,6 +654,17 @@ export function CountdownSection() {
             animation: none;
           }
           .brilho-fogo { opacity: calc(var(--acesa) * 0.85); }
+
+          /*
+            Quem pediu menos movimento recebe o texto já posto. O dado continua
+            sendo escrito no elemento — é ele que tira o "invisível" de cima do
+            texto — mas a fila e o clarão não acontecem.
+          */
+          .entrada[data-entrou] > *,
+          .entrada[data-entrou] .titulo {
+            animation: none;
+            opacity: 1;
+          }
         }
       `}</style>
     </section>
