@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo, Chicle, Rubik_Wet_Paint, Share_Tech_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { event } from "@/config/event";
 import { PaperGrain } from "@/components/PaperGrain";
 import "./globals.css";
@@ -83,6 +84,26 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="relative min-h-full">
         <PaperGrain />
         <main className="relative z-10">{children}</main>
+        {/*
+          A contagem de visitas da Vercel.
+
+          Conta acesso, de onde veio o link, país e tipo de aparelho — e nada
+          além disso. Não usa cookie, não segue ninguém entre sites e **não vê
+          o formulário**: medido, a única coisa que ela chega a enfileirar é
+          {"pageview", route "/"}. Digitar nome, e-mail e telefone não
+          acrescenta nada à fila. O que ela mede é a página, não a pessoa —
+          para uma lista de convidados isso importa mais do que parece.
+
+          Rodar na sua máquina não polui o número, mas não é porque o script
+          fique de fora: ele entra no HTML sempre. O que acontece é que
+          /_vercel/insights/script.js só existe servido pela Vercel — em
+          qualquer outro lugar ele dá 404, nada carrega e nada é registrado.
+
+          **Falta um passo, e é fora do código:** ligar em Vercel → o projeto →
+          aba Analytics → Enable. Sem isso o painel fica vazio para sempre,
+          mesmo com este componente no ar.
+        */}
+        <Analytics />
       </body>
     </html>
   );

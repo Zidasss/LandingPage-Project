@@ -320,6 +320,11 @@ caixa de seleção.
 - [ ] **Trocar `SHEETS_WEBHOOK_URL` na Vercel** pela URL da implantação nova do
       Apps Script (a que responde `{"confirmados":N}`), e dar Redeploy. Sem isso
       o selo de vagas não aparece e os pedidos vão para um endereço aposentado.
+- [ ] **Ligar o Analytics na Vercel:** abra o projeto → aba **Analytics** →
+      **Enable**. O código já está no site (`<Analytics />` no `layout.tsx`),
+      mas ele só começa a contar depois desse clique — sem ele o painel fica
+      vazio para sempre. Depois de ligar, o número aparece no primeiro acesso
+      novo; visita que já aconteceu não entra retroativamente.
 - [ ] Apagar as linhas de teste da planilha e a aba `Página1` vazia
 - [ ] Arquivar a implantação antiga do Apps Script, para ninguém tropeçar nela
 - [ ] Conferir se a Associação Volvo comporta mesmo as 130 pessoas (a
