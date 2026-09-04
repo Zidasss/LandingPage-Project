@@ -124,6 +124,35 @@ function avisar() {
 
 // ---------------------------------------------------------------- montagem
 
+/**
+ * Pede ao iPhone para tratar o site como quem toca música, e não como som de
+ * enfeite.
+ *
+ * É o motivo de a música sair no computador e não sair no celular. No iOS o
+ * Web Audio nasce na categoria "ambient", e ambient é **calado pelo
+ * interruptor de silencioso** — aquela chavinha na lateral do aparelho, que a
+ * maioria das pessoas vive com ela ligada. Do lado do código está tudo certo:
+ * o contexto diz `running`, a música decodifica, os nós tocam. O sistema é que
+ * joga o som fora antes do alto-falante. Computador não tem essa chave, e por
+ * isso lá sempre funcionou.
+ *
+ * `playback` é a categoria de quem toca de propósito: passa por cima do
+ * silencioso, que é o comportamento de qualquer aplicativo de música.
+ *
+ * Existe desde o Safari 16.4 (março de 2023). Em iPhone mais antigo que isso a
+ * propriedade não existe, não há como contornar, e o jeito é desligar o
+ * silencioso — está anotado no manual.
+ */
+function pedirSessaoDeMidia() {
+  const nav = navigator as Navigator & { audioSession?: { type: string } };
+  if (!nav.audioSession) return;
+  try {
+    nav.audioSession.type = "playback";
+  } catch {
+    // Navegador que expõe a propriedade mas recusa o valor: segue no padrão.
+  }
+}
+
 function montar(): boolean {
   if (ctx) return true;
   const Contexto =
@@ -709,6 +738,13 @@ export function assinar(ouvinte: () => void): () => void {
 /** Liga o som. Só funciona dentro de um gesto da pessoa — regra do navegador. */
 export function ligar() {
   if (!montar() || !ctx) return;
+  /*
+    Antes do `resume`, e não na criação do contexto: aqui é o momento em que o
+    site declara que quer tocar. Declarar a categoria não toma o áudio de
+    ninguém — quem toma é o som saindo —, então isto é inofensivo para quem
+    abre a página e deixa no mudo.
+  */
+  pedirSessaoDeMidia();
   ligado = true;
   // A porta é baixada já: ela pode ser precisa a qualquer rolagem, e esperar o
   // download no momento do gesto atrasaria o som para depois da animação.

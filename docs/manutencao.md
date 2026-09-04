@@ -307,6 +307,27 @@ Aconteceu comigo em desenvolvimento, não em produção: um servidor antigo serv
 HTML que aponta para um CSS que não existe mais. Feche tudo (`pkill -f next`) e
 rode `npm run dev` de novo.
 
+### A música não sai no iPhone (no computador sai)
+
+Quase sempre é o **interruptor de silencioso**, aquela chavinha na lateral do
+aparelho. No iOS o som de site nasce na categoria "ambient", e ambient é calado
+por ela — do lado do código está tudo certo, o sistema é que joga o som fora
+antes do alto-falante. Computador não tem essa chave, e por isso lá sempre
+funcionou.
+
+O site já pede ao iPhone a categoria de quem toca música de propósito
+(`playback`, que passa por cima do silencioso). Isso existe a partir do **Safari
+16.4** — em iPhone mais antigo não há como contornar, e o jeito é desligar o
+silencioso.
+
+Duas outras coisas que valem checar antes de achar que quebrou:
+
+- **O botão precisa de um toque.** Nenhum navegador deixa um site tocar som
+  sozinho. Enquanto isso o adesivo do canto fica vermelho piscando e diz
+  "tocar" — é ele pedindo o toque, não um defeito.
+- **Ligação, Siri ou tela bloqueada cortam o áudio** no iPhone, e ao voltar o
+  som fica parado. Um toque em qualquer lugar da página retoma.
+
 ### A coluna PAGO está com um `x` mas não conta
 
 Qualquer texto na célula conta como pago. **Cuidado com caixa de seleção:**
